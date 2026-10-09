@@ -6,10 +6,12 @@ pub mod io;
 pub mod math;
 pub mod noise;
 pub mod rng;
+pub mod sparse;
 pub mod validate;
 
 pub use column::{AttrSet, Column};
 pub use geo::{Geometry, Instances, Topology, Volume};
+pub use sparse::{SparseVolume, Tile};
 
 use serde_json::{json, Value};
 use std::collections::BTreeMap;

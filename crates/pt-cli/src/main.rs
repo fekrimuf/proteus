@@ -150,6 +150,8 @@ fn main() {
         Some("bench") => bench(args.get(2).map(String::as_str) == Some("a")),
         Some("golden") => golden(),
         Some("trace") => trace_cmd(&args[2..]),
+        Some("sparse-bench") => sparse_bench_cmd(),
+        Some("critique-bench") => critique_bench_cmd(&args[2..]),
         Some("render") => render_cmd(&args[2..]),
         Some("recipes") => recipes_cmd(&args[2..]),
         Some("recipes-accept") => recipes_accept_cmd(&args[2..]),
@@ -281,6 +283,45 @@ fn trace_cmd(args: &[String]) -> Result<(), String> {
             Ok(e) => println!("{id:<24} {} points={} prims={} inst={}", &hex(&e.hash)[..32], e.geo.n_points(), e.geo.n_prims(), e.geo.n_instances()),
             Err(err) => println!("{id:<24} ERROR {err}"),
         }
+    }
+    Ok(())
+}
+
+/// `pt critique-bench prepare [dir]` | `pt critique-bench score <judgments.json> [dir]` (see critique_bench.rs).
+fn critique_bench_cmd(args: &[String]) -> Result<(), String> {
+    let dir = |i: usize| std::path::PathBuf::from(args.get(i).map(String::as_str).unwrap_or("out/critique"));
+    match args.first().map(String::as_str) {
+        Some("prepare") => pt_cli::critique_bench::prepare(&dir(1)),
+        Some("score") => pt_cli::critique_bench::score(std::path::Path::new(args.get(1).ok_or("usage: pt critique-bench score <judgments.json> [dir]")?), &dir(2)),
+        _ => Err("usage: pt critique-bench prepare [dir] | score <judgments.json> [dir]".into()),
+    }
+}
+
+/// `pt sparse-bench`: the rock recipe through `sparse_remesh` at shrinking voxel sizes, next to what the dense
+/// `sdf_from_mesh` volume would need (it refuses above 48M voxels).
+fn sparse_bench_cmd() -> Result<(), String> {
+    let code = std::fs::read_to_string(recipes::list().into_iter().find(|p| p.to_string_lossy().contains("03_rock")).ok_or("no rock recipe")?).map_err(|e| e.to_string())?;
+    let mut g = Graph::new();
+    let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
+    let rock = g.cook(rep.outputs.first().ok_or("no output")?)?;
+    let (lo, hi) = rock.base_bounds().ok_or("empty rock")?;
+    println!("rock: {} points, {:.2} x {:.2} x {:.2} m", rock.n_points(), hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]);
+    println!("{:>8} {:>14} {:>10} | {:>11} {:>10} {:>8} {:>9} {:>9} {:>8}", "voxel", "dense voxels", "dense MB", "dense tiles", "const", "MB", "build ms", "mesh ms", "closed");
+    for voxel in [0.04f32, 0.02, 0.01, 0.005, 0.0025] {
+        let dims = [0, 1, 2].map(|a| ((hi[a] - lo[a] + 0.6) / voxel).ceil() as u128 + 1);
+        let dense_n = dims[0] * dims[1] * dims[2];
+        let t = Instant::now();
+        let vol = pt_sop::sparse::build_sdf(&rock, voxel, 3, "bench")?;
+        let build_ms = t.elapsed().as_secs_f64() * 1000.0;
+        let t = Instant::now();
+        let mesh = pt_sop::sparse::to_mesh(&vol, 0.0, "auto", "bench")?;
+        let mesh_ms = t.elapsed().as_secs_f64() * 1000.0;
+        let closed = pt_core::validate::validate(&mesh).iter().all(|i| i.severity != "error");
+        let dense_note = if dense_n > 48_000_000 { " (dense refuses)" } else { "" };
+        println!(
+            "{:>8} {:>14} {:>10.0} | {:>11} {:>10} {:>8.1} {:>9.0} {:>9.0} {:>8}{}",
+            voxel, dense_n, dense_n as f64 * 4.0 / 1.0e6, vol.n_dense(), vol.n_const(), vol.memory_bytes() as f64 / 1.0e6, build_ms, mesh_ms, closed, dense_note
+        );
     }
     Ok(())
 }

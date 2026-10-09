@@ -1,0 +1,16 @@
+{
+  "judge": "Claude (vision, blind, brief + 2x2 same-camera sheet only)",
+  "note": "Scores 0-10 for how well the slot satisfies the brief. Empty slots (white) are unscored. Written before reading key.json. The shaded render does not show the Cd attribute, so Cd specs could not be judged.",
+  "scores": {
+    "01_fence": {"A": 9, "B": 3, "C": 1},
+    "02_spiral_staircase": {"A": 9, "B": 4, "C": 5, "D": 4},
+    "04_tree": {"A": 10, "B": 2, "C": 3, "D": 4},
+    "05_building": {"A": 9, "B": 2, "C": 1, "D": 8},
+    "06_pipe_network": {"A": 4, "B": 1, "C": 10},
+    "09_colonnade": {"A": 1, "B": 7, "C": 4, "D": 9},
+    "10_scifi_panel": {"A": 3, "B": 2, "C": 9},
+    "12_mechanical_bracket": {"A": 5, "B": 10, "C": 1},
+    "18_bolt": {"A": 8, "B": 3, "C": 9, "D": 2},
+    "21_city_block": {"A": 2, "B": 10, "C": 5, "D": 5}
+  }
+}

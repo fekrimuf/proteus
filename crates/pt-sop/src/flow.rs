@@ -188,6 +188,13 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             }
             Ok(e)
         }
+        "sparse_remesh" | "sparse_boolean" => {
+            let e = in0();
+            if !e.has_surface {
+                return Err(vec![fd(format!("{kind} needs closed polygon meshes"), "connect a closed mesh (box, sphere, sdf_to_mesh output...)")]);
+            }
+            Ok(GeoEnv::base_points(&[("N", Ty::Vec3)], true))
+        }
         "sdf_to_mesh" => {
             let e = in0();
             if !e.volumes.contains("sdf") {

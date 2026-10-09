@@ -3,6 +3,7 @@
 //! * observation: task brief + verifiable constraints + feedback from the last step
 //! * action: a complete hcs program (the whole scene; each step replaces the last)
 //! * reward in [0, 1]: 0.05 builds, 0.05 attribute-flow clean, 0.05 output cooks and validates,
+//!   (spec credit is halved while the static flow check reports problems)
 //!   0.85 fraction of the task's specs satisfied. Done at reward 1.0 or max_steps.
 //!
 //! Driven over stdin/stdout JSON lines (`pt gym`) so any language/agent framework can use it:
@@ -22,6 +23,10 @@ pub struct Task {
     pub brief: String,
     pub specs: Vec<SpecDef>,
     pub max_steps: usize,
+    /// "build" (from scratch), "repair" (fix a defective program) or "edit" (change an existing program to new requirements).
+    pub kind: &'static str,
+    /// Program the agent starts from (empty for build tasks); shown in the observation.
+    pub starter: String,
     /// Reference solution (used only for oracle baselines, never shown to the agent).
     pub reference: String,
 }
@@ -55,14 +60,14 @@ fn describe_spec(s: &SpecDef) -> String {
 fn tier_of(name: &str) -> &'static str {
     match name.get(..2).and_then(|n| n.parse::<u32>().ok()) {
         Some(1..=2) => "T1",
-        Some(3..=6) | Some(8..=10) | Some(18) => "T2",
+        Some(3..=6) | Some(8..=10) | Some(18) | Some(25) => "T2",
         Some(_) => "T3",
         None => "T1",
     }
 }
 
 pub fn tasks() -> Vec<Task> {
-    let t1 = |id: &str, brief: &str, specs: Vec<SpecDef>, reference: &str| Task { id: id.into(), tier: "T1", brief: brief.into(), specs, max_steps: 6, reference: reference.into() };
+    let t1 = |id: &str, brief: &str, specs: Vec<SpecDef>, reference: &str| Task { id: id.into(), tier: "T1", brief: brief.into(), specs, max_steps: 6, reference: reference.into(), kind: "build", starter: String::new() };
     let mut v = vec![
         t1(
             "t1_box_sized",
@@ -111,9 +116,127 @@ pub fn tasks() -> Vec<Task> {
             specs,
             max_steps: 8,
             reference: code,
+            kind: "build",
+            starter: String::new(),
         });
     }
+    v.extend(repair_and_edit_tasks());
     v
+}
+
+fn recipe_source(prefix: &str) -> Option<String> {
+    let p = recipes::list().into_iter().find(|p| p.file_stem().is_some_and(|s| s.to_string_lossy().starts_with(prefix)))?;
+    std::fs::read_to_string(p).ok()
+}
+
+fn recipe_specs(code: &str) -> Vec<SpecDef> {
+    let mut g = Graph::new();
+    pt_hcs::run(code, &mut g, true).map(|r| r.specs).unwrap_or_default()
+}
+
+fn named_spec(kind: &str, name: &str) -> SpecDef {
+    SpecDef { name: Some(name.into()), ..spec(kind, None, None) }
+}
+
+/// Repair tasks inject one defect into a verified recipe (the recipe is the oracle); edit tasks keep the
+/// recipe as the starting program but change the requirements, so the unchanged program fails.
+fn repair_and_edit_tasks() -> Vec<Task> {
+    // (id, recipe prefix, find, replace, what the agent is told)
+    let repairs: [(&str, &str, &str, &str, &str); 6] = [
+        ("repair_fence_typo", "01_", "array(", "arry(", "This fence program does not build."),
+        ("repair_stairs_wrong_size", "02_", "steps = 16", "steps = 10", "This spiral staircase comes out the wrong size."),
+        ("repair_rock_floating", "03_", "grounded = center(relaxed, mode=\"ground\")", "grounded = relaxed", "This rock generator builds, but the result violates its constraints."),
+        ("repair_pipes_flow", "06_", "copy_to_points(joint, crossings)", "copy_to_points(joint, crossings, orient_to_normal=1)", "This pipe network is rejected by the attribute-flow check."),
+        ("repair_blob_no_output", "13_", "out(blob)", "", "This program runs but nothing is marked as its result."),
+        ("repair_tree_units", "04_", "height=3.2", "height=32", "This tree is far too large (a unit slip somewhere)."),
+    ];
+    let mut out = Vec::new();
+    for (id, prefix, find, repl, what) in repairs {
+        let Some(src) = recipe_source(prefix) else { continue };
+        assert!(src.contains(find), "repair task {id}: defect pattern not found in recipe");
+        let specs = recipe_specs(&src);
+        let list = specs.iter().map(|s| format!("- {}", describe_spec(s))).collect::<Vec<_>>().join("\n");
+        out.push(Task {
+            id: id.into(),
+            tier: "T2",
+            kind: "repair",
+            brief: format!("REPAIR: {what} Find the defect and fix it with the smallest change; the result must satisfy:\n{list}"),
+            specs,
+            max_steps: 6,
+            starter: src.replacen(find, repl, 1),
+            reference: src,
+        });
+    }
+
+    // (id, recipe prefix, [(find, replace)], new specs, what to change)
+    let edits: Vec<(&str, &str, Vec<(&str, &str)>, Vec<SpecDef>, &str)> = vec![
+        (
+            "edit_fence_longer",
+            "01_",
+            vec![("length = 6.0", "length = 12.0")],
+            vec![spec("width", Some(12.0), Some(12.3)), spec("height", Some(1.15), Some(1.25)), spec("instances", Some(9.0), Some(9.0)), spec("grounded", None, None), spec("finite", None, None)],
+            "Make the fence 12 m long, keeping the post spacing and height.",
+        ),
+        (
+            "edit_colonnade_taller",
+            "09_",
+            vec![("col_h = 5.0", "col_h = 7.0"), ("count = 8", "count = 12")],
+            vec![spec("height", Some(8.1), Some(8.3)), spec("instances", Some(12.0), Some(12.0)), spec("grounded", None, None), spec("finite", None, None)],
+            "Make the colonnade 12 columns wide with 7 m shafts.",
+        ),
+        (
+            "edit_building_tower",
+            "05_",
+            vec![("floors = 10", "floors = 14"), ("bays = 6", "bays = 4")],
+            vec![spec("height", Some(16.8), Some(17.3)), spec("width", Some(6.0), Some(6.6)), spec("instances", Some(10.0), None), spec("grounded", None, None), spec("finite", None, None)],
+            "Turn the building into a taller, narrower tower: 14 floors, 4 bays across.",
+        ),
+        (
+            "edit_bolt_longer",
+            "18_",
+            vec![("shaft_len = 2.4", "shaft_len = 4.0"), ("turns = 16", "turns = 26")],
+            vec![spec("height", Some(4.35), Some(4.45)), spec("instances", Some(26.0), Some(26.0)), spec("grounded", None, None), spec("finite", None, None)],
+            "Lengthen the bolt shaft to 4 m while keeping the thread pitch the same.",
+        ),
+    ];
+    for (id, prefix, subs, specs, what) in edits {
+        let Some(src) = recipe_source(prefix) else { continue };
+        let mut reference = src.clone();
+        for (find, repl) in &subs {
+            assert!(reference.contains(find), "edit task {id}: pattern '{find}' not found in recipe");
+            reference = reference.replacen(find, repl, 1);
+        }
+        let list = specs.iter().map(|s| format!("- {}", describe_spec(s))).collect::<Vec<_>>().join("\n");
+        out.push(Task {
+            id: id.into(),
+            tier: "T2",
+            kind: "edit",
+            brief: format!("EDIT: {what} Change the given program; the result must satisfy:\n{list}"),
+            specs,
+            max_steps: 6,
+            starter: src,
+            reference,
+        });
+    }
+
+    // Edit that adds an attribute while preserving everything else the recipe guaranteed.
+    if let Some(src) = recipe_source("09_") {
+        let mut specs = recipe_specs(&src);
+        specs.push(named_spec("attribute", "Cd"));
+        let list = specs.iter().map(|s| format!("- {}", describe_spec(s))).collect::<Vec<_>>().join("\n");
+        let reference = src.replacen("out(colonnade)", "tinted = wrangle(colonnade, code=\"@Cd = vec3(0.8, 0.75, 0.7);\")\nout(tinted)", 1);
+        out.push(Task {
+            id: "edit_colonnade_color".into(),
+            tier: "T2",
+            kind: "edit",
+            brief: format!("EDIT: Give the colonnade a stone color (point attribute Cd) without changing its shape. Change the given program; the result must satisfy:\n{list}"),
+            specs,
+            max_steps: 6,
+            starter: src,
+            reference,
+        });
+    }
+    out
 }
 
 pub struct Env {
@@ -137,7 +260,8 @@ impl Env {
 
     pub fn observation(&self, feedback: Value) -> Value {
         json!({
-            "task": self.task.id, "tier": self.task.tier, "brief": self.task.brief,
+            "task": self.task.id, "tier": self.task.tier, "kind": self.task.kind, "brief": self.task.brief,
+            "starter_program": if self.task.starter.is_empty() { Value::Null } else { json!(self.task.starter) },
             "constraints": self.task.specs.iter().map(describe_spec).collect::<Vec<_>>(),
             "step": self.step, "max_steps": self.task.max_steps, "feedback": feedback,
             "tools": "submit a COMPLETE hcs program with step(code); see docs/AGENT_GUIDE.md for the language",
@@ -149,6 +273,12 @@ impl Env {
         self.last_code = code.to_string();
         let mut reward = 0.0;
         let mut info = json!({"build": false});
+        if !self.task.starter.is_empty() {
+            // Edit distance proxy: how many lines differ from the starter program (reported, not rewarded).
+            let (a, b): (Vec<&str>, Vec<&str>) = (self.task.starter.lines().collect(), code.lines().collect());
+            let common = a.iter().filter(|l| b.contains(l)).count();
+            info["lines_changed"] = json!(a.len().max(b.len()) - common.min(a.len().max(b.len())));
+        }
         match pt_hcs::run(code, &mut self.graph, true) {
             Err(ds) => {
                 info["errors"] = json!(ds.iter().map(|d| d.to_json()).collect::<Vec<_>>());
@@ -179,7 +309,9 @@ impl Env {
                             }).collect();
                             let results = pt_hcs::evaluate_specs(&mut self.graph, &specs);
                             let ok = results.iter().filter(|r| r.ok).count();
-                            reward += 0.85 * ok as f64 / results.len().max(1) as f64;
+                            // Programs the static attribute-flow check rejects only earn half the spec credit.
+                            let flow_factor = if info.get("flow").is_some() { 0.5 } else { 1.0 };
+                            reward += 0.85 * flow_factor * ok as f64 / results.len().max(1) as f64;
                             info["specs"] = json!(results.iter().map(|r| json!({"spec": r.kind, "ok": r.ok, "message": r.message})).collect::<Vec<_>>());
                             info["specs_passed"] = json!(format!("{ok}/{}", results.len()));
                         }
@@ -214,7 +346,7 @@ pub fn serve() {
             continue;
         };
         let resp = match req["cmd"].as_str().unwrap_or("") {
-            "tasks" => json!({"tasks": all.iter().map(|t| json!({"id": t.id, "tier": t.tier, "max_steps": t.max_steps, "specs": t.specs.len()})).collect::<Vec<_>>()}),
+            "tasks" => json!({"tasks": all.iter().map(|t| json!({"id": t.id, "tier": t.tier, "kind": t.kind, "max_steps": t.max_steps, "specs": t.specs.len()})).collect::<Vec<_>>()}),
             "reset" => match all.iter().find(|t| Some(t.id.as_str()) == req["task"].as_str()) {
                 Some(t) => {
                     let e = Env::new(t.clone());
@@ -253,7 +385,7 @@ pub fn serve() {
 // ---- baselines ----
 
 /// Multiply every numeric literal in `code` by a deterministic factor in [1-amp, 1+amp].
-fn perturb(code: &str, seed: u64, amp: f64) -> String {
+pub fn perturb(code: &str, seed: u64, amp: f64) -> String {
     let mut out = String::new();
     let b: Vec<char> = code.chars().collect();
     let (mut i, mut k) = (0, 0u64);
@@ -296,18 +428,19 @@ fn perturb(code: &str, seed: u64, amp: f64) -> String {
 
 pub fn baseline() -> Result<(), String> {
     let all = tasks();
-    println!("{:<26} {:>4} | {:>7} {:>7} {:>9}", "task", "tier", "oracle", "null", "perturbed");
+    println!("{:<26} {:>6} | {:>7} {:>7} {:>9}", "task", "kind", "oracle", "null", "perturbed");
     let mut rows = Vec::new();
     for t in &all {
         let oracle = Env::new(t.clone()).step(&t.reference).reward;
-        let nullr = Env::new(t.clone()).step("out(box())\n").reward;
+        // Null agent: do nothing (resubmit the starter program; an empty box for build tasks).
+        let nullr = Env::new(t.clone()).step(if t.starter.is_empty() { "out(box())\n" } else { &t.starter }).reward;
         // Best of 3 perturbation attempts: models an agent that has the right structure but guesses numbers.
         let mut perturbed = 0.0f64;
         for attempt in 0..3 {
             perturbed = perturbed.max(Env::new(t.clone()).step(&perturb(&t.reference, 100 + attempt, 0.35)).reward);
         }
-        println!("{:<26} {:>4} | {:>7.3} {:>7.3} {:>9.3}", t.id, t.tier, oracle, nullr, perturbed);
-        rows.push(json!({"task": t.id, "tier": t.tier, "oracle": oracle, "null_agent": nullr, "perturbed_best_of_3": perturbed}));
+        println!("{:<26} {:>6} | {:>7.3} {:>7.3} {:>9.3}", t.id, t.kind, oracle, nullr, perturbed);
+        rows.push(json!({"task": t.id, "tier": t.tier, "kind": t.kind, "oracle": oracle, "null_agent": nullr, "perturbed_best_of_3": perturbed}));
     }
     let mean = |k: &str| rows.iter().map(|r| r[k].as_f64().unwrap_or(0.0)).sum::<f64>() / rows.len().max(1) as f64;
     println!("{:<26} {:>4} | {:>7.3} {:>7.3} {:>9.3}", "MEAN", "", mean("oracle"), mean("null_agent"), mean("perturbed_best_of_3"));
@@ -331,9 +464,33 @@ mod tests {
         for t in &all {
             let r = Env::new(t.clone()).step(&t.reference);
             assert!(r.reward >= 0.999, "{}: oracle reward {} info {}", t.id, r.reward, r.info);
-            let n = Env::new(t.clone()).step("out(box())\n");
-            assert!(n.reward < 0.8, "{}: null agent scores {}", t.id, n.reward);
+            if t.starter.is_empty() {
+                let n = Env::new(t.clone()).step("out(box())\n");
+                assert!(n.reward < 0.8, "{}: null agent scores {}", t.id, n.reward);
+            } else {
+                // Repair/edit: leaving the starter untouched must not solve the task...
+                let n = Env::new(t.clone()).step(&t.starter);
+                assert!(n.reward < 0.999, "{}: the unchanged starter already solves the task ({})", t.id, n.reward);
+                // ...and the starter is a different program from the oracle.
+                assert_ne!(t.starter, t.reference, "{}", t.id);
+            }
         }
+    }
+
+    #[test]
+    fn repair_and_edit_tasks_exist_and_show_the_starter() {
+        let all = tasks();
+        let kinds = |k: &str| all.iter().filter(|t| t.kind == k).count();
+        assert!(kinds("repair") >= 6 && kinds("edit") >= 5 && kinds("build") >= 24, "repair {} edit {} build {}", kinds("repair"), kinds("edit"), kinds("build"));
+        let t = all.iter().find(|t| t.id == "repair_fence_typo").unwrap().clone();
+        let mut env = Env::new(t.clone());
+        let obs = env.observation(json!(null));
+        assert_eq!(obs["kind"], "repair");
+        assert!(obs["starter_program"].as_str().unwrap().contains("arry("));
+        // A one-token fix is enough: the reference differs from the starter by one line.
+        let r = env.step(&t.reference);
+        assert!(r.reward >= 0.999);
+        assert_eq!(r.info["lines_changed"], 1);
     }
 
     #[test]

@@ -260,6 +260,37 @@ pub fn atan64(x: f64) -> f64 {
     if neg { -r } else { r }
 }
 
+/// Deterministic atan2 in f32 (computed in f64 from basic ops, so identical on every platform).
+pub fn atan2(y: f32, x: f32) -> f32 {
+    let (y, x) = (y as f64, x as f64);
+    let pi = std::f64::consts::PI;
+    let r = if x > 0.0 {
+        atan64(y / x)
+    } else if x < 0.0 {
+        if y >= 0.0 { atan64(y / x) + pi } else { atan64(y / x) - pi }
+    } else if y > 0.0 {
+        pi / 2.0
+    } else if y < 0.0 {
+        -pi / 2.0
+    } else {
+        0.0
+    };
+    r as f32
+}
+
+/// Deterministic asin / acos / atan for f32 (inputs to asin/acos are clamped to [-1, 1]).
+pub fn asin(x: f32) -> f32 {
+    let x = x.clamp(-1.0, 1.0);
+    atan2(x, (1.0 - x * x).max(0.0).sqrt())
+}
+pub fn acos(x: f32) -> f32 {
+    let x = x.clamp(-1.0, 1.0);
+    atan2((1.0 - x * x).max(0.0).sqrt(), x)
+}
+pub fn atan(x: f32) -> f32 {
+    atan64(x as f64) as f32
+}
+
 #[cfg(test)]
 mod tests_atan {
     #![allow(clippy::disallowed_methods)]
@@ -269,6 +300,26 @@ mod tests_atan {
         for k in -400..400 {
             let x = k as f64 * 0.05;
             assert!((atan64(x) - x.atan()).abs() < 1e-9, "atan {x}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests_atan2 {
+    #![allow(clippy::disallowed_methods)]
+    use super::*;
+    #[test]
+    fn atan2_asin_acos_match_std() {
+        for yi in -20..=20 {
+            for xi in -20..=20 {
+                let (y, x) = (yi as f32 * 0.37, xi as f32 * 0.29);
+                assert!((atan2(y, x) - y.atan2(x)).abs() < 2e-6, "atan2({y},{x})");
+            }
+        }
+        for k in -100..=100 {
+            let x = k as f32 * 0.01;
+            assert!((asin(x) - x.asin()).abs() < 3e-6, "asin {x}");
+            assert!((acos(x) - x.acos()).abs() < 3e-6, "acos {x}");
         }
     }
 }

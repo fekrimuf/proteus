@@ -63,7 +63,8 @@ fn tool_defs() -> Value {
         t("vary", "Render N diverse variants (Latin hypercube + maximin) of a node over parameter ranges as one contact sheet, plus each variant's parameter values. The scene is left unchanged; apply a favorite with set_param/batch.", json!({"node": str_(), "params": {"type": "array", "items": {"type": "object"}}, "count": {"type": "integer"}, "seed": {"type": "integer"}, "mode": str_(), "path": str_()}), json!(["node", "params"])),
         t("fit_wrangle", "Differentiable fit: tune a point wrangle's `channels` by gradient descent (forward-mode autodiff, <=8 channels) so its output attribute matches the same attribute on target_node (same point count). The fitted channels are applied.", json!({"node": str_(), "attr": str_(), "component": {"type": "integer"}, "target_node": str_(), "steps": {"type": "integer"}, "lr": {"type": "number"}}), json!(["node", "attr", "target_node"])),
         t("render_final", "Path-traced render (sun + sky + ground, soft shadows, glossy coat) for lookdev and final stills. turntable>1 renders that many azimuths into one sheet. Deterministic: same inputs, same pixels. Quality scales with spp (try 16 for drafts, 64+ for finals).", json!({"node": str_(), "width": {"type": "integer"}, "height": {"type": "integer"}, "spp": {"type": "integer"}, "azimuth": {"type": "number"}, "elevation": {"type": "number"}, "sun_azimuth": {"type": "number"}, "sun_elevation": {"type": "number"}, "sun_intensity": {"type": "number"}, "ground": {"type": "boolean"}, "roughness": {"type": "number"}, "turntable": {"type": "integer"}, "mode": str_(), "path": str_()}), json!(["node"])),
-        t("critique", "Objective image critique of a node's render: coverage/centering, contrast, clipping, detail, colorfulness, with a pass/fail rubric and advice; optionally compares against a reference PNG (SSIM, PSNR, MSE). Use it next to your own look at render_preview.", json!({"node": str_(), "reference": str_(), "azimuth": {"type": "number"}, "elevation": {"type": "number"}}), json!(["node"])),
+        t("render_compare", "Render 2-4 nodes side by side under ONE shared camera (framed on the first node, or on all nodes with frame=\"union\") so differences in size, proportion and count are visible. Cells go left-to-right, top-to-bottom in the order given; the result lists each node's true size in meters. Use it to compare variants or a result against a target.", json!({"nodes": {"type": "array", "items": {"type": "string"}}, "frame": str_(), "mode": str_(), "azimuth": {"type": "number"}, "elevation": {"type": "number"}, "path": str_()}), json!(["nodes"])),
+        t("critique", "Image-hygiene check of a node's render (framing, centering, contrast, clipping, detail) with a pass/fail rubric. It does NOT judge whether the model matches the brief (measured: chance-level agreement with spec results, see gym/critique_experiment.json); use spec(...) for that and render_compare to look. With a reference PNG it adds SSIM/PSNR/MSE.", json!({"node": str_(), "reference": str_(), "azimuth": {"type": "number"}, "elevation": {"type": "number"}}), json!(["node"])),
         t("list_recipes","List built-in example recipes (hcs programs with specs).", json!({}), json!([])),
         t("get_recipe", "Return a recipe's hcs source.", json!({"name": str_()}), json!(["name"])),
         t("propose_recipe", "Submit a recipe (hcs source with spec(...) checks). It is validated; if it passes it is stored in recipes/proposed/ for a human to accept.", json!({"name": str_(), "code": str_()}), json!(["name", "code"])),
@@ -351,6 +352,40 @@ impl Session {
                 }
                 Ok(Out::Image { png, meta })
             }
+            "render_compare" => {
+                let ids: Vec<&str> = a.get("nodes").and_then(Value::as_array).ok_or("missing 'nodes' array")?.iter().filter_map(Value::as_str).collect();
+                if !(2..=4).contains(&ids.len()) {
+                    return Err("render_compare needs 2 to 4 node ids".into());
+                }
+                let mut geos = Vec::new();
+                for id in &ids {
+                    geos.push(self.graph.cook(id)?);
+                }
+                let boxes: Vec<_> = geos.iter().map(|g| g.bounds()).collect();
+                let union = boxes.iter().flatten().fold(None, |acc: Option<([f32; 3], [f32; 3])>, (lo, hi)| match acc {
+                    None => Some((*lo, *hi)),
+                    Some((l, h)) => Some(([l[0].min(lo[0]), l[1].min(lo[1]), l[2].min(lo[2])], [h[0].max(hi[0]), h[1].max(hi[1]), h[2].max(hi[2])])),
+                });
+                let fit = if a.get("frame").and_then(Value::as_str) == Some("union") { union } else { boxes[0] };
+                let mode = match a.get("mode").and_then(Value::as_str).unwrap_or("shaded") {
+                    "shaded" => Mode::Shaded,
+                    "wire" => Mode::Wire,
+                    other => Mode::Attr(other.to_string()),
+                };
+                let mut o = Opts { width: 400, height: 300, mode, fit_bounds: fit, ..Opts::default() };
+                if let Some(v) = a.get("azimuth").and_then(Value::as_f64) { o.azimuth_deg = v as f32; }
+                if let Some(v) = a.get("elevation").and_then(Value::as_f64) { o.elevation_deg = v as f32; }
+                let imgs: Vec<_> = geos.iter().map(|g| pt_render::render(g, &o).0).collect();
+                let img = pt_render::grid(&imgs, 2, 4);
+                let png = pt_render::encode_png(&img)?;
+                let sizes: Vec<Value> = ids.iter().zip(&boxes).map(|(id, b)| json!({"node": id, "size_m": b.map(|(lo, hi)| [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]])})).collect();
+                let mut meta = json!({"layout": "cells left-to-right, top-to-bottom in the order given", "shared_camera_framed_on": if a.get("frame").and_then(Value::as_str) == Some("union") { "union of all nodes" } else { "first node" }, "nodes": sizes});
+                if let Some(p) = a.get("path").and_then(Value::as_str) {
+                    std::fs::write(p, &png).map_err(|e| e.to_string())?;
+                    meta["saved"] = p.into();
+                }
+                Ok(Out::Image { png, meta })
+            }
             "export" => {
                 let geo = self.graph.cook(s(a, "node")?)?;
                 let path = s(a, "path")?;
@@ -542,38 +577,11 @@ impl Session {
                 let mut o = Opts { width: 480, height: 360, ..Opts::default() };
                 if let Some(v) = a.get("azimuth").and_then(Value::as_f64) { o.azimuth_deg = v as f32; }
                 if let Some(v) = a.get("elevation").and_then(Value::as_f64) { o.elevation_deg = v as f32; }
-                let (img, _) = pt_render::render(&geo, &o);
-                let mask = pt_render::silhouette(&geo, &o);
-                let coverage = mask.iter().filter(|b| **b).count() as f64 / mask.len().max(1) as f64;
-                let (mut sx, mut sy, mut n) = (0.0f64, 0.0f64, 0.0f64);
-                for (i, m) in mask.iter().enumerate() {
-                    if *m {
-                        sx += (i % o.width) as f64;
-                        sy += (i / o.width) as f64;
-                        n += 1.0;
-                    }
-                }
-                let off = if n > 0.0 { (((sx / n) / o.width as f64 - 0.5).abs().max(((sy / n) / o.height as f64 - 0.5).abs())) } else { 1.0 };
-                let st = pt_render::metrics::analyze(&img);
-                let check = |ok: bool, name: &str, value: f64, good: &str, advice: &str| json!({"check": name, "pass": ok, "value": value, "target": good, "advice": if ok { "" } else { advice }});
-                let mut rubric = vec![
-                    check((0.12..=0.85).contains(&coverage), "framing", coverage, "subject covers 12-85% of the frame", "the subject is tiny or overflowing; check scale (meters) and stray far-away geometry"),
-                    check(off < 0.3, "centering", off, "subject centroid within 30% of frame center", "geometry is lopsided or has far outliers; check instances and bounds"),
-                    check(st.contrast > 18.0, "contrast", st.contrast, "luminance std > 18", "render looks flat: add height/shape variation or use render_final for lighting"),
-                    check(st.clipped_bright < 0.08 && st.clipped_dark < 0.5, "clipping", st.clipped_bright, "<8% blown highlights", "highlights are clipping: reduce exposure or lighting"),
-                    check(st.edge_density > 0.01, "detail", st.edge_density, "edge density > 1% of pixels", "very little visible detail: add secondary detail (noise, instances, bevels)"),
-                ];
-                let mut result = json!({"coverage": coverage, "center_offset": off, "mean_luma": st.mean_luma, "contrast": st.contrast, "clipped_bright": st.clipped_bright, "clipped_dark": st.clipped_dark, "colorfulness": st.colorfulness, "edge_density": st.edge_density, "saturation": st.mean_saturation});
-                if let Some(rp) = a.get("reference").and_then(Value::as_str) {
-                    let reference = pt_render::decode_png(&std::fs::read(rp).map_err(|e| format!("{rp}: {e}"))?)?;
-                    let c = pt_render::metrics::compare(&img, &reference);
-                    result["vs_reference"] = json!({"ssim": c.ssim, "psnr": c.psnr, "mse": c.mse});
-                    rubric.push(check(c.ssim > 0.6, "reference_similarity", c.ssim, "SSIM > 0.6", "structure differs from the reference: compare silhouettes and proportions"));
-                }
-                let passed = rubric.iter().filter(|r| r["pass"] == true).count();
-                result["rubric"] = json!(rubric);
-                result["score"] = json!(passed as f64 / rubric.len() as f64);
-                j(result)
+                let reference = match a.get("reference").and_then(Value::as_str) {
+                    Some(rp) => Some(pt_render::decode_png(&std::fs::read(rp).map_err(|e| format!("{rp}: {e}"))?)?),
+                    None => None,
+                };
+                j(crate::critique::critique_json(&geo, &o, reference.as_ref()))
             }
             "list_recipes" => j(json!(RECIPES.iter().map(|(n, src)| json!({"name": n, "summary": src.lines().next().unwrap_or("").trim_start_matches("# ")})).collect::<Vec<_>>())),
             "get_recipe" => {
@@ -687,6 +695,7 @@ const RECIPES: &[(&str, &str)] = &[
     ("22_lathe_vase", include_str!("../../../recipes/22_lathe_vase.hcs")),
     ("23_spring_and_cable", include_str!("../../../recipes/23_spring_and_cable.hcs")),
     ("24_hillside_village", include_str!("../../../recipes/24_hillside_village.hcs")),
+    ("25_carved_boulder", include_str!("../../../recipes/25_carved_boulder.hcs")),
 ];
 
 fn parse_space(a: &Value) -> Result<Vec<pt_opt::ParamRef>, String> {

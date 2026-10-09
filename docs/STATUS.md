@@ -6,9 +6,9 @@ Agent-facing usage guide: [AGENT_GUIDE.md](AGENT_GUIDE.md).
 
 ## Verified state (last full run)
 
-* `cargo test --workspace --release`: **99 tests pass**, 0 failures. `cargo clippy --workspace --all-targets`: 0 errors.
-* `pt recipes`: **24/24 recipes** pass their specs, static check and golden hashes (`recipes/golden.json`).
-* `pt gym-baseline`: oracle 1.000, perturbation agent 0.744, null agent 0.401 over 29 tasks (`gym/baseline.json`).
+* `cargo test --workspace --release`: **113 tests pass**, 0 failures. `cargo clippy --workspace --all-targets`: 0 errors.
+* `pt recipes`: **25/25 recipes** pass their specs, static check and golden hashes (`recipes/golden.json`).
+* `pt gym-baseline`: oracle 1.000, perturbation agent 0.730, null agent 0.438 over 41 tasks (24 build, 6 repair, 5 edit, + 6 T1; `pt gym` kinds: build | repair | edit) (`gym/baseline.json`).
 * Cross-OS determinism: Windows (MSVC and GNU) matches Linux and macOS on all recipes once the physics math stack is patched (`vendor/`, see vendor/README.md). Repo: https://github.com/fekrimuf/proteus (private), CI in `.github/workflows/ci.yml`.
 
 ## Environment (Windows, everything on D:)
@@ -25,7 +25,7 @@ Agent-facing usage guide: [AGENT_GUIDE.md](AGENT_GUIDE.md).
 |---|---|
 | `pt-core` | Geometry v2 (columnar COW attributes, instance tables, groups, volumes), deterministic math/RNG/noise, OBJ/glTF/USD/`ptgeo` I/O, validation. |
 | `pt-vex` | VEX-style language: lexer, parser, type checker (line/col diagnostics with fixes), interpreter generic over autodiff channels, `fit` (gradient fitting). |
-| `pt-sop` | ~73 node types: primitives, curves + deformers (bend twist taper sweep revolve resample drop_to_surface...), attributes, groups, topology ops, terrain, SDF, simulation adapters, fused point kernel, attribute-flow `effect()`. |
+| `pt-sop` | ~75 node types: primitives, curves + deformers (bend twist taper sweep revolve resample drop_to_surface...), sparse SDF ops (sparse_remesh, sparse_boolean), attributes, groups, topology ops, terrain, SDF, simulation adapters, fused point kernel, attribute-flow `effect()`. |
 | `pt-sim` | Solvers: particles, PBD cloth, smoke (stable fluids), rigid bodies (rapier3d, enhanced-determinism). |
 | `pt-graph` | Node DAG, content-addressed cook cache with early cutoff, provenance, expressions (`$F`, `ch("node/param")`), assets/`repeat`, static `check()`, `merge` (diff + 3-way). |
 | `pt-hcs` | Agent language (Python syntax): functions, loops, comprehensions, `spec()`, `asset()`, `frame()`, `to_hcs()`. |
@@ -68,15 +68,28 @@ check_graph explain get_graph`. See: `render_preview render_final critique`. Sea
 * Alembic, FBX, MaterialX, Blender/Unreal live links -> USD/glTF today; others behind cargo features.
 * COP (compositing), CHOP, KineFX rigging, crowds, Python bindings, WASM plugins, browser build, CRDT multiplayer -> next; the
   JSON-RPC (MCP) and gym protocols are already language-agnostic.
-* Sparse (VDB-like) volumes -> dense volumes only so far; own tiled hash grid planned (patent-safe, see PLAN D8).
-* 80+ node types -> 73 now; remaining ops (polybevel, convex hull, lattice, atan2 in VEX) are small and follow `crates/pt-sop/src/deform.rs`.
-* Cross-OS hash check -> CI workflow written (`.github/workflows/ci.yml`) but never run; needs a GitHub push.
+* Sparse volumes: DONE as `pt_core::SparseVolume` (8^3 tiles, const interior tiles, deterministic) plus `sparse_remesh`/`sparse_boolean` (mesh in, mesh out; `pt sparse-bench`: rock at 2.5 mm voxels = 166 MB vs 4.3 GB dense). Not yet: sparse volumes as a first-class `Geometry` attribute, sparse smoothing/displace/advection (smoke is still dense).
+* 80+ node types -> 75 now; remaining ops (polybevel, convex hull, lattice) are small and follow `crates/pt-sop/src/deform.rs`.
 * Legal/naming: original names only; never run or study Houdini (EULA, see PLAN D1). Final product name still to be decided.
+
+## Done recently (all verified by tests/CI)
+
+* CI on Windows/Linux/macOS is green incl. the cross-OS hash compare; physics math stack vendored+patched (`vendor/`).
+* Recipe promotion (`propose_recipe`, `pt recipes-accept`); recipes 18-25; 14 new nodes (deformers, curves, placement, sparse SDF).
+* VEX: `atan2 atan asin acos mod radians degrees` with autodiff.
+* Gym: repair tasks (inject a defect into a verified recipe) and edit tasks (change requirements of a given program); the
+  starter program is part of the observation; spec credit halves while the static flow check fails.
+* Critique experiment (`pt critique-bench`, result in `gym/critique_experiment.json`, judgments in `gym/critique_judgments_claude.json`):
+  10 tasks x 4 candidates, same-camera 2x2 sheets, blind judge = Claude reading the sheets. Agreement with spec ground truth:
+  vision judge Spearman 0.84 / 92% pairwise / best-pick 90%; SSIM to oracle 0.54 / 75% / 100%; generic `critique` rubric 0.10 / 52%
+  (chance). Caveats: n=10 tasks, one judge (the author model, not an external VLM), perturbation defects only, oracle-framed camera.
+  Consequence: `render_compare` tool added (shared camera, true sizes), `critique` documented as hygiene-only.
 
 ## Suggested next steps
 
-1. Push the repo to GitHub and watch the first CI run (`.github/workflows/ci.yml` is written: 3 OSes, tests, recipes, cross-OS golden compare, unverified until it runs).
-2. DONE: recipe promotion (`propose_recipe` MCP tool -> `recipes/proposed/`, `pt recipes-accept [name]` promotes and updates golden). Next: a gym task that rewards good proposals.
-3. DONE: recipes 18-24 (bolt, canyon, forest clearing, city block, lathe vase, spring+cable, hillside village) cover T1-T3; 11 new nodes in `deform.rs`. Next: a real VLM-judged critique experiment, gym tasks that are not recipes, sparse volumes, COP-lite.
-4. Compositing (COP-lite), more simulation (pyro/FLIP), sparse volumes, Alembic/FBX interop.
-5. Update PLAN.md phases as items land; keep `recipes/golden.json` and `gym/baseline.json` in sync (`pt recipes --update`).
+1. Repeat the critique experiment with an external VLM and with a second judge to check the 0.84 isn't judge-specific; add defects
+   that perturbation can't produce (missing parts, wrong topology). Feed `render_compare` into the gym as an observation option.
+2. Sparse volumes as a first-class `Geometry` attribute (smooth/displace/offset on tiles, cache serialization), then sparse smoke.
+3. More gym tasks: multi-step "conversation" edits, tasks scored by reference similarity, and a task that rewards good recipe proposals.
+4. Compositing (COP-lite), pyro/FLIP, Alembic/FBX interop, polybevel/convex hull/lattice nodes.
+5. Keep PLAN.md phases, `recipes/golden.json` and `gym/baseline.json` in sync (`pt recipes --update`, `pt gym-baseline`).

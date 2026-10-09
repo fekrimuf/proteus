@@ -56,6 +56,7 @@ float h = fbm(@P * ch("freq"), 4.0) * ch("amp");
 
 Types: `float`, `vec3`. Reads and writes use `@name`. Functions: `sin cos tan abs sqrt floor ceil
 fract exp ln sign min max pow step clamp mix smoothstep fit length normalize dot cross distance
+atan2 atan asin acos mod radians degrees
 noise fbm rand vec3`. Loops are bounded: `for i in 0..8 { ... }`. Everything is deterministic
 and differentiable w.r.t. `ch()` values.
 
@@ -89,3 +90,23 @@ flag mistakes such as `copy_to_points(..., orient_to_normal=1)` fed by points wi
 `graph_to_hcs` -> author. `batch`, `create_node`, `set_param`, `connect` -> fine edits.
 `cook`, `validate`, `check_graph`, `explain` -> inspect. `render_preview` -> look.
 `list_recipes`, `get_recipe` -> start from proven examples. `export` -> deliver.
+
+## Checking your own work (what the measurements say)
+
+We measured how well different judges agree with the spec results on 10 tasks x 4 candidates
+(`pt critique-bench`, `gym/critique_experiment.json`): a vision judge looking at same-camera sheets agreed
+well (Spearman 0.84, 92% of pairwise rankings right), SSIM against a reference render moderately (0.54), the
+generic `critique` rubric not at all (0.10, chance level). So:
+
+* `spec(...)` lines are your definition of done; `critique` only catches framing/contrast problems.
+* To judge a result by eye, use `render_compare` (2-4 nodes, one shared camera, true sizes in meters listed)
+  instead of separate `render_preview` calls, whose auto-framing hides differences in scale.
+* The shaded preview does not show colors from `Cd`; use `mode="Cd"` to look at color specs.
+
+## Sparse SDF booleans and remeshing
+
+`sparse_boolean(a, b, op=..., voxel=..., band=...)` and `sparse_remesh(mesh, voxel=..., offset=...)` take CLOSED meshes
+and return a clean mesh with normals. They store only a narrow band around the surface, so `voxel` can be far smaller than
+the dense `sdf_*` nodes allow (those refuse above 48M voxels). Keep `k` (smooth ops) and `|offset|` below `band * voxel`;
+raise `band` for larger blends. Use them for carving, rounded joins and fixing non-manifold meshes; booleans between meshes
+that overlap themselves are not supported (sign comes from ray parity).

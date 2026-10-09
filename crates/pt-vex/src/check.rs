@@ -9,6 +9,7 @@ pub enum Fn_ {
     Sin, Cos, Abs, Sqrt, Floor, Ceil, Fract, Exp, Ln, Sign,
     Min, Max, Pow, Step, Clamp, Mix, Smoothstep, Fit,
     Length, Normalize, Dot, Cross, Distance, Noise, Fbm, Rand,
+    Atan2, Atan, Asin, Acos, Mod,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -50,6 +51,7 @@ pub enum IStmt {
 const FUNCS: &[&str] = &[
     "sin", "cos", "tan", "abs", "sqrt", "floor", "ceil", "fract", "exp", "ln", "sign", "min", "max", "pow", "step", "clamp", "mix", "lerp",
     "smoothstep", "fit", "length", "normalize", "dot", "cross", "distance", "noise", "fbm", "rand", "vec3", "ch", "chv",
+    "atan2", "atan", "asin", "acos", "mod", "radians", "degrees",
 ];
 
 struct Cx<'a> {
@@ -270,6 +272,25 @@ impl<'a> Cx<'a> {
                     "ceil" => Fn_::Ceil, "fract" => Fn_::Fract, "exp" => Fn_::Exp, "ln" => Fn_::Ln, _ => Fn_::Sign,
                 };
                 (f, a[0].1)
+            }
+            "atan" | "asin" | "acos" => {
+                if !arity(self, 1, &format!("{name}(x)")) {
+                    return None;
+                }
+                (match name { "atan" => Fn_::Atan, "asin" => Fn_::Asin, _ => Fn_::Acos }, a[0].1)
+            }
+            "atan2" | "mod" => {
+                if !arity(self, 2, &format!("{name}(a, b)")) {
+                    return None;
+                }
+                (if name == "atan2" { Fn_::Atan2 } else { Fn_::Mod }, arith(a[0].1, a[1].1))
+            }
+            "radians" | "degrees" => {
+                if !arity(self, 1, &format!("{name}(x)")) {
+                    return None;
+                }
+                let k = if name == "radians" { std::f32::consts::PI / 180.0 } else { 180.0 / std::f32::consts::PI };
+                return Some((Ir::Bin(Bin::Mul, Box::new(a[0].0.clone()), Box::new(Ir::Const(k))), a[0].1));
             }
             "min" | "max" | "pow" | "step" => {
                 if !arity(self, 2, &format!("{name}(a, b)")) {

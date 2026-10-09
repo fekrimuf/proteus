@@ -1,0 +1,26 @@
+# Boulder with a carved basin and a smooth-blended boss, built with sparse SDF booleans.
+# Technique: closed meshes go into `sparse_boolean` (tiled narrow-band SDFs, memory follows the surface area, so
+# resolution is not limited by the dense volume cap); a smooth subtract carves the basin with a rounded rim and a
+# smooth union grows a boss. `sparse_remesh` then rebuilds the result as one clean uniform mesh.
+# Inputs must be closed meshes; the output carries smooth normals `N`.
+blob = wrangle(subdivide(box(size=[2, 2, 2]), levels=3), code="""
+vec3 n = normalize(@P);
+@P = n * (1.0 + 0.12 * fbm(n * 2.2, 3.0));
+""")
+boulder = transform(blob, s=[1.25, 0.85, 1.0])
+
+basin_tool = transform(sphere(radius=0.75, rows=24, cols=48), t=[0.15, 0.95, 0.0])
+carved = sparse_boolean(boulder, basin_tool, op="smooth_subtract", k=0.12, voxel=0.03, band=5)
+
+boss_tool = transform(sphere(radius=0.4, rows=20, cols=40), t=[-0.8, 0.1, 0.55])
+with_boss = sparse_boolean(carved, boss_tool, op="smooth_union", k=0.14, voxel=0.03, band=5)
+
+final = center(sparse_remesh(with_boss, voxel=0.03, band=5), mode="ground")
+
+spec(final, "height", min=1.2, max=2.0)
+spec(final, "width", min=2.0, max=3.4)
+spec(final, "grounded")
+spec(final, "watertight")
+spec(final, "attribute", name="N")
+spec(final, "finite")
+out(final)

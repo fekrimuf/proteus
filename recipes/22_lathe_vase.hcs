@@ -1,19 +1,19 @@
-# Lathe-turned vase with a twisted ribbed neck and a matching lid.
+# Lathe-turned vase with a twisted fluted neck and a matching lid.
 # Technique: `curve` holds the silhouette as (radius, height) points, `resample` evens out the
 # spacing, `revolve` spins it around Y (poles on the axis collapse to a single point, so the
 # surface is watertight). `twist` then rotates cross-sections along the height.
 profile = curve(points=[[0.001, 0, 0], [0.5, 0, 0], [0.62, 0.15, 0], [0.9, 0.6, 0], [0.95, 1.0, 0], [0.7, 1.5, 0], [0.35, 1.9, 0], [0.3, 2.3, 0], [0.45, 2.5, 0]])
 even = resample(profile, count=40)
 body = revolve(even, divisions=48)
-ribbed = twist(wrangle(body, code="""
-float rib = 0.03 * sin(@P.y * 14.0);
+fluted = twist(wrangle(body, code="""
+float rib = 0.03 * sin(atan2(@P.z, @P.x) * 12.0) + 0.012 * sin(@P.y * 14.0);
 @P.x += rib * @P.x;
 @P.z += rib * @P.z;
 @Cd = mix(vec3(0.12, 0.25, 0.55), vec3(0.85, 0.75, 0.5), smoothstep(1.4, 2.4, @P.y));
 """), angle=12.0)
 lid_profile = curve(points=[[0.001, 2.52, 0], [0.2, 2.52, 0], [0.22, 2.6, 0], [0.12, 2.75, 0], [0.001, 2.78, 0]])
 lid = wrangle(revolve(lid_profile, divisions=32), code="@Cd = vec3(0.85, 0.75, 0.5);")
-vase = merge(ribbed, lid)
+vase = merge(fluted, lid)
 
 spec(vase, "height", min=2.6, max=2.9)
 spec(vase, "width", min=1.7, max=2.1)

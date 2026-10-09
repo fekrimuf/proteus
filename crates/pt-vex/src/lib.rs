@@ -158,6 +158,9 @@ mod tests {
             ("float s = 0.0; for i in 0..4 { s += sin(ch(\"a\") * @P.x + i) * ch(\"b\"); } @P.y = s;", vec![1.1, 0.4]),
             ("if (@P.x > 1.0) { @P.y = ch(\"a\") * @P.x; } else { @P.y = ch(\"b\") * @P.z; }", vec![0.5, 1.5]),
             ("@P.y = fit(@P.x, 0.0, 3.0, ch(\"a\"), ch(\"b\")) + normalize(@P + {1.0,1.0,1.0}).y * ch(\"a\");", vec![2.0, 4.0]),
+            ("@P.y = atan2(@P.z * ch(\"a\") + 0.5, @P.x + ch(\"b\") + 2.0);", vec![1.2, 0.3]),
+            ("@P.y = asin(clamp(@P.x * 0.2 * ch(\"a\"), -0.9, 0.9)) + acos(clamp(@P.z * 0.1 * ch(\"b\"), -0.9, 0.9)) + atan(ch(\"a\") * @P.x);", vec![1.1, 0.8]),
+            ("@P.y = radians(ch(\"a\")) * @P.x + degrees(ch(\"b\")) * 0.01 * @P.z;", vec![0.9, 1.3]),
         ];
         for (code, ch) in programs {
             let (_, g) = run_sum(code, &ch, "P", 1);
@@ -173,6 +176,16 @@ mod tests {
         }
     }
 
+
+    #[test]
+    fn mod_and_inverse_trig_values() {
+        let (loss, _) = run_sum("@P.y = mod(@P.x - 4.0, 1.5);", &[], "P", 1);
+        let want: f32 = pts().iter().map(|p| { let a = p[0] - 4.0; a - 1.5 * (a / 1.5).floor() }).sum();
+        assert!((loss - want).abs() < 1e-3, "mod {loss} vs {want}");
+        let (loss, _) = run_sum("@P.y = atan2(@P.z, @P.x) + degrees(acos(0.5)) * 0.0 + asin(0.5);", &[], "P", 1);
+        let want: f32 = pts().iter().map(|p| p[2].atan2(p[0]) + 0.5f32.asin()).sum();
+        assert!((loss - want).abs() < 1e-3, "atan2 {loss} vs {want}");
+    }
     #[test]
     fn noise_gradient_is_piecewise_but_close() {
         let code = "@P.y = noise(@P * ch(\"f\")) * ch(\"a\");";

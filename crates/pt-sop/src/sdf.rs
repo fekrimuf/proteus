@@ -143,7 +143,7 @@ fn shape(p: &Params) -> Res {
 }
 
 /// Closest point on triangle abc to p (Ericson, Real-Time Collision Detection).
-fn closest_on_tri(p: [f32; 3], a: [f32; 3], b: [f32; 3], c: [f32; 3]) -> [f32; 3] {
+pub(crate) fn closest_on_tri(p: [f32; 3], a: [f32; 3], b: [f32; 3], c: [f32; 3]) -> [f32; 3] {
     let dot = |x: [f32; 3], y: [f32; 3]| x[0] * y[0] + x[1] * y[1] + x[2] * y[2];
     let (ab, ac, ap) = (math::sub(b, a), math::sub(c, a), math::sub(p, a));
     let (d1, d2) = (dot(ab, ap), dot(ac, ap));
@@ -334,23 +334,12 @@ fn combine(a: &Geometry, b: &Geometry, p: &Params) -> Res {
     let (lo, hi) = ([0, 1, 2].map(|i| la[i].min(lb[i])), [0, 1, 2].map(|i| ha[i].max(hb[i])));
     let voxel = if p.f("voxel") > 0.0 { p.f("voxel") } else { va.voxel.min(vb.voxel) };
     let mut out = alloc(lo, hi, voxel, "sdf_combine")?;
-    let smin = move |x: f32, y: f32| {
-        let h = (0.5 + 0.5 * (y - x) / k).clamp(0.0, 1.0);
-        y + (x - y) * h - k * h * (1.0 - h)
-    };
-    let f: Box<dyn Fn(f32, f32) -> f32 + Sync> = match op.as_str() {
-        "union" => Box::new(f32::min),
-        "intersect" => Box::new(f32::max),
-        "subtract" => Box::new(|x, y| x.max(-y)),
-        "smooth_union" => Box::new(smin),
-        "smooth_subtract" => Box::new(move |x, y| -smin(-x, y)),
-        o => return Err(format!("sdf_combine: unknown op '{o}' (union | intersect | subtract | smooth_union | smooth_subtract)")),
-    };
+    let f = combine_fn(&op, k, "sdf_combine")?;
     fill(&mut out, |q| f(va.sample(q), vb.sample(q)));
     Ok(with_sdf(Geometry::new(), out))
 }
 
-fn surface_nets(v: &Volume, iso: f32) -> (Vec<[f32; 3]>, Vec<Vec<u32>>) {
+pub(crate) fn surface_nets(v: &Volume, iso: f32) -> (Vec<[f32; 3]>, Vec<Vec<u32>>) {
     let [nx, ny, nz] = v.dims;
     let val = |i: usize, j: usize, k: usize| v.data[v.idx(i, j, k)] - iso;
     let (cx, cy, cz) = (nx - 1, ny - 1, nz - 1);
@@ -433,7 +422,7 @@ fn surface_nets(v: &Volume, iso: f32) -> (Vec<[f32; 3]>, Vec<Vec<u32>>) {
 /// Marching tetrahedra on the Kuhn cube split: more triangles than surface nets, but the
 /// output is a closed manifold by construction (shared lattice-edge vertices, consistent
 /// face diagonals), so it is the fallback when surface nets hits an ambiguous cell.
-fn marching_tets(v: &Volume, iso: f32) -> (Vec<[f32; 3]>, Vec<Vec<u32>>) {
+pub(crate) fn marching_tets(v: &Volume, iso: f32) -> (Vec<[f32; 3]>, Vec<Vec<u32>>) {
     let [nx, ny, nz] = v.dims;
     const TETS: [[usize; 4]; 6] = [[0, 1, 3, 7], [0, 1, 5, 7], [0, 2, 3, 7], [0, 2, 6, 7], [0, 4, 5, 7], [0, 4, 6, 7]];
     let mut verts: Vec<[f32; 3]> = Vec::new();
@@ -503,7 +492,7 @@ fn marching_tets(v: &Volume, iso: f32) -> (Vec<[f32; 3]>, Vec<Vec<u32>>) {
     (verts, tris)
 }
 
-fn non_manifold_edges(polys: &[Vec<u32>]) -> usize {
+pub(crate) fn non_manifold_edges(polys: &[Vec<u32>]) -> usize {
     let mut edges: std::collections::HashMap<(u32, u32), u32> = std::collections::HashMap::new();
     for pr in polys {
         for k in 0..pr.len() {
@@ -723,4 +712,21 @@ pub(crate) fn from_mesh_pub(src: &Geometry, p: &Params) -> Res {
 
 pub(crate) fn to_mesh_pub(g: &Geometry, p: &Params) -> Res {
     to_mesh(g, p)
+}
+
+/// Pointwise SDF boolean `f(a, b)` for `op` (shared by the dense and sparse combine nodes).
+pub(crate) fn combine_fn(op: &str, k: f32, node: &str) -> Result<Box<dyn Fn(f32, f32) -> f32 + Sync + Send>, String> {
+    let k = k.max(1e-5);
+    let smin = move |x: f32, y: f32| {
+        let h = (0.5 + 0.5 * (y - x) / k).clamp(0.0, 1.0);
+        y + (x - y) * h - k * h * (1.0 - h)
+    };
+    Ok(match op {
+        "union" => Box::new(f32::min),
+        "intersect" => Box::new(f32::max),
+        "subtract" => Box::new(|x, y| x.max(-y)),
+        "smooth_union" => Box::new(smin),
+        "smooth_subtract" => Box::new(move |x, y| -smin(-x, y)),
+        o => return Err(format!("{node}: unknown op '{o}' (union | intersect | subtract | smooth_union | smooth_subtract)")),
+    })
 }

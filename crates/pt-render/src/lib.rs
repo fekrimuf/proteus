@@ -482,3 +482,21 @@ pub fn encode_png(img: &Image) -> Result<Vec<u8>, String> {
     }
     Ok(out)
 }
+
+/// Arrange equally sized images into a grid with `cols` columns (row-major) and a white gap between cells.
+pub fn grid(imgs: &[Image], cols: usize, gap: usize) -> Image {
+    let cols = cols.max(1);
+    let rows = imgs.len().div_ceil(cols).max(1);
+    let (w, h) = imgs.first().map_or((1, 1), |i| (i.w, i.h));
+    let (sw, sh) = (w * cols + gap * (cols - 1), h * rows + gap * (rows - 1));
+    let mut out = Image { w: sw, h: sh, rgb: vec![255; sw * sh * 3] };
+    for (i, im) in imgs.iter().enumerate() {
+        let (ox, oy) = ((i % cols) * (w + gap), (i / cols) * (h + gap));
+        for y in 0..h.min(im.h) {
+            let src = &im.rgb[y * im.w * 3..y * im.w * 3 + w.min(im.w) * 3];
+            let dst = ((oy + y) * sw + ox) * 3;
+            out.rgb[dst..dst + src.len()].copy_from_slice(src);
+        }
+    }
+    out
+}

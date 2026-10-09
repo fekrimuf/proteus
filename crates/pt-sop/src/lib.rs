@@ -8,6 +8,7 @@ pub mod flow;
 pub mod kernel;
 mod prims;
 mod sdf;
+pub mod sparse;
 mod sim;
 mod terrain;
 mod topo;
@@ -95,6 +96,7 @@ pub fn schemas() -> Vec<NodeSchema> {
     v.extend(topo::schemas());
     v.extend(terrain::schemas());
     v.extend(sdf::schemas());
+    v.extend(sparse::schemas());
     v.extend(sim::schemas());
     v
 }
@@ -177,6 +179,9 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Res {
         return r;
     }
     if let Some(r) = sim::cook(kind, p, inputs) {
+        return r;
+    }
+    if let Some(r) = sparse::cook(kind, p, inputs) {
         return r;
     }
     if let Some(r) = sdf::cook(kind, p, inputs) {
