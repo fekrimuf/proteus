@@ -20,20 +20,29 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build --workspace --release
+      - name: Per-node hash trace of the rigid-body recipe (diagnostic)
+        shell: bash
+        run: cargo run --release -p pt-cli --bin pt -- trace 17_shattering | tee trace-${{ matrix.os }}.txt
       - name: Tests
         run: cargo test --workspace --release
       - name: Recipes (specs, static check, golden hashes)
+        if: always()
         run: cargo run --release -p pt-cli --bin pt -- recipes
       - name: Determinism golden across thread counts
+        if: always()
         shell: bash
         run: cargo run --release -p pt-cli --bin pt -- golden | tee golden-${{ matrix.os }}.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: golden-${{ matrix.os }}
-          path: golden-${{ matrix.os }}.txt
+          path: |
+            golden-${{ matrix.os }}.txt
+            trace-${{ matrix.os }}.txt
 
   cross-os-determinism:
     needs: test
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

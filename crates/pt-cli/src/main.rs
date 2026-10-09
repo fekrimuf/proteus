@@ -149,6 +149,7 @@ fn main() {
         Some("demo") => demo(args.get(2).map_or("out", String::as_str)),
         Some("bench") => bench(args.get(2).map(String::as_str) == Some("a")),
         Some("golden") => golden(),
+        Some("trace") => trace_cmd(&args[2..]),
         Some("render") => render_cmd(&args[2..]),
         Some("recipes") => recipes_cmd(&args[2..]),
         Some("recipes-accept") => recipes_accept_cmd(&args[2..]),
@@ -257,6 +258,28 @@ fn recipes_accept_cmd(args: &[String]) -> Result<(), String> {
             for f in p {
                 println!("{}", f.file_stem().unwrap().to_string_lossy());
             }
+        }
+    }
+    Ok(())
+}
+
+/// `pt trace <recipe>`: cook a recipe and print the content hash of every node. Diff the output
+/// between operating systems to find the first node whose result is not bit-identical.
+fn trace_cmd(args: &[String]) -> Result<(), String> {
+    let [name] = args else { return Err("usage: pt trace <recipe-name-or-file>".into()) };
+    let path = if std::path::Path::new(name).exists() {
+        std::path::PathBuf::from(name)
+    } else {
+        recipes::list().into_iter().find(|p| p.file_stem().is_some_and(|s| s.to_string_lossy().contains(name.as_str()))).ok_or_else(|| format!("no recipe matching '{name}'"))?
+    };
+    let code = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let mut g = Graph::new();
+    pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
+    let ids: Vec<String> = g.nodes.keys().cloned().collect();
+    for id in ids {
+        match g.cook_entry(&id) {
+            Ok(e) => println!("{id:<24} {} points={} prims={} inst={}", &hex(&e.hash)[..32], e.geo.n_points(), e.geo.n_prims(), e.geo.n_instances()),
+            Err(err) => println!("{id:<24} ERROR {err}"),
         }
     }
     Ok(())
