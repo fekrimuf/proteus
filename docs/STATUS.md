@@ -85,6 +85,11 @@ check_graph explain get_graph`. See: `render_preview render_final critique`. Sea
   (chance). Caveats: n=10 tasks, one judge (the author model, not an external VLM), perturbation defects only, oracle-framed camera.
   Consequence: `render_compare` tool added (shared camera, true sizes), `critique` documented as hygiene-only.
 
+## Current priority
+
+**Read [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) first.** It is the agreed plan for reaching professional-grade output: rebuild public-domain professional
+assets as recipes, score by measurement, mine reusable building blocks, then train a proposer. Tomorrow starts at its Phase 0.
+
 ## Suggested next steps
 
 1. Repeat the critique experiment with an external VLM and with a second judge to check the 0.84 isn't judge-specific; add defects
