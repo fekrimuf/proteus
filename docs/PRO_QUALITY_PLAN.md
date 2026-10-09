@@ -21,6 +21,37 @@ opinions. Recipes that work are kept. The computer then notices patterns that ke
 into a new building block, so the next model is cheaper to rebuild. Over time a small learned helper takes over the
 first-draft writing, so cost per model keeps falling. People are only needed for steering and for spot-checks.
 
+## Is rebuilding hundreds of low-poly models enough to get professional, realistic worlds? No.
+
+You are right. Rebuilding stylized props is **Level 1 of five**. It proves the mechanism (professional work as the answer
+key, measured, with a library that learns), and it is the cheapest place to prove it. It does not by itself produce
+realism, because realism comes mostly from things a mesh does not contain. The honest ladder:
+
+| Level | What it adds | Why it matters for realism | Answer key (oracle) | Status today |
+|---|---|---|---|---|
+| 1. Assets | shape, structure, editable recipe | proportion and believable form | professional models (CC0) | plan below, Phase 0 to 3 |
+| 2. Appearance | materials, lighting, rendering | usually the single biggest jump from "CG" to "photo" | real material scans and HDRI lighting (CC0), photos | **nothing yet: our exports carry no materials and no UVs** |
+| 3. Systems | terrain, ecology, settlements that follow real processes | worlds look real because nature and cities follow rules | real elevation data, land-cover, street statistics | basic erosion nodes exist; nothing fitted to reality |
+| 4. Composition | set dressing, detail hierarchy, focal points, camera | what makes a scene feel art-directed instead of random | photographs and reference scenes, plus your direction | none |
+| 5. Delivery and scale | export to Blender/Unreal, instancing, LOD | pro pipelines are where the final image is made | pipeline referees (validators, Blender) | partial (glTF/USD geometry only) |
+
+The real target is **not** "an autonomous system that makes a finished AAA world". It is: **an art-directed system that
+automates the large, repetitive majority of world-building (terrain, ecology, layout, dressing, material variation) to
+professional standard, so a small team (or one person) directs the rest.** That is also how Houdini is used in studios.
+Hand-made hero assets and final art direction stay human.
+
+Two out-of-the-box moves keep this tractable:
+
+- **Reality is the answer key at every level.** Not just models: real elevation data for terrain, real material scans
+  for surfaces, real photographs for the final look. We match *statistics* (slopes, drainage, tree spacing, texture
+  character), not copies, which is how procedural systems get unlimited variety that still looks real.
+- **Don't rebuild what already exists in CC0.** Pros dress worlds with scanned rocks, plants and materials. Our job is the
+  systems that place, vary and combine them, plus the procedural parts (terrain, buildings, plants, hard-surface props).
+  We also don't need to invent a renderer: we export to Blender (and later Unreal) and use it as renderer and referee.
+
+So tomorrow's plan now runs two tracks: **Track A** (the asset flywheel below) and **Track B** (a realism probe, then a
+"photoreal valley" demo, section B12). Track B comes first because it answers your question with evidence within a day.
+
 ## What the last research round changed (the upgrades)
 
 1. **A proven shortcut exists.** Published systems (MeshCoder, CAD-Recode, ShapeCoder) turn shapes into editable code.
@@ -45,14 +76,20 @@ first-draft writing, so cost per model keeps falling. People are only needed for
 
 **What you do:** open a session and paste this one line:
 
-> Read docs/PRO_QUALITY_PLAN.md and execute Phase 0, then run the first 50 assets and report at Checkpoint 1.
+> Read docs/PRO_QUALITY_PLAN.md and execute Phase 0 and the Realism Probe (B12), then run the first 50 assets and report at Checkpoint 1.
 
-**What I do:** build the tools in Phase 0 (download and license records, a reader for the common 3D file format, the
-measuring ruler, the test runner), download the first 50 public-domain models, try to rebuild them, and write you a
-plain-English report. Nothing needs your credentials or money.
+**What I do, in this order:**
+1. Build the Phase 0 tools (download and license records, a reader for the common 3D file format, the measuring ruler,
+   the test runner).
+2. **Realism Probe (a few hours):** take one of our plain rocks and one public-domain scanned rock, give both a real
+   public-domain material and real lighting, render both in Blender, and show you the four images side by side. This tells
+   us how much of the "looks real" gap is appearance (materials and light) versus shape. It decides how much to
+   invest in Level 2 first.
+3. Download the first 50 public-domain models, try to rebuild them, and write you a plain-English report. Nothing needs
+   your credentials or money (installing Blender and downloading public-domain files only).
 
-**What you get:** a one-page report with traffic lights (below), pictures of originals next to our rebuilds, and a
-recommendation on whether to continue.
+**What you get:** a one-page report with traffic lights (below), pictures of originals next to our rebuilds, the probe
+images, and a recommendation on whether to continue.
 
 ## The three checkpoints (traffic lights)
 
@@ -63,6 +100,10 @@ recommendation on whether to continue.
 | 3. Does it look right to a human? | after checkpoint 2 | you are shown pairs (original vs our rebuild, same camera) and pick the original in no more than 7 of 10 pairs | adjust the finishing steps and the judges, retest |
 
 No checkpoint commits you to anything. Each one ends with a recommendation you can decline.
+
+The realistic-worlds track has its own gates (W0 to W4 in section B12.5): the Realism Probe, a "photoreal valley" built from
+real elevation data, a distance-to-real-photos measure, a second biome, and a small town. Same rule: each ends in a
+recommendation, never a commitment.
 
 ## Your fixed commitments (they do not grow with the size of the library)
 
@@ -96,6 +137,10 @@ No checkpoint commits you to anything. Each one ends with a recommendation you c
   export to OBJ/glTF/USD, software rasterizer and CPU path tracer, MCP server.
 - **Missing (Phase 0 builds these):** glTF/GLB importer, reference-matching metrics (`pt match`), corpus download +
   license ledger, part splitting, the batch runner with budgets and resume, motif mining, FD_DINOv2.
+- **Missing for realism (Track B, section B12):** the exporters (`io.rs`) write geometry only: no materials, no UVs, no
+  texture coordinates. There is no material system, no lighting description, no Blender bridge, no real-elevation import,
+  and nothing that fits terrain parameters to real data. Existing terrain nodes: `hf_erode_thermal`, `hf_erode_hydraulic`,
+  `hf_slope`, `hf_terrace`, noise, `scatter_poisson`, `drop_to_surface`.
 - Never run or study Houdini or its files (EULA). Original names only.
 
 ## B2. Evidence base (what supports the approach, with caveats)
@@ -235,12 +280,91 @@ is reported separately so we do not fool ourselves.
 3. Update the checkpoint report, commit results JSON (not raw assets), push, check CI.
 4. Update `docs/STATUS.md` (counts, KPIs) and this plan's gate table with measured numbers.
 
+## B12. Track B: from assets to realistic worlds
+
+**Principle:** at every level the answer key is real-world data and the metric is statistical or perceptual, never "looks
+right to me". Match distributions, not copies.
+
+### B12.1 Realism Probe (day 1, a few hours; decides the order of Level 2 work)
+
+1. Install Blender on D: (separate program; we only call it from the command line; see B6 for the licensing note).
+2. Fetch from Poly Haven (CC0): one scanned rock model, one PBR rock material set, one HDRI. Record all three in the ledger.
+3. Render 4 images with the same camera in Blender Cycles: (a) our current procedural rock, flat grey; (b) our rock with the
+   real PBR material (box/triplanar mapping) under the HDRI; (c) the scanned rock with its own material; (d) the scanned
+   rock flat grey.
+4. Show the four side by side to the owner. **Question answered:** how much realism comes from appearance (b vs a) versus
+   shape (c vs b)? If (b) already looks mostly real, Level 2 (materials and lighting) is the first investment; if not, shape and
+   detail come first. Record the answer and the images in `corpus/results/probe/`.
+
+### B12.2 Level 2: appearance (build order, cheapest first)
+
+1. **Material binding, no UVs needed:** scenes declare a material *name* per surface group (e.g. `rock_granite_02`); a Blender
+   script binds the matching CC0 PBR set with box (triplanar) projection. Add the name as a primitive attribute and carry it
+   through glTF `extras` and USD. This sidesteps UV unwrapping until we need it.
+2. **Lighting description:** HDRI name, sun angle, camera height and lens in the scene file; the Blender script builds the
+   rig. Same description renders the same image (determinism goal; Cycles seeds fixed).
+3. **PBR export:** glTF `pbrMetallicRoughness` and USD preview surface for engine round trips; UVs only where needed
+   (hard-surface props), via Blender's unwrap referee at first.
+4. **Procedural materials fitted to scans:** precedent is [MATch (SIGGRAPH Asia 2020)](https://match.csail.mit.edu/):
+   differentiable procedural material graphs optimised to reproduce photographs; output is editable and resolution
+   independent. This is a research-scale build (we have no material graph system today); do it after steps 1 to 3 prove value.
+5. **Wear and imperfection:** curvature- and exposure-driven dirt, edge wear, per-instance colour and scale variation. Judged
+   by the pro-fingerprint metric and the taps.
+
+### B12.3 Level 3: systems (terrain first, then ecology, then settlements)
+
+- **Terrain.** Oracle: real elevation tiles. USGS 3DEP is described by USGS as public domain (credit requested; catalog fields
+  are inconsistent, so confirm the wording on The National Map download page and record it). Copernicus GLO-30 is free but
+  needs the exact attribution and disclaimer, and a modified-data notice; WorldDEM-10 is excluded; some countries are
+  missing. Metric: distribution distances (Wasserstein, as used for landscape misfit in
+  [Morris et al., GRL 2023](https://doi.org/10.1029/2023gl103880)) between our terrain and the real tile for slope, curvature,
+  hypsometric curve, drainage density and ridge/valley spacing. Method: CMA-ES (we have it) over erosion/noise parameters.
+  **Open research:** I found no published method that fits erosion parameters to DEM summary statistics; related work is
+  Bayesian inversion of landscape-evolution models and the gradient-based INVTERRA project. Treat as our research bet and
+  keep the objective simple first (3 statistics).
+- **Ecology.** Oracle: real forest and land-cover patterns (point-pattern statistics such as pair-correlation and
+  nearest-neighbour distance, size distributions, species mix by slope/altitude/moisture). Data source to verify: ESA
+  WorldCover (believed CC BY 4.0, **not verified this round**), national forest inventories. Method: rule-based scattering
+  (we have `scatter_poisson`, group-by-expression, `drop_to_surface`) with parameters fitted to the statistics.
+- **Settlements.** Oracle: street-network statistics (block sizes, intersection angles, connectivity). OpenStreetMap is the
+  obvious source but is ODbL; whether statistics or models trained on it trigger share-alike is unsettled in community
+  discussion. **Keep OSM out until counsel advises**; prefer public-domain city GIS open data where available.
+
+### B12.4 Level 4 and 5: composition and delivery
+
+- **Global realism judge.** FD_DINOv2 distance between our renders (at human eye height, same lens) and photographs of the
+  same biome or place type, plus pairwise VLM judgments and the monthly taps. Photo sources must be permissively licensed
+  (CC0, public domain or properly attributed); keep a ledger row per photo.
+- **Detail hierarchy and dressing rules:** large forms, medium forms, small forms, then noise; focal points; clutter near
+  edges and paths. Encoded as scatter rules and scored by the fingerprint metric.
+- **Delivery:** USD scene with instancing, material names and lighting description; Blender script renders it; Unreal import
+  test later. LOD and streaming only after the above works.
+
+### B12.5 Milestones and gates (world track)
+
+| Gate | What is shown | Pass | Else |
+|---|---|---|---|
+| W0 Realism Probe | 4-image comparison (B12.1) | answer recorded; owner decides order | none, it is a measurement |
+| W1 Photoreal Valley | one 3 km tile of real elevation, terrain statistics fitted, CC0 scanned rocks and plants scattered by rules, CC0 PBR materials, HDRI, rendered in Blender | statistics within the agreed tolerance on 3 measures; owner picks it over a hand-set-up baseline of the same scene in at least 5 of 10 blind pairs | iterate on materials/light before more systems |
+| W2 Photo-distance | FD_DINOv2 between 100 renders and 100 photos of that biome | distance falls monotonically across 3 improvement rounds and beats the flat-shaded baseline | re-examine camera, scale, atmosphere |
+| W3 Second biome | repeat W1 for a different biome (desert, farmland, alpine) with no new human-written rules beyond parameters | passes W1 with parameter changes only | the systems are over-fitted; generalise the rules |
+| W4 Settlement | a small town: street network fitted to public-domain statistics, buildings from the Level 1 generators | owner's blind pair test as W1 | back to Level 1 building generators |
+
+### B12.6 Honest sizing
+
+Level 1 is weeks of focused work to a first verdict. Levels 2 and 3 are a multi-month program; I cannot give a responsible
+date, which is why every step has a gate and an early probe. The first realistic-looking demo (W1) mostly composes things
+that already exist (terrain erosion nodes, scatter, `drop_to_surface`, CC0 assets, Blender), so it should arrive well before
+the fitted-material and settlement work.
+
 ## B11. Decisions already made (do not re-litigate without new evidence)
 
-- Use professional public-domain work as the answer key rather than human ratings or hand-written specs.
+- Use professional public-domain work as the answer key rather than human ratings or hand-written specs, at every level (assets, materials, terrain, ecology, photos); match statistics, not copies.
+- Level 1 (assets) is only the foundation; realism comes from Levels 2 to 5 (B12). Do not claim realistic worlds from asset rebuilding alone.
 - Hand-curated references and per-item human rating were rejected: they scale with people's time.
 - Aesthetic predictors are weak tie-breakers only until validated against taps.
 - Start with structured, man-made and plant/rock assets; characters and animals later.
+- Export to Blender (and later Unreal) for the final render instead of building a production renderer; call Blender only as a separate program.
 - Houdini is never run, opened or studied.
 
 ## Sources
@@ -249,3 +373,5 @@ is reported separately so we do not fool ourselves.
 - [Kenney support page (license statement)](https://kenney.nl/support), [Poly Haven Public API](https://github.com/Poly-Haven/Public-API)
 - [Objaverse-XL on PyPI](https://pypi.org/project/objaverse-xl/0.1.3), [Infinigen](https://github.com/princeton-vl/infinigen), [candle examples](https://github.com/huggingface/candle/tree/main/candle-examples/examples)
 - [Khronos glTF-Validator](https://github.khronos.org/glTF-Validator)
+- [Infinigen (CVPR 2023)](https://arxiv.org/abs/2306.09310) (all assets procedural; read sections 3+ before copying techniques), [MATch (SIGGRAPH Asia 2020)](https://match.csail.mit.edu/)
+- [USGS 3DEP data](https://www.usgs.gov/3d-elevation-program) and [Copernicus DEM licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf)
