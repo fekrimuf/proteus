@@ -35,10 +35,10 @@ realism, because realism comes mostly from things a mesh does not contain. The h
 | 4. Composition | set dressing, detail hierarchy, focal points, camera | what makes a scene feel art-directed instead of random | photographs and reference scenes, plus your direction | none |
 | 5. Delivery and scale | export to Blender/Unreal, instancing, LOD | pro pipelines are where the final image is made | pipeline referees (validators, Blender) | partial (glTF/USD geometry only) |
 
-The real target is **not** "an autonomous system that makes a finished AAA world". It is: **an art-directed system that
-automates the large, repetitive majority of world-building (terrain, ecology, layout, dressing, material variation) to
-professional standard, so a small team (or one person) directs the rest.** That is also how Houdini is used in studios.
-Hand-made hero assets and final art direction stay human.
+**The target is unchanged: an autonomous system that makes a finished AAA world from a short brief.** The five levels are
+the stack that target needs; section "North Star" below says what "finished" means in measurable terms and how autonomy is
+reached rung by rung. (An earlier draft of this plan narrowed the goal to "automate most of the work, a human directs the
+rest". That was the planner's guess, not the owner's goal, and it has been removed.)
 
 Two out-of-the-box moves keep this tractable:
 
@@ -51,6 +51,63 @@ Two out-of-the-box moves keep this tractable:
 
 So tomorrow's plan now runs two tracks: **Track A** (the asset flywheel below) and **Track B** (a realism probe, then a
 "photoreal valley" demo, section B12). Track B comes first because it answers your question with evidence within a day.
+A third track, **Track C** (the world compiler and automatic QA, section B13), starts once the valley works.
+
+## North Star: an autonomous system that makes a finished AAA world
+
+**"Finished" must be something we can measure, or the project can never tell whether it is getting closer.** So the
+plan defines an **AAA Readiness Scorecard** with six families, each checked by a tool, not by opinion:
+
+| Family | Plain-English question | Who checks it |
+|---|---|---|
+| Visual quality | does a frame look like a top-tier game or photo? | distance to real photos and reference renders, blind human pairs |
+| Art coherence | does it have one consistent style and identity, with no obvious repetition? | an "art bible" built from references, style-match scores, a repetition detector |
+| World function | can you actually play in it: no stuck spots, clear routes, landmarks you can see? | automatic playtest bots, navigation checks, sightline checks |
+| Performance | does it run smoothly on target hardware? | the game engine's own profiler and build tools |
+| Content breadth | enough unique, detailed things per square kilometre? | counts and variety measures |
+| Delivery | does it open in Unreal or Unity with no errors and package into a build? | engine command-line builds and file validators |
+
+**How autonomy is reached: the unit of work is a "vertical slice"**, the same unit real studios use: one square kilometre
+(about a five-minute walk) at final quality. The rungs:
+
+| Rung | Meaning | Human role |
+|---|---|---|
+| A0 (today) | tools an AI can drive | everything |
+| A1 | assets rebuilt and generated on their own | approve libraries |
+| A2 | given a brief and an approved art bible, the system builds a full slice | approve the art bible only |
+| A3 | several slices joined into one consistent world | approve the brief |
+| A4 | one paragraph in, finished world out | optional taps; veto only |
+
+Each rung ends in a gate: the scorecard plus a blind comparison against a hand-made reference. A4 is the stated goal. Nobody has
+shown it yet, so it is a research target; the rungs exist so that each step is real and measurable and so that failure
+shows up early and cheaply.
+
+**Why our approach can reach scale where others stall.** Meta's WorldGen (2025/26) generates traversable worlds from text but
+only about 50 by 50 metres, and quality degrades within 3 to 5 metres of the centre. Studio practice (Horizon Zero Dawn) is
+the opposite: art-directed procedural placement, data-driven, deterministic and stable, which scales to a continent. Our
+engine is built the studio way (recipes, determinism, caching, checks), so scale is native; what we add is the autonomous
+director, the judges and the playtest bots.
+
+**The open problems, each with my routes** (nothing here is a reason to stop; it is where the research is):
+
+1. *Hero-level asset realism (landmarks, creatures, characters).* Routes: (a) layered detail: a recipe for the large forms
+   plus procedural micro-detail fitted to scan statistics, plus kitbashing from CC0 scans; (b) generate a base with an image or
+   3D generator, then re-express it as a clean, editable recipe with the Track A flywheel; (c) environment first, characters
+   later via licensed or CC0 bases with parametric variation.
+2. *Taste and art direction.* Routes: (a) an "art bible compiler" that turns a reference set into measured palette, shape
+   language, detail density, material set and lighting mood, enforced by two judges that fail differently; (b) have the system
+   propose three directions and choose by judge consensus, with a human veto; (c) calibrate against the monthly taps.
+3. *Is it fun and readable to play?* Routes: (a) measurable proxies: sightlines, landmark visibility from paths, pacing
+   intervals, route clarity; (b) automatic playtest agents that explore, find stuck spots and report coverage; (c) a few human
+   taps on "which route feels better".
+4. *AAA scale and performance.* Routes: (a) use the engine's own headless builders (World Partition, HLOD, navigation data,
+   PCG builder) as referees; (b) our own LOD and instancing generators; (c) budgets as hard constraints in the planner.
+5. *Animation, audio, story.* Routes: define "world" as environment, props, lighting and gameplay spaces first; reuse CC0
+   animation libraries; treat audio and narrative as later modules behind the same brief.
+6. *Coherence across a whole world.* Routes: a plan that goes region, district, block under one art bible; a repetition
+   detector on image embeddings; automatic seam and transition tests.
+7. *Unknowns to verify, not assume:* engine licence terms, the exact Unreal headless/Python interfaces, and the licences of
+   any reference scenes used for benchmarking.
 
 ## What the last research round changed (the upgrades)
 
@@ -357,10 +414,72 @@ date, which is why every step has a gate and an early probe. The first realistic
 that already exist (terrain erosion nodes, scatter, `drop_to_surface`, CC0 assets, Blender), so it should arrive well before
 the fitted-material and settlement work.
 
+## B13. Track C: the autonomous world compiler and the AAA Readiness Scorecard
+
+### B13.1 Scorecard (draft bars; calibrate every number against reference scenes before first use)
+
+| Family | Measure | Draft bar |
+|---|---|---|
+| Visual | FD_DINOv2 of renders vs a reference set of the same biome/style; blind human pairs vs a hand-made reference | distance no worse than the distance between two different reference scenes of the same type; picked >= 40% of pairs (50% = indistinguishable) |
+| Visual | material coverage, GI/shadows/atmosphere enabled, texel density band | 100% of visible surfaces have a material; density within the reference band |
+| Art coherence | style-match to the art bible (palette distance in Lab, shape-language and detail-density statistics, embedding distance); repetition detector (near-identical crops within 50 m, one asset repeated in view) | style score within tolerance of the reference scenes' own scores; repetition below a calibrated limit |
+| World function | navigation coverage of intended walkable area; stuck points found by explorer agents; landmark visibility from main paths; POI spacing/pacing; collision (raycast fall-through test) | >= 99% coverage; 0 stuck points over a fixed bot-hour budget; every landmark visible from a path within 300 m; pacing within target |
+| Performance | frame rate on a defined target GPU and resolution; triangles, draw calls, VRAM; HLOD present; streaming hitches | engine capture meets the budget (e.g. 60 fps at 1440p on the chosen spec) |
+| Content breadth | unique assets per km2; max repeats of one asset in view; LOD chain on every mesh above 2k triangles | calibrated from reference scenes; 100% LOD coverage |
+| Delivery | engine opens the project with zero errors; HLOD/nav/PCG builds succeed headless; packaged build survives a 10-minute bot path; glTF/USD validators clean | all pass |
+
+Publish the scorecard result on every build as one page (traffic lights plus the evidence images), same style as the
+checkpoint report.
+
+### B13.2 Architecture: a studio of agents with referees
+
+```
+brief -> ART BIBLE compiler -> WORLD PLANNER (region > district > block; road/river graphs; landmarks; POIs;
+        blockout + navmesh) -> BUILDERS (terrain fitted to real stats, ecology, settlements, props, materials)
+        -> DRESSING -> LIGHTING -> TECH ART (LOD, HLOD, nav, streaming budgets) -> QA LOOP
+        (playtest bots, validators, engine profiler, judges) -> REPAIR (agent edits the recipe graph) -> DELIVERY
+```
+
+The recipe graph is the shared medium. Existing strengths to use, not rebuild: deterministic cooks, content-addressed cache with
+early cutoff, provenance and `explain`, `check`/`validate`, `checkpoint`/`restore`, `diff`/`merge`, the `vary` engine, the
+gym. Pattern borrowed from WorldGen: plan the functional skeleton first (blockout + navigation mesh), then realise it, so
+the result is traversable by construction. Pattern borrowed from Horizon Zero Dawn: artist-directable, data-driven,
+deterministic, locally stable rules, so that moving a mountain or changing a biome re-dresses the world automatically.
+
+### B13.3 Track C tasks (ordered; none needed for tomorrow)
+
+- **C0 Scorecard harness v0:** compute what we can today (material coverage, instance counts and repeats, repetition crops,
+  grid-nav coverage on our own geometry, budgets). Unit-test each metric. Report page generator.
+- **C1 Art bible compiler v0:** a folder of reference images (CC0/permissive only, ledger row each) to `artbible.json`
+  (palette, detail frequency, shape language, material set, lighting mood) plus a judge that scores renders against it.
+- **C2 Planner prototype:** brief to blockout (region graph, roads, landmarks) with a navmesh; the plan becomes recipe-graph parameters;
+  constraints (budgets, slope limits, spacing) are checked by solvers, not by the language model.
+- **C3 Playtest bot v0:** explorer agent on the navmesh (Go-Explore style): coverage, stuck detection, landmark visibility;
+  results feed the scorecard.
+- **C4 Engine bridge:** export USD/glTF with material names and the lighting description; headless Unreal scripts using the
+  World Partition builder commandlets (HLOD, navigation data, PCG builder) as referees. **Verify first:** Unreal licence terms,
+  exact command lines and the Python/automation interface for the installed engine version.
+- **C5 Closed repair loop:** scorecard failures become tasks for the builder agent (edit, re-cook, re-score), with the gym
+  scoring how well it repairs.
+- **C6 Vertical slice trial (rung A2 gate):** one square kilometre from a brief and an approved art bible; scorecard plus a
+  blind comparison against a hand-made reference slice.
+
+### B13.4 Evidence for Track C (and its limits)
+
+| Source | What it shows | Caveat |
+|---|---|---|
+| [WorldGen, Meta (arXiv 2511.16825)](https://arxiv.org/abs/2511.16825) | LLM plans a blockout and navmesh, a generative model realises it; traversable by construction | scenes about 50 by 50 m; quality degrades 3 to 5 m from the centre (Meta's own statement); secondary-source numbers unverified |
+| [GPU-based procedural placement in Horizon Zero Dawn (GDC 2017)](https://www.guerrilla-games.com/read/gpu-based-procedural-placement-in-horizon-zero-dawn) | AAA open worlds are art-directed, data-driven, deterministic procedural placement | artists painted the layout; autonomy of the layout is exactly what we add |
+| [Go-Explore for reachability testing (arXiv 2209.00570)](https://arxiv.org/abs/2209.00570) | automated agents cover navigation meshes and find reachability bugs; authors claim a 1.5 km square world in about 10 hours on one machine | research prototype; "fun" is not measured |
+| [World Partition builder commandlets (Epic docs)](https://dev.epicgames.com/documentation/unreal-engine/world-partition-builder-commandlet-reference) | headless engine builds for HLOD, navigation data and PCG generation | exact flags vary by engine version; Python interface unverified |
+
 ## B11. Decisions already made (do not re-litigate without new evidence)
 
+- **The owner's target is an autonomous system that makes a finished AAA world.** It is staged by the autonomy rungs
+  (A0 to A4) and the scorecard; do not narrow the goal in any document without the owner's explicit say.
+
 - Use professional public-domain work as the answer key rather than human ratings or hand-written specs, at every level (assets, materials, terrain, ecology, photos); match statistics, not copies.
-- Level 1 (assets) is only the foundation; realism comes from Levels 2 to 5 (B12). Do not claim realistic worlds from asset rebuilding alone.
+- Level 1 (assets) is only the foundation; realism comes from Levels 2 to 5 (B12) and world function from Track C (B13). Do not claim realistic worlds from asset rebuilding alone.
 - Hand-curated references and per-item human rating were rejected: they scale with people's time.
 - Aesthetic predictors are weak tie-breakers only until validated against taps.
 - Start with structured, man-made and plant/rock assets; characters and animals later.

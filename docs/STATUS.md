@@ -87,7 +87,7 @@ check_graph explain get_graph`. See: `render_preview render_final critique`. Sea
 
 ## Current priority
 
-**Read [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) first.** It is the agreed plan for reaching professional-grade output in five levels (assets, appearance, systems, composition, delivery; assets alone do NOT give realistic worlds). Track A: rebuild public-domain professional
+**Read [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) first.** North star (owner's goal): an AUTONOMOUS system that makes a FINISHED AAA world; staged by autonomy rungs A0-A4 and an AAA Readiness Scorecard. Plan covers five levels (assets, appearance, systems, composition, delivery; assets alone do NOT give realistic worlds). Track A: rebuild public-domain professional
 assets as recipes, score by measurement, mine reusable building blocks, then train a proposer. Track B: realism probe, then a "photoreal valley" from real elevation data + CC0 scans/materials rendered in Blender. Tomorrow starts at Phase 0 + the Realism Probe.
 
 ## Suggested next steps
