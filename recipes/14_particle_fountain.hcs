@@ -1,0 +1,18 @@
+# Particle fountain.
+# Technique: a tiny emitter patch (scatter on a 1-cell grid gives points whose normal is +Y, which
+# pop_sim uses as the emission direction). Particles obey gravity, light drag and bounce off the
+# ground; each becomes an instance of a low-poly drop scaled by its random pscale. The scene shows
+# frame 60; scrubbing `frame(...)` re-simulates deterministically from the start frame.
+frame(60)
+patch = grid(size=[0.2, 0.2], rows=1, cols=1)
+nozzle = scatter(patch, count=4, seed=2)
+spray = pop_sim(nozzle, speed=7, spread=0.12, rate=6, drag=0.05, bounce=0.35, ground_y=0, pscale_min=0.04, pscale_max=0.07, seed=3)
+drop = sphere(radius=1.0, rows=6, cols=10)
+drops = copy_to_points(drop, spray)
+ground = grid(size=[8, 8], rows=1, cols=1)
+fountain = merge(drops, ground)
+
+spec(fountain, "instances", min=500)
+spec(fountain, "height", min=1.5, max=4.0)
+spec(fountain, "finite")
+out(fountain)

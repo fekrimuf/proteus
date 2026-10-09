@@ -1,0 +1,25 @@
+[package]
+name = "pt-cli"
+edition.workspace = true
+version.workspace = true
+
+[lib]
+name = "pt_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pt"
+path = "src/main.rs"
+
+[dependencies]
+pt-core.workspace = true
+pt-vex.workspace = true
+pt-sop.workspace = true
+pt-graph.workspace = true
+pt-hcs.workspace = true
+pt-opt.workspace = true
+pt-render.workspace = true
+serde_json.workspace = true
+blake3.workspace = true
+tiny_http = "0.12"
+rayon.workspace = true

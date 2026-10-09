@@ -1,0 +1,16 @@
+# Determinism lint (PLAN D2): std transcendentals differ across platforms; use pt_core::math instead.
+disallowed-methods = [
+  { path = "f32::sin", reason = "use pt_core::math::sin_cos" },
+  { path = "f32::cos", reason = "use pt_core::math::sin_cos" },
+  { path = "f32::sin_cos", reason = "use pt_core::math::sin_cos" },
+  { path = "f32::tan", reason = "non-deterministic across platforms" },
+  { path = "f32::exp", reason = "non-deterministic across platforms" },
+  { path = "f32::ln", reason = "non-deterministic across platforms" },
+  { path = "f32::powf", reason = "non-deterministic across platforms" },
+  { path = "f32::powi", reason = "non-deterministic across platforms" },
+  { path = "f32::atan2", reason = "non-deterministic across platforms" },
+  { path = "f64::sin", reason = "use pt_core::math" },
+  { path = "f64::cos", reason = "use pt_core::math" },
+  { path = "f64::exp", reason = "non-deterministic across platforms" },
+  { path = "f64::powf", reason = "non-deterministic across platforms" },
+]

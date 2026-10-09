@@ -1,0 +1,21 @@
+# Fence: regularly spaced posts and two rails.
+# Technique: instance the posts with `array` (lazy, no geometry copies), model rails as
+# scaled boxes, merge. Everything is in meters, +Y up, and the fence stands on y = 0.
+length = 6.0
+spacing = 1.5
+n = int(length / spacing) + 1
+
+post = tube(radius=0.06, height=1.2, cols=8, center=[0, 0.6, 0])
+posts = array(post, count=n, offset=[spacing, 0, 0])
+
+rail = box(size=[length, 0.06, 0.04], center=[length / 2, 0, 0])
+rail_low = transform(rail, t=[0, 0.4, 0])
+rail_high = transform(rail, t=[0, 0.9, 0])
+
+fence = merge(posts, rail_low, rail_high)
+
+spec(fence, "height", min=1.15, max=1.25)
+spec(fence, "width", min=6.0, max=6.3)
+spec(fence, "grounded")
+spec(fence, "finite")
+out(fence)

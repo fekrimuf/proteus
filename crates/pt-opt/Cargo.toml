@@ -1,0 +1,13 @@
+[package]
+name = "pt-opt"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+pt-core.workspace = true
+pt-sop.workspace = true
+pt-graph.workspace = true
+pt-hcs.workspace = true
+pt-render.workspace = true
+serde_json.workspace = true
+rayon.workspace = true

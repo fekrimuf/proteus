@@ -1,0 +1,21 @@
+# Hex bolt with a threaded shaft.
+# Technique: a 6-sided tube is a hex head; the thread is a stack of thin rings made with one
+# `array` (lazy instances), so 16 turns cost one node. Everything is in meters, +Y up, and
+# the bolt stands on its head at y = 0.
+head_h = 0.4
+shaft_len = 2.4
+turns = 16
+pitch = shaft_len / turns
+
+head = wrangle(tube(radius=0.55, height=head_h, cols=6, center=[0, head_h / 2, 0]), code="@Cd = vec3(0.55, 0.56, 0.6);")
+shaft = wrangle(tube(radius=0.3, height=shaft_len, cols=20, center=[0, head_h + shaft_len / 2, 0]), code="@Cd = vec3(0.62, 0.63, 0.66);")
+ring = wrangle(tube(radius=0.36, radius_top=0.3, height=pitch * 0.6, cols=20, center=[0, head_h + pitch / 2, 0]), code="@Cd = vec3(0.5, 0.5, 0.54);")
+thread = array(ring, count=turns, offset=[0, pitch, 0])
+bolt = merge(head, shaft, thread)
+
+spec(bolt, "height", min=2.75, max=2.85)
+spec(bolt, "width", min=1.0, max=1.2)
+spec(bolt, "grounded")
+spec(bolt, "instances", min=16, max=16)
+spec(bolt, "finite")
+out(bolt)

@@ -1,0 +1,27 @@
+# Mechanical bracket with a raised boss, mounting holes and a center bore.
+# Technique: robust booleans through signed distance fields. Each closed mesh becomes an SDF,
+# fields are combined (smooth union adds a fillet where the boss meets the plate, subtract
+# drills the holes), a light blur breaks the razor edges, and the result is meshed once.
+# Unlike polygon booleans this cannot fail on coplanar faces or tiny slivers.
+plate = box(size=[3.0, 0.4, 2.0])
+boss = tube(radius=0.55, height=1.1, cols=40, center=[0, 0.35, 0])
+holes = merge(
+    tube(radius=0.17, height=1.0, cols=24, center=[-1.1, 0, 0.65]),
+    tube(radius=0.17, height=1.0, cols=24, center=[-1.1, 0, -0.65]),
+    tube(radius=0.17, height=1.0, cols=24, center=[1.1, 0, 0.65]),
+    tube(radius=0.17, height=1.0, cols=24, center=[1.1, 0, -0.65]),
+)
+bore = tube(radius=0.3, height=1.8, cols=40, center=[0, 0.35, 0])
+
+body = sdf_combine(sdf_from_mesh(plate, voxel=0.04), sdf_from_mesh(boss, voxel=0.04), op="smooth_union", k=0.14)
+drilled = sdf_combine(body, sdf_from_mesh(holes, voxel=0.04), op="subtract")
+bored = sdf_combine(drilled, sdf_from_mesh(bore, voxel=0.04), op="subtract")
+finished = sdf_smooth(bored, iterations=1)
+bracket = center(sdf_to_mesh(finished), mode="ground")
+
+spec(bracket, "height", min=1.0, max=1.3)
+spec(bracket, "width", min=2.9, max=3.2)
+spec(bracket, "grounded")
+spec(bracket, "watertight")
+spec(bracket, "finite")
+out(bracket)

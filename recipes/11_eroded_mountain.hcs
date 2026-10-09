@@ -1,0 +1,38 @@
+# Eroded mountain with snow, bare rock and river channels.
+# Technique (the classic heightfield pipeline):
+#   1. build the large-scale form analytically (a sharpened cone) + fbm roughness that is
+#      strongest on the flanks,
+#   2. thermal erosion knocks steep slopes back to a stable angle,
+#   3. hydraulic erosion carves drainage channels and deposits sediment (brush radius keeps it
+#      smooth; a short thermal pass afterwards removes any needles); it also writes a
+#      `flow` map (1 = average) of where water concentrated,
+#   4. derive slope, then color by slope (rock on steep ground), altitude (snow) and flow
+#      (water in channels at low altitude).
+base = grid(size=[100, 100], rows=200, cols=200)
+massif = wrangle(base, code="""
+float r = sqrt(@P.x * @P.x + @P.z * @P.z) / ch("radius");
+float cone = max(0.0, 1.0 - r);
+float h = pow(cone, ch("sharp")) * ch("height");
+h += fbm(@P * ch("freq"), 6.0) * ch("rough") * (0.3 + cone);
+@P.y = h;
+""", channels={"radius": 48.0, "sharp": 1.4, "height": 28.0, "freq": 0.03, "rough": 7.0})
+relaxed = hf_erode_thermal(massif, iterations=25, talus=34, strength=0.6)
+carved_raw = hf_erode_hydraulic(relaxed, droplets=120000, steps=40, radius=2, seed=4)
+carved = hf_erode_thermal(carved_raw, iterations=8, talus=36, strength=0.4)
+sloped = hf_slope(carved)
+mountain = wrangle(sloped, code="""
+float rock = smoothstep(ch("rock_lo"), ch("rock_hi"), @slope_deg);
+float snow = smoothstep(ch("snow_lo"), ch("snow_hi"), @P.y) * (1.0 - rock);
+float river = smoothstep(ch("flow_lo"), ch("flow_hi"), @flow) * (1.0 - smoothstep(6.0, 14.0, @P.y));
+vec3 col = mix(vec3(0.24, 0.36, 0.17), vec3(0.42, 0.39, 0.36), rock);
+col = mix(col, vec3(0.95, 0.96, 0.98), snow);
+@Cd = mix(col, vec3(0.18, 0.32, 0.5), river);
+""", channels={"rock_lo": 28.0, "rock_hi": 42.0, "snow_lo": 17.0, "snow_hi": 22.0, "flow_lo": 6.0, "flow_hi": 14.0})
+
+spec(mountain, "width", min=99.0, max=101.0)
+spec(mountain, "height", min=18.0, max=40.0)
+spec(mountain, "points", min=40401, max=40401)
+spec(mountain, "attribute", name="Cd")
+spec(mountain, "attribute", name="flow")
+spec(mountain, "finite")
+out(mountain)

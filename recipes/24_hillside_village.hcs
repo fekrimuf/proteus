@@ -1,0 +1,36 @@
+# Hillside village placed ON the terrain.
+# Technique: Poisson-spaced lot points are lifted onto a hill with `drop_to_surface` (XZ lookup,
+# also writes the surface normal), house sizes vary per lot through `fit_size`d boxes picked by
+# `switch`, and filtering by slope (N.y) keeps houses off steep ground. Trees fill the rest.
+ground = grid(size=[60, 60], rows=100, cols=100)
+hills = wrangle(noise(ground, amp=3.0, freq=0.05, octaves=4, seed=17), code="""
+float r = length(vec3(@P.x, 0.0, @P.z));
+@P.y = @P.y + 5.0 * exp(-r * r / 400.0);
+@Cd = mix(vec3(0.3, 0.45, 0.2), vec3(0.55, 0.5, 0.4), smoothstep(2.0, 7.0, @P.y));
+""")
+terrain = normals(hills)
+
+flat = scatter_poisson(grid(size=[50, 50], rows=2, cols=2), count=300, min_dist=7.0, seed=9)
+lots = drop_to_surface(flat, terrain, offset=0.0)
+level = group_by_expression(lots, name="level", expression="@N.y > 0.93")
+house_points = blast(level, group="level", keep_selected=1)
+
+small = fit_size(box(), size=[3.0, 2.5, 4.0], uniform=0)
+tall = fit_size(box(), size=[3.5, 4.5, 3.5], uniform=0)
+wide = fit_size(box(), size=[5.5, 2.5, 3.5], uniform=0)
+body = switch(small, tall, wide, index=1)
+roof = fit_size(wrangle(taper(tube(radius=1.0, height=1.0, cols=4, caps=1), scale_start=1.0, scale_end=0.0), code="@Cd = vec3(0.6, 0.2, 0.15);"), size=[4.0, 1.5, 4.0], uniform=0)
+house = merge(wrangle(body, code="@Cd = vec3(0.85, 0.8, 0.7);"), transform(roof, t=[0, 4.5, 0]))
+houses = copy_to_points(house, house_points, rot_y_random=360, seed=3)
+
+tree_pts = scatter_poisson(terrain, count=250, min_dist=2.5, seed=4, pscale_min=0.7, pscale_max=1.3)
+tree = wrangle(tube(radius=0.7, radius_top=0.0, height=3.0, cols=7, center=[0, 1.5, 0]), code="@Cd = vec3(0.1, 0.3, 0.14);")
+trees = copy_to_points(tree, tree_pts, rot_y_random=360, seed=8)
+
+village = merge(terrain, houses, trees)
+
+spec(village, "width", min=59.0, max=64.0)
+spec(village, "instances", min=40)
+spec(village, "attribute", name="Cd")
+spec(village, "finite")
+out(village)

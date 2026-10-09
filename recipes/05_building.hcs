@@ -1,0 +1,24 @@
+# Building with a window grid.
+# Technique: nested instancing. One window -> a row of windows (array) -> a stack of rows
+# (array of the array). Three small nodes describe 60 windows; nothing is copied until export.
+floors = 10
+bays = 6
+floor_h = 1.2
+bay_w = 1.5
+w = bays * bay_w
+h = floors * floor_h
+
+body = wrangle(box(size=[w, h, 6], center=[w / 2, h / 2, 0]), code="@Cd = vec3(0.62, 0.58, 0.52);")
+window = wrangle(box(size=[1.0, 0.7, 0.12], center=[bay_w / 2, floor_h / 2, 3.0]), code="@Cd = vec3(0.25, 0.4, 0.6);")
+row = array(window, count=bays, offset=[bay_w, 0, 0])
+facade = array(row, count=floors, offset=[0, floor_h, 0])
+roof = wrangle(box(size=[w + 0.4, 0.3, 6.4], center=[w / 2, h + 0.15, 0]), code="@Cd = vec3(0.3, 0.3, 0.32);")
+
+building = merge(body, facade, roof)
+
+spec(building, "height", min=h, max=h + 0.5)
+spec(building, "width", min=w, max=w + 0.6)
+spec(building, "grounded")
+spec(building, "instances", min=10)
+spec(building, "finite")
+out(building)

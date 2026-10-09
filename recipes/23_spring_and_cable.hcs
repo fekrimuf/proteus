@@ -1,0 +1,20 @@
+# Coil spring wound from swept wire, plus a bent cable on a post.
+# Technique: `helix` makes the centerline, `sweep` turns it into a pipe with parallel-transport
+# frames (no twisting artifacts), a radius change tapers the wire at the end. The cable is a
+# straight `curve`, `resample`d into many points, swept, then `bend`-ed into an arc.
+coil_line = helix(radius=0.5, radius_end=0.35, pitch=0.3, turns=8, points_per_turn=20)
+coil = wrangle(transform(sweep(coil_line, radius=0.06, radius_end=0.03, cols=8), t=[0, 0.06, 0]), code="@Cd = vec3(0.7, 0.72, 0.78);")
+
+post = wrangle(tube(radius=0.09, height=2.8, cols=12, center=[1.6, 1.4, 0]), code="@Cd = vec3(0.35, 0.25, 0.18);")
+cable_line = resample(curve(points=[[0, 0, 0], [0, 2.4, 0]]), count=40)
+cable_pipe = sweep(cable_line, radius=0.035, cols=8)
+cable = wrangle(transform(bend(cable_pipe, axis="y", angle=100, length=2.4), t=[1.6, 0.4, 0]), code="@Cd = vec3(0.1, 0.1, 0.1);")
+
+scene = merge(coil, post, cable)
+
+spec(scene, "height", min=2.7, max=3.0)
+spec(scene, "width", min=3.0, max=4.3)
+spec(scene, "grounded")
+spec(scene, "attribute", name="Cd")
+spec(scene, "finite")
+out(scene)

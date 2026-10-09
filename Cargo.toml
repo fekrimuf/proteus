@@ -1,0 +1,31 @@
+[workspace]
+resolver = "2"
+members = ["crates/pt-core", "crates/pt-vex", "crates/pt-sim", "crates/pt-sop", "crates/pt-graph", "crates/pt-hcs", "crates/pt-opt", "crates/pt-render", "crates/pt-cli"]
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+blake3 = "1"
+rayon = "1"
+bytemuck = { version = "1", features = ["extern_crate_alloc"] }
+png = "0.17"
+pt-core = { path = "crates/pt-core" }
+pt-vex = { path = "crates/pt-vex" }
+pt-sim = { path = "crates/pt-sim" }
+pt-sop = { path = "crates/pt-sop" }
+pt-graph = { path = "crates/pt-graph" }
+pt-hcs = { path = "crates/pt-hcs" }
+pt-opt = { path = "crates/pt-opt" }
+pt-render = { path = "crates/pt-render" }
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
+debug = false

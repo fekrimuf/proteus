@@ -1,0 +1,31 @@
+# Alpine valley with conifers on flat ground.
+# Technique: layered noise (large mountains + fine detail), a radial wrangle that carves a
+# bowl so the middle is a valley, light smoothing, height-based color, then Poisson-spaced
+# tree points filtered by SLOPE (face normal N.y) and altitude via a group expression.
+base = grid(size=[80, 80], rows=160, cols=160)
+mountains = noise(base, amp=9, freq=0.035, octaves=5, seed=3)
+detail = noise(mountains, amp=0.6, freq=0.25, octaves=3, seed=11)
+carved = wrangle(detail, code="""
+float r = sqrt(@P.x * @P.x + @P.z * @P.z);
+float bowl = smoothstep(0.0, ch("radius"), r);
+@P.y = @P.y * (0.25 + 0.75 * bowl) - ch("depth") * (1.0 - bowl);
+""", channels={"radius": 28.0, "depth": 2.0})
+smoothed = smooth(carved, iterations=3, strength=0.4, pin_boundary=1)
+colored = wrangle(smoothed, code="""
+float t = fit(@P.y, -2.0, 8.0, 0.0, 1.0);
+@Cd = mix(vec3(0.22, 0.34, 0.16), vec3(0.88, 0.88, 0.92), smoothstep(0.55, 0.9, t));
+""")
+
+seeds = scatter_poisson(colored, count=700, min_dist=1.6, seed=5, pscale_min=0.7, pscale_max=1.4)
+flat = group_by_expression(seeds, name="flat", expression="@N.y > 0.9 && @P.y < 3.0")
+tree_points = blast(flat, group="flat", keep_selected=1)
+conifer = wrangle(tube(radius=0.5, radius_top=0.0, height=2.5, rows=1, cols=7, center=[0, 1.25, 0]), code="@Cd = vec3(0.1, 0.32, 0.16);")
+trees = copy_to_points(conifer, tree_points, rot_y_random=360)
+
+valley = merge(colored, trees)
+
+spec(valley, "width", min=79.0, max=82.5)
+spec(valley, "instances", min=30)
+spec(valley, "attribute", name="Cd")
+spec(valley, "finite")
+out(valley)

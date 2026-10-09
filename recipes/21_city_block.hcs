@@ -1,0 +1,41 @@
+# City block: a street grid with towers of varying height.
+# Technique: a python-style loop in hcs generates one box per lot (heights come from a
+# deterministic sine hash, so the same program always gives the same skyline), a ground slab
+# and two street stripes are merged on top. Loops are unrolled at authoring time; the
+# graph stays an ordinary DAG that caches and recooks incrementally.
+lots = 5
+lot = 12.0
+street = 6.0
+pitch = lot + street
+extent = lots * pitch + street
+
+def tower(k):
+    i = k // lots
+    j = k % lots
+    h = 8.0 + 30.0 * abs(sin(i * 12.9898 + j * 78.233)) ** 2
+    w = lot - 2.0 - 2.0 * abs(sin(i * 3.1 + j * 1.7))
+    d = lot - 2.0 - 2.0 * abs(sin(i * 5.3 + j * 2.9))
+    cx = street + lot / 2 + i * pitch
+    cz = street + lot / 2 + j * pitch
+    return wrangle(box(size=[w, h, d], center=[cx, h / 2, cz]), code="@Cd = vec3(0.45, 0.5, 0.58) * (0.7 + 0.3 * @P.y / 40.0);")
+
+towers = [tower(k) for k in range(lots * lots)]
+slab = wrangle(box(size=[extent, 0.2, extent], center=[extent / 2, 0.1, extent / 2]), code="@Cd = vec3(0.16, 0.16, 0.18);")
+
+group_a = merge(towers[0], towers[1], towers[2], towers[3])
+group_b = merge(towers[4], towers[5], towers[6], towers[7])
+group_c = merge(towers[8], towers[9], towers[10], towers[11])
+group_d = merge(towers[12], towers[13], towers[14], towers[15])
+group_e = merge(towers[16], towers[17], towers[18], towers[19])
+group_f = merge(towers[20], towers[21], towers[22], towers[23])
+group_g = merge(towers[24], slab)
+upper = merge(group_a, group_b, group_c, group_d)
+lower = merge(group_e, group_f, group_g)
+city = merge(upper, lower)
+
+spec(city, "width", min=extent - 0.5, max=extent + 0.5)
+spec(city, "height", min=20.0, max=40.0)
+spec(city, "grounded")
+spec(city, "attribute", name="Cd")
+spec(city, "finite")
+out(city)

@@ -1,0 +1,24 @@
+# Pipe network on two layers with ball joints at every crossing.
+# Technique: orient one pipe along X and one along Z, array each across the grid, and put a
+# joint sphere on every point of a coarse grid with copy_to_points (grid points = crossings).
+pipe = tube(radius=0.12, height=8, cols=10, center=[0, 0, 0])
+along_x = transform(pipe, r=[0, 0, 90])
+along_z = transform(pipe, r=[90, 0, 0])
+
+rows_x = array(along_x, count=5, offset=[0, 0, 2])
+rows_x_c = transform(rows_x, t=[0, 0, -4])
+rows_z = array(along_z, count=5, offset=[2, 0, 0])
+rows_z_c = transform(rows_z, t=[-4, 0.5, 0])
+
+crossings = grid(size=[8, 8], rows=4, cols=4, center=[0, 0.25, 0])
+joint = sphere(radius=0.22, rows=8, cols=12)
+joints = copy_to_points(joint, crossings)
+
+network = center(merge(rows_x_c, rows_z_c, joints), mode="ground")
+
+spec(network, "grounded")
+spec(network, "width", min=8.0, max=8.5)
+spec(network, "depth", min=8.0, max=8.5)
+spec(network, "instances", min=5)
+spec(network, "finite")
+out(network)

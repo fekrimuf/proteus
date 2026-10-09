@@ -1,0 +1,19 @@
+# Spiral staircase around a central pole.
+# Technique: model ONE tread offset from the pole, then `array` it with a per-copy rotation
+# and rise. The instance transform is T(rise*i) * Ry(angle*i), so each copy climbs and turns.
+steps = 16
+rise = 0.18
+angle = 22.5
+pole_h = steps * rise + 0.8
+
+tread = box(size=[1.1, 0.08, 0.35], center=[0.65, 0, 0])
+treads = array(tread, count=steps, offset=[0, rise, 0], rotate=[0, angle, 0])
+pole = tube(radius=0.08, height=pole_h, cols=12, center=[0, pole_h / 2, 0])
+
+stair = merge(treads, pole)
+
+spec(stair, "height", min=3.5, max=3.9)
+spec(stair, "grounded", min=-0.05, max=0.05)
+spec(stair, "instances", min=16, max=16)
+spec(stair, "finite")
+out(stair)

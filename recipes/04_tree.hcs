@@ -1,0 +1,17 @@
+# Stylized tree.
+# Technique: tapered trunk (tube with a smaller top radius), a noisy crown volume, then
+# Poisson-spaced leaf points on the crown surface so leaves never clump, instanced with
+# random yaw and normal alignment. Leaves are lazy instances: cheap to cook and render.
+trunk = wrangle(tube(radius=0.28, radius_top=0.12, height=3.2, rows=4, cols=10, center=[0, 1.6, 0]), code="@Cd = vec3(0.34, 0.22, 0.12);")
+crown = sphere(radius=1.6, rows=14, cols=28, center=[0, 4.0, 0])
+crown_rough = noise(crown, amp=0.35, freq=0.9, direction=[1, 0.4, 0.7])
+leaf_points = scatter_poisson(crown_rough, count=220, min_dist=0.38, seed=7, pscale_min=0.6, pscale_max=1.2)
+leaf = wrangle(sphere(radius=0.3, rows=6, cols=10), code="@Cd = vec3(0.17, 0.45, 0.13);")
+leaves = copy_to_points(leaf, leaf_points, orient_to_normal=1, rot_y_random=360)
+tree = merge(trunk, leaves)
+
+spec(tree, "height", min=4.5, max=7.5)
+spec(tree, "instances", min=100)
+spec(tree, "grounded")
+spec(tree, "finite")
+out(tree)

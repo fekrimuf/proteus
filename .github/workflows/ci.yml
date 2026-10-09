@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --workspace --release
+      - name: Tests
+        run: cargo test --workspace --release
+      - name: Recipes (specs, static check, golden hashes)
+        run: cargo run --release -p pt-cli --bin pt -- recipes
+      - name: Determinism golden across thread counts
+        shell: bash
+        run: cargo run --release -p pt-cli --bin pt -- golden | tee golden-${{ matrix.os }}.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: golden-${{ matrix.os }}
+          path: golden-${{ matrix.os }}.txt
+
+  cross-os-determinism:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: golden
+      - name: Compare golden hashes between operating systems
+        shell: bash
+        run: |
+          cat golden/*/golden-*.txt
+          # strip the "threads=N:" prefix, then every line on every OS must be identical
+          n=$(cat golden/*/golden-*.txt | sed 's/^threads=[0-9]*: //' | sort -u | wc -l)
+          if [ "$n" -ne 1 ]; then echo "cross-OS hash mismatch ($n distinct)"; exit 1; fi

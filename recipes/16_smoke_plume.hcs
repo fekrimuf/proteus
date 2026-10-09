@@ -1,0 +1,17 @@
+# Rising smoke plume.
+# Technique: stable-fluids gas on a grid. A small emitter heats and fills the lowest cells; buoyancy
+# lifts it, vorticity confinement keeps the curls alive, pressure projection keeps it incompressible.
+# The density volume is thresholded into a signed field and meshed so it can be viewed anywhere
+# (meshing is also how you hand the result to a mesh-only renderer). Frame 40 is shown.
+frame(40)
+patch = grid(size=[0.3, 0.3], rows=1, cols=1, center=[0, 0.3, 0])
+emitter = scatter(patch, count=3, seed=1)
+gas = smoke_sim(emitter, size=[3, 4.2, 3], center=[0, 0, 0], voxel=0.1, source_radius=0.3, source_rate=16, iterations=40)
+iso = volume_to_sdf(gas, threshold=0.12)
+plume = sdf_to_mesh(iso)
+
+spec(plume, "height", min=1.2)
+spec(plume, "prims", min=200)
+spec(plume, "attribute", name="N")
+spec(plume, "finite")
+out(plume)

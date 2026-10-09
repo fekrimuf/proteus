@@ -1,0 +1,28 @@
+# Rock generator.
+# Technique: start from an evenly tessellated "cube sphere" (subdivided cube projected onto a
+# sphere, so there are no pinched poles). Displace along the normal in three layers:
+#   mass   - low-frequency fbm for the overall lumpy form,
+#   cracks - abs(noise) ridges carved in as creases,
+#   chisel - quantized noise that cuts planar steps, the "broken stone" look.
+# Then squash non-uniformly to break symmetry, relax slightly, and sit it on the ground.
+# Tunables live in `channels` so an agent or optimizer can change them without touching code.
+cube = subdivide(box(size=[2, 2, 2]), levels=4)
+base = wrangle(cube, code="@P = normalize(@P);")
+rough = wrangle(base, code="""
+vec3 n = normalize(@P);
+float mass = fbm(@P * ch("freq"), 4.0) * ch("amp");
+float cracks = abs(noise(@P * ch("freq") * 2.3)) * ch("ridge");
+float chisel = floor(fbm(@P * ch("freq") * 1.7, 2.0) * ch("steps")) / ch("steps") * ch("cut");
+@P += n * (mass - cracks + chisel);
+""", channels={"freq": 1.8, "amp": 0.34, "ridge": 0.16, "steps": 4.0, "cut": 0.09})
+squashed = transform(rough, s=[1.3, 0.8, 1.0])
+relaxed = smooth(squashed, iterations=1, strength=0.25, pin_boundary=0)
+grounded = center(relaxed, mode="ground")
+rock = normals(grounded)
+
+spec(rock, "height", min=0.7, max=2.0)
+spec(rock, "grounded")
+spec(rock, "watertight")
+spec(rock, "finite")
+spec(rock, "attribute", name="N")
+out(rock)

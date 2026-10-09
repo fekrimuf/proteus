@@ -1,0 +1,13 @@
+[package]
+name = "pt-graph"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+pt-core.workspace = true
+pt-sop.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+blake3.workspace = true
+pt-vex.workspace = true
+rayon.workspace = true

@@ -1,0 +1,25 @@
+# Sci-fi wall panel (greebling).
+# Technique: subdivide a flat plate into cells, extrude every cell with an inset (polyextrude),
+# color each cell with a per-point random tint from a wrangle, and frame it with four bars.
+plate = grid(size=[4.0, 3.0], rows=6, cols=8)
+cells = polyextrude(plate, distance=0.12, inset=0.12)
+colored = wrangle(cells, code="""
+float k = rand(@ptnum);
+@Cd = vec3(0.22 + 0.25 * k, 0.30, 0.38 + 0.2 * rand(@ptnum + 7.0));
+""")
+
+bar_x = box(size=[4.2, 0.12, 0.12])
+bar_z = box(size=[0.12, 0.12, 3.0])
+top = transform(bar_x, t=[0, 0, 1.5])
+bottom = transform(bar_x, t=[0, 0, -1.5])
+left = transform(bar_z, t=[-2.0, 0, 0])
+right = transform(bar_z, t=[2.0, 0, 0])
+
+panel = merge(colored, top, bottom, left)
+panel_full = merge(panel, right)
+
+spec(panel_full, "height", min=0.15, max=0.25)
+spec(panel_full, "width", min=4.0, max=4.3)
+spec(panel_full, "attribute", name="Cd")
+spec(panel_full, "finite")
+out(panel_full)

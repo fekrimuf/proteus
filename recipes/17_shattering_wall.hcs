@@ -1,0 +1,15 @@
+# Wall shattering under an impact.
+# Technique: fracture a solid wall into closed pieces by Voronoi cells (done on signed distance
+# fields, so every piece is a clean closed mesh), then simulate the pieces as rigid bodies with
+# convex-hull colliders. A radial impulse centered in front of the wall launches the nearby
+# pieces away; the rest settle under gravity on the ground plane. Frame 48 is shown.
+frame(48)
+wall = box(size=[4, 2.5, 0.4], center=[0, 1.25, 0])
+pieces = rbd_shatter(wall, pieces=40, voxel=0.07, seed=5)
+rubble = rbd_sim(pieces, impact_center=[0, 1.0, 2.0], impact_radius=3.5, impact_strength=9, ground_y=0.0, seed=2)
+
+spec(rubble, "prims", min=100)
+spec(rubble, "grounded", min=-0.06, max=0.15)
+spec(rubble, "depth", min=1.0)
+spec(rubble, "finite")
+out(rubble)

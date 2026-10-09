@@ -1,0 +1,9 @@
+[package]
+name = "pt-vex"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+pt-core.workspace = true
+serde_json.workspace = true
+rayon.workspace = true

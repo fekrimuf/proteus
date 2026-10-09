@@ -1,0 +1,38 @@
+# Forest with a circular clearing, boulders and a campfire ring.
+# Technique: rolling terrain, Poisson-spaced tree points, then a group expression on the
+# distance to the origin removes every tree inside the clearing. Two tree species are
+# instanced from the same filtered points at different scales (pscale), plus boulders on the
+# clearing edge. Nothing is realized: thousands of trees stay lazy instances.
+ground = grid(size=[60, 60], rows=90, cols=90)
+hills = noise(ground, amp=1.6, freq=0.06, octaves=4, seed=8)
+earth = wrangle(hills, code="""
+float r = length(vec3(@P.x, 0.0, @P.z));
+@P.y = @P.y * smoothstep(5.0, 12.0, r);
+@Cd = mix(vec3(0.5, 0.42, 0.28), vec3(0.2, 0.36, 0.14), smoothstep(4.0, 9.0, r));
+""")
+earth_n = normals(earth)
+
+seeds = scatter_poisson(earth_n, count=600, min_dist=2.2, seed=13, pscale_min=0.7, pscale_max=1.5)
+inside = group_by_expression(seeds, name="inside", expression="length(vec3(@P.x, 0.0, @P.z)) < 9.0")
+tree_points = blast(inside, group="inside", keep_selected=0)
+
+trunk = wrangle(tube(radius=0.18, radius_top=0.1, height=2.0, cols=8, center=[0, 1.0, 0]), code="@Cd = vec3(0.33, 0.21, 0.12);")
+crown = wrangle(tube(radius=1.0, radius_top=0.0, height=3.5, rows=2, cols=9, center=[0, 3.5, 0]), code="@Cd = vec3(0.1, 0.33, 0.15);")
+tree = merge(trunk, crown)
+forest = copy_to_points(tree, tree_points, rot_y_random=360, seed=4)
+
+edge = scatter_poisson(earth_n, count=60, min_dist=3.0, seed=2, pscale_min=0.5, pscale_max=1.1)
+ring = group_by_expression(edge, name="ring", expression="length(vec3(@P.x, 0.0, @P.z)) > 7.0 && length(vec3(@P.x, 0.0, @P.z)) < 10.0")
+boulder_points = blast(ring, group="ring", keep_selected=1)
+boulder = wrangle(noise(sphere(radius=0.6, rows=8, cols=14, center=[0, 0.3, 0]), amp=0.15, freq=2.0), code="@Cd = vec3(0.45, 0.45, 0.47);")
+boulders = copy_to_points(boulder, boulder_points, rot_y_random=360, seed=6)
+
+logs = wrangle(radial_array(tube(radius=0.12, height=1.2, cols=8, center=[1.4, 0.12, 0]), count=5), code="@Cd = vec3(0.3, 0.2, 0.1);")
+
+scene = merge(earth_n, forest, boulders, logs)
+
+spec(scene, "width", min=59.0, max=65.0)
+spec(scene, "instances", min=60)
+spec(scene, "attribute", name="Cd")
+spec(scene, "finite")
+out(scene)

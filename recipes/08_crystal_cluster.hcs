@@ -1,0 +1,18 @@
+# Crystal cluster.
+# Technique: one tapered crystal, tilted outward, then concentric `radial_array` rings of
+# different size/tilt around a taller central spire. Variation comes from ring parameters,
+# not from hand placement.
+crystal = tube(radius=0.18, radius_top=0.02, height=1.6, rows=1, cols=6, caps=0, center=[0, 0.8, 0])
+inner_c = transform(crystal, r=[0, 0, -18])
+outer_c = transform(crystal, r=[0, 0, -32], uniform_scale=1.4)
+spire = transform(crystal, uniform_scale=1.9)
+
+inner = radial_array(inner_c, count=9, radius=0.25)
+outer = radial_array(outer_c, count=14, radius=0.9, start_angle=12)
+cluster = center(merge(inner, outer, spire), mode="ground")
+
+spec(cluster, "height", min=2.8, max=3.6)
+spec(cluster, "grounded", min=-0.05, max=0.05)
+spec(cluster, "instances", min=23, max=23)
+spec(cluster, "finite")
+out(cluster)

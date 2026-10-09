@@ -1,0 +1,10 @@
+[package]
+name = "pt-core"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+serde_json.workspace = true
+blake3.workspace = true
+rayon.workspace = true
+bytemuck.workspace = true

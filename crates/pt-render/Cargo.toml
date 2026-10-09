@@ -1,0 +1,9 @@
+[package]
+name = "pt-render"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+pt-core.workspace = true
+png.workspace = true
+rayon.workspace = true

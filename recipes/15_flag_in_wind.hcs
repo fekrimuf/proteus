@@ -1,0 +1,19 @@
+# Flag fluttering in the wind.
+# Technique: a vertical cloth sheet whose left edge is selected with a group expression and
+# pinned to the pole; position-based cloth with wind pressure does the rest. Stiffness stays high
+# so the flag keeps its size while the free edge ripples in z. Wind is an acceleration per m/s of
+# relative air speed (2.0 here beats gravity, so the flag streams). Frame 60 is shown.
+frame(60)
+sheet = grid(size=[3, 2], rows=24, cols=36)
+flag_rest = transform(sheet, r=[90, 0, 0], t=[0, 4.0, 0])
+edge = group_by_expression(flag_rest, name="hoist", expression="@P.x < -1.49")
+flag = cloth_sim(edge, pin_group="hoist", wind=[6.0, 0.2, 1.5], wind_strength=2.0, stiffness=0.95, bend_stiffness=0.2, substeps=8)
+flag_n = normals(flag)
+pole = tube(radius=0.06, height=5.2, cols=10, center=[-1.5, 2.6, 0])
+scene = merge(flag_n, pole)
+
+spec(scene, "width", min=2.0, max=3.3)
+spec(scene, "height", min=4.5, max=5.4)
+spec(scene, "depth", min=0.15)
+spec(scene, "finite")
+out(scene)

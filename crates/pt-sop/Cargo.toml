@@ -1,0 +1,11 @@
+[package]
+name = "pt-sop"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+pt-core.workspace = true
+serde_json.workspace = true
+rayon.workspace = true
+pt-vex.workspace = true
+pt-sim.workspace = true

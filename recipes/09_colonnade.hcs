@@ -1,0 +1,23 @@
+# Colonnade built from a reusable asset.
+# Technique: model one column with parameter EXPRESSIONS (the cap and shaft follow the
+# promoted `height`), package it as an asset, then instance the asset along a row and add
+# an architrave. Changing `col_h` re-cooks only what depends on it.
+shaft = tube(radius=0.35, radius_top=0.3, height=4.0, rows=1, cols=16, center=[0, "=0.4 + ch(\"shaft/height\") / 2", 0])
+base = tube(radius=0.55, height=0.4, cols=16, center=[0, 0.2, 0])
+cap = tube(radius=0.55, height=0.3, cols=16, center=[0, "=0.4 + ch(\"shaft/height\") + 0.15", 0])
+column = merge(shaft, base, cap)
+asset("column", output=column, promote={"height": [shaft, "height"]}, doc="Fluted-style column; height is the shaft height in meters.")
+
+col_h = 5.0
+count = 8
+spacing = 2.2
+one = hda(asset="column", values={"height": col_h})
+row = array(one, count=count, offset=[spacing, 0, 0])
+beam = box(size=[(count - 1) * spacing + 1.6, 0.5, 1.4], center=[(count - 1) * spacing / 2, 0.4 + col_h + 0.3 + 0.25, 0])
+colonnade = merge(row, beam)
+
+spec(colonnade, "height", min=6.1, max=6.3)
+spec(colonnade, "grounded")
+spec(colonnade, "instances", min=8, max=8)
+spec(colonnade, "finite")
+out(colonnade)
