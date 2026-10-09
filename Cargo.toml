@@ -29,3 +29,12 @@ opt-level = 1
 [profile.release]
 opt-level = 3
 debug = false
+
+# Vendored copies of the physics math stack, patched so every transcendental function (sin, cos,
+# acos, log2, ...) on the simulation path goes through the pure-software `libm` crate. The std
+# versions call each operating system's C library, which rounds differently on Windows vs
+# Linux/macOS and made rigid-body results differ across platforms (see docs/STATUS.md).
+[patch.crates-io]
+rapier3d = { path = "vendor/rapier3d" }
+parry3d = { path = "vendor/parry3d" }
+glamx = { path = "vendor/glamx" }

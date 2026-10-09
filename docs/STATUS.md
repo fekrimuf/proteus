@@ -9,7 +9,7 @@ Agent-facing usage guide: [AGENT_GUIDE.md](AGENT_GUIDE.md).
 * `cargo test --workspace --release`: **99 tests pass**, 0 failures. `cargo clippy --workspace --all-targets`: 0 errors.
 * `pt recipes`: **24/24 recipes** pass their specs, static check and golden hashes (`recipes/golden.json`).
 * `pt gym-baseline`: oracle 1.000, perturbation agent 0.744, null agent 0.401 over 29 tasks (`gym/baseline.json`).
-* Not yet verified: determinism **across operating systems** (only across thread counts), anything on Linux/macOS.
+* Cross-OS determinism: Windows (MSVC and GNU) matches Linux and macOS on all recipes once the physics math stack is patched (`vendor/`, see vendor/README.md). Repo: https://github.com/fekrimuf/proteus (private), CI in `.github/workflows/ci.yml`.
 
 ## Environment (Windows, everything on D:)
 
