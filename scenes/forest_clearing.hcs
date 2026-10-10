@@ -1,0 +1,33 @@
+# Forest clearing with named materials: the first scene for the Level 2 render (docs/AGENT_GUIDE.md, "Materials, light and photographic renders").
+# Run:  pt render-scene scenes/forest_clearing.hcs scenes/forest_clearing.scene.json out/forest.png
+# Materials are names (set_material); Blender binds the CC0 PBR sets by name. Shapes are still placeholders (cones for trees).
+ground = grid(size=[60, 60], rows=90, cols=90)
+hills = noise(ground, amp=1.6, freq=0.06, octaves=4, seed=8)
+earth = wrangle(hills, code="""
+float r = length(vec3(@P.x, 0.0, @P.z));
+@P.y = @P.y * smoothstep(5.0, 12.0, r);
+""")
+earth_n = normals(earth)
+grassy = set_material(earth_n, name="grass_lush")
+patch = group_by_expression(grassy, name="patch", expression="length(vec3(@P.x, 0.0, @P.z)) < 8.0")
+ground_m = set_material(patch, name="dirt", group="patch", class="point")
+
+seeds = scatter_poisson(earth_n, count=600, min_dist=2.2, seed=13, pscale_min=0.7, pscale_max=1.5)
+inside = group_by_expression(seeds, name="inside", expression="length(vec3(@P.x, 0.0, @P.z)) < 9.0")
+tree_points = blast(inside, group="inside", keep_selected=0)
+
+trunk = set_material(tube(radius=0.18, radius_top=0.1, height=2.0, cols=8, center=[0, 1.0, 0]), name="bark")
+crown = set_material(tube(radius=1.0, radius_top=0.0, height=3.5, rows=2, cols=9, center=[0, 3.5, 0]), name="grass_lush")
+tree = merge(trunk, crown)
+forest = copy_to_points(tree, tree_points, rot_y_random=360, seed=4)
+
+edge = scatter_poisson(earth_n, count=60, min_dist=3.0, seed=2, pscale_min=0.5, pscale_max=1.1)
+ring = group_by_expression(edge, name="ring", expression="length(vec3(@P.x, 0.0, @P.z)) > 7.0 && length(vec3(@P.x, 0.0, @P.z)) < 10.0")
+boulder_points = blast(ring, group="ring", keep_selected=1)
+boulder = set_material(noise(sphere(radius=0.6, rows=8, cols=14, center=[0, 0.3, 0]), amp=0.15, freq=2.0), name="rock_boulder")
+boulders = copy_to_points(boulder, boulder_points, rot_y_random=360, seed=6)
+
+logs = set_material(radial_array(tube(radius=0.12, height=1.2, cols=8, center=[1.4, 0.12, 0]), count=5), name="bark")
+
+scene = merge(ground_m, forest, boulders, logs)
+out(scene)

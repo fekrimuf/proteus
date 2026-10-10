@@ -8,3 +8,4 @@ serde_json.workspace = true
 blake3.workspace = true
 rayon.workspace = true
 bytemuck.workspace = true
+meshopt = "0.6.2"

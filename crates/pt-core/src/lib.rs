@@ -4,6 +4,7 @@ pub mod column;
 pub mod geo;
 pub mod gltf;
 pub mod io;
+pub mod lod;
 pub mod math;
 pub mod noise;
 pub mod rng;

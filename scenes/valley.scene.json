@@ -1,0 +1,8 @@
+{
+ "style": "styles/alpine_meadow.json",
+ "cameras": [
+  {"name": "hero", "location": [-420, 520, 600], "look_at": [0, 60, 0], "lens": 32},
+  {"name": "valley", "location": [-400, 40, 60], "look_at": [0, 40, -20], "lens": 24},
+  {"name": "eye",  "eye": {"at": [-250, -40], "height": 1.7, "yaw": 10, "pitch": 3}, "lens": 28}
+ ]
+}

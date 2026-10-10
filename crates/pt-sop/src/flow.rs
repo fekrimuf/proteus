@@ -207,7 +207,7 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             e.is_grid = false;
             Ok(e)
         }
-        "box" | "sphere" | "tube" | "torus" | "circle" => Ok(GeoEnv::base_points(&[], true)),
+        "box" | "sphere" | "tube" | "torus" | "circle" | "import_asset" => Ok(GeoEnv::base_points(&[], true)),
         "line" => Ok(GeoEnv::base_points(&[], false)),
         "curve" | "helix" | "resample" => Ok(GeoEnv::base_points(&[], false)),
         "sweep" | "revolve" => Ok(GeoEnv::base_points(&[], true)),
@@ -259,6 +259,21 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             }
             if p.i("orient_to_normal") != 0 && t.point.get("N") != Some(&Ty::Vec3) {
                 return Err(vec![fd("orient_to_normal=1 but input 1 has no vec3 point attribute N", "put `normals` (or scatter) before input 1, or set orient_to_normal=0")]);
+            }
+            let mut a = t.point.clone();
+            a.remove("P");
+            Ok(GeoEnv { inst: Some(a), ..Default::default() })
+        }
+        "copy_variants" => {
+            let t = in0();
+            if !t.has_points {
+                return Err(vec![fd("copy_variants input 0 has no points to copy onto", "connect scatter or scatter_poisson (then filter with blast) to input 0")]);
+            }
+            if ins.iter().skip(1).all(Option::is_none) {
+                return Err(vec![fd("copy_variants has no prototype", "connect at least one prototype (a tree, rock, plant) to input 1")]);
+            }
+            if p.i("orient_to_normal") != 0 && t.point.get("N") != Some(&Ty::Vec3) {
+                return Err(vec![fd("orient_to_normal=1 but input 0 has no vec3 point attribute N", "put `normals` (or scatter) before input 0, or set orient_to_normal=0")]);
             }
             let mut a = t.point.clone();
             a.remove("P");

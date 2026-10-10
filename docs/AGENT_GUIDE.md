@@ -124,7 +124,7 @@ pt match <ref> <recipe.hcs> [--report DIR] [--align bbox|reference]
                                 --report writes match.json and match.png (original left, ours right, two angles)
 pt refine <ref> <recipe.hcs> [--evals N] [--out FILE] [--tune-integers]
                                 CMA-ES over the NUMBERS in the recipe source; structure (loops, mirror, array) is untouched
-pt export <recipe> <out.obj|glb|gltf|usda>     cook a recipe and export it (no materials yet)
+pt export <recipe> <out.obj|glb|gltf|usda>     cook a recipe and export it (material names and instances included)
 pt match-bench <manifest> --run NAME [--recipes DIR --only-recipes] [--resume] ...    batch with budgets and resume
 pt corpus fetch|verify          licence ledger (corpus/LEDGER.csv): every file hashed, only CC0 accepted
 pt report --baseline A.json --llm B.json --out DIR    the plain-English checkpoint page
@@ -144,3 +144,99 @@ variables, then `pt refine`, then `pt match`. Conventions that matter:
 * Size matters: the score normalises each shape by its bounding box, so a rebuild of the wrong overall size is capped at bronze
   (`size_ratio` must be within 10%).
 * Thin sticks (frames, fences, ladders) are the hard case for silhouette IoU; thick boxy furniture is the easy case.
+
+## Materials, light and photographic renders (Level 2)
+
+A recipe names materials; it never builds textures. `set_material(geo, name="rock_cliff")` binds a NAME to every primitive (or to a
+`group`; with `class="point"` a primitive is chosen when all its points are in the group). The name travels through every export (glTF
+material name, USD `GeomSubset` binding, OBJ `usemtl`), and the Blender render binds a CC0 PBR set to it with box (triplanar)
+projection, so nothing needs UVs. Paint **prototypes before `copy_to_points`**, or call `set_material` on the instanced geometry with no
+group (it then reaches the prototypes too). Unpainted surfaces render with the `Cd` point colour if there is one, else a default grey.
+
+```
+render_scene(node, scene={...}, quick=false)     MCP: a photographic still, about 10 s on the GPU, plus a report
+pt render-scene <recipe|file.glb> <scene.json> <out.png> [--quick] [--samples N] [--keep DIR]
+pt export <recipe> out.glb                       materials and instances included (EXT_mesh_gpu_instancing above 20 000 instances)
+```
+
+Material names (corpus/materials/library.json, Poly Haven CC0, 1k; `scale_m` = metres per texture tile): `rock_boulder rock_cliff
+rock_mossy grass grass_lush forest_floor dirt sand snow gravel cobblestone wood_planks bark brick_red stone_blocks stone_blocks_light
+plaster plaster_smooth roof_clay roof_slate metal_plate metal_rust concrete`. An unknown name still renders (flat colour) and is listed
+in the report as `unknown_materials`; give it a colour in the scene file: `"materials": {"my_ore": {"color": [0.4, 0.1, 0.5]}}`. Any
+library entry can be tinted or rescaled per scene: `"materials": {"grass_lush": {"tint": [0.45, 0.7, 0.4], "scale_m": 3.0}}`.
+
+The scene file (everything optional; typos are rejected with the fix; coordinates are metres, Y up):
+
+```json
+{
+ "render":   {"samples": 64, "resolution": [1280, 720], "exposure": 0.0, "device": "auto", "smooth_angle": 35, "seed": 0},
+ "lighting": {"sky": "nishita", "sun_elevation": 32, "sun_azimuth": 140, "fog_density": 0.0002, "fog_height": 150, "fog_extent": 400000,
+              "fog_color": [0.75, 0.82, 0.95]},
+ "cameras":  [{"name": "eye",  "eye": {"at": [-14, 12], "height": 1.7, "yaw": -35, "pitch": 3}, "lens": 28},
+              {"name": "over", "location": [40, 22, 40], "look_at": [0, 1, 0], "lens": 35}],
+ "ground":   {"material": "grass_lush"},
+ "materials": {"grass_lush": {"tint": [0.45, 0.7, 0.4]}}
+}
+```
+
+* `sun_azimuth` is the heading toward the sun in the XZ plane from +X toward +Z (degrees); `sun_elevation` is above the horizon.
+  `exposure` is in stops around a calibrated sunny-day setting (0 = an 18% grey card in full sun at 45 degrees renders near mid grey).
+* `eye` puts the camera at a standing height on the terrain (the base geometry) or the ground plane at `[x, z]`, never on a tree.
+  No camera at all frames the whole model from a three-quarter view. With several `cameras` each frame is written as `<out>_<name>.png`.
+* `ground` is an endless plane (default on, material `dirt`; `"ground": false` removes it) so the horizon is ground, not the dark lower
+  half of the sky. Haze is a big box of scattering air whose density falls off exponentially with height (`fog_density` at the ground, `fog_height` = the height over which it drops to 1 e-th, `fog_extent` = box width; use a very large extent so no side of the box shows at the horizon); a world-wide volume would absorb the sun and turn the frame black.
+* `sky: "hdri"` needs `"hdri": "<path under the corpus root or absolute>"`; `sky: "flat"` takes `color`.
+* The same description gives the same image: pixel-identical on the CPU, within 1/255 on a handful of GPU pixels. Use `quick` while
+  iterating (quarter samples, half size) and a final render once the picture is right.
+* The report says `material_coverage` (share of triangles with a textured library material), `unresolved`, `unknown_materials` and any
+  warnings. Aim for coverage 1.0 and empty lists before judging the picture.
+
+### Real assets, soft material layers, styles, and the scorecard (steel thread)
+
+```
+import_asset(path="polyhaven/models/rock_09/rock_09_1k.gltf", part="rock_09", size=2.0)   # a CC0 scan with UVs, normals, AUTHORED materials
+copy_variants(points, proto_a, proto_b, proto_c, weights=[3, 1, 1], rot_y_random=360)     # up to 3 prototypes, picked per point by weight
+blend_materials(geo, name="terrain_blend", layers="ground_flat ground_forest ground_rock ground_snow")   # soft layers from w_<layer> point weights
+pt scorecard <recipe> <scene.json> --out DIR [--quick] [--no-render] [--no-fps]          # one build measured by Blender, Godot and the glTF validator
+```
+
+* **`import_asset`** reads a file under the corpus root (every file has a ledger row; `pt corpus fetch corpus/models_manifest.json`, ids in
+  `corpus/models.txt`). `height=` or `size=` (longest side) fit it in metres, `ground=1` puts it on y=0, `part=` picks one glTF node:
+  Poly Haven plants and rock sets ship several variants side by side in a file (`fern_02_a..d`, `rock_moss_set_01_rock01..06`; a miss lists
+  the names). Its materials keep their textures through `copy_to_points` and the exporters (the glTF writer copies the material, samplers
+  and images from the source file), so a scattered scan renders and ships with its real look. Scans are heavy (the jacaranda tree is 3.9 M
+  triangles): that is what the scorecard's LOD and triangle rows measure.
+* **`blend_materials`** is how terrain gets soft transitions. Write one float point attribute per layer with a wrangle
+  (`@w_ground_rock = smoothstep(33.0, 41.0, @slope_deg + 5.0 * noise(@P * 0.05));`), let each layer take what the earlier ones left
+  (`rem = rem * (1.0 - rock)`), and the node normalises the weights and exports them as `_WEIGHTS_0/_1`; the render mixes the layers'
+  textures by them. Layer names are ROLES, not library names:
+* **Styles** (`styles/*.json`, set with `"style": "styles/alpine_meadow.json"` in the scene file) map roles to library materials and tints
+  (`"ground_rock": {"use": "rock_cliff", "tint": [0.62, 0.68, 0.78]}`) and carry default lighting, render and ground. The scene file wins key by key.
+  One recipe, many looks: change the style, not the recipe. `scenes/valley.hcs` is the worked example (analytic valley, erosion, soft layers,
+  scanned trees/ferns/rocks placed by rules on the masks).
+* **`pt scorecard`** writes `scorecard.json`, `scorecard.html` (and a `_fragment` for publishing) and prints each measure with pass or fail.
+  Referees: Blender (material coverage, atmosphere), Godot headless and windowed (`engine/godot/referee.gd`: import errors, triangles and draw
+  calls in frame, frame rate, terrain navigation-mesh coverage), the Khronos glTF validator, geometry audits (repeats, LOD chains) and the
+  ledger. Paths: `PT_BLENDER`, `PT_GODOT` (console exe), `PT_GLTF_VALIDATOR`. All bars are drafts from B13.1 until calibrated.
+
+### Delivery to an engine: LODs, baked terrain, and the referee
+
+`pt scorecard` writes two glTFs: `world.glb` (full detail, what the Blender render sees) and `world.engine.glb` (what an engine gets).
+The engine file differs in three ways, none of which needs anything in the recipe:
+
+* **Levels of detail.** Every placed prototype above 2000 triangles becomes a chain (`pt_core::lod`): level 0 is capped at about 200 000
+  triangles, then 35%, 12% and 4% of that, each with a switch-in distance (2, 5 and 12 times the object's diagonal) and a draw distance.
+  Solid surfaces (trunks, rocks) are simplified with meshoptimizer, UVs and normals in the error metric; foliage cards (alpha-cut
+  materials, flagged by `import_asset`) are culled by a triangle budget and the survivors enlarged so the canopy keeps its coverage.
+  Each instance becomes one node per level, `inst_<i>__lod<l>`, with the range in its extras (`proteus_lod_range`, scaled by the
+  instance). `pt export <recipe> out.glb --lod` writes uncapped LOD chains; the cache for decimated levels is `out/lod_cache`.
+* **Baked terrain.** A layered material (`blend_materials`) has no portable form, so the scorecard bakes it with Blender into an albedo and a
+  tangent-space normal texture (4096 px, through the planar UVs `blend_materials` writes) and the engine file carries those.
+* **Tangents** are exported for authored and baked normal maps, so the validator reports 0 errors and 0 warnings.
+
+The engine referee (`engine/godot/referee.gd`, Godot 4.7) turns the node ranges into visibility ranges, then reports import errors,
+instances and triangles, a navigation mesh baked over the terrain and how much of the intended walkable ground (slope under 25 degrees)
+it reaches, and, windowed at 1280x720 with vsync off, frame rate, draw calls, triangles in frame and video memory, plus a screenshot
+(`engine_eye.png`) from the scene's first eye-height camera. Run it directly:
+`Godot_..._console.exe --headless --path engine/godot --script referee.gd -- <file.glb> nav=1` or
+`... --script referee.gd -- <file.glb> fps=1 eye_at=-250,-40 height=1.7 yaw=10 shot=<out.png>`.

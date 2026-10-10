@@ -2,6 +2,7 @@
 //! geometry -> geometry. Pointwise ops also expose a `PointOp` list so the graph can fuse them.
 //! `flow` predicts attributes per node without cooking (the attribute-flow type system).
 
+mod assets;
 mod attrs;
 mod deform;
 pub mod flow;
@@ -76,6 +77,12 @@ fn base_schemas() -> Vec<NodeSchema> {
             ps("orient_to_normal", json!(0), "1 = rotate +Y onto target `N`."),
             ps("seed", json!(1), "Random seed."),
         ]),
+        sch("copy_variants", "Like copy_to_points, but with up to 3 prototypes (inputs 1-3) picked per target point by weight, so a forest or meadow is not one tree repeated. Input 0 = target points; honors `pscale` and `N`.", 4, D::None, G::PerPoint, vec![
+            ps("weights", json!([1.0, 1.0, 1.0]), "Relative chance of prototype 1, 2, 3 (extra entries ignored; unconnected prototypes are skipped)."),
+            ps("rot_y_random", json!(360.0), "Random Y rotation range in degrees (0..value)."),
+            ps("orient_to_normal", json!(0), "1 = rotate +Y onto target `N`."),
+            ps("seed", json!(1), "Random seed."),
+        ]),
         sch("realize", "Turn instances into real geometry.", 1, D::Piecewise, G::Whole, vec![]),
         sch("normals", "Compute area-weighted point normals into point attr `N`.", 1, D::Piecewise, G::PerPrim, vec![]),
         sch("color_by_height", "Write point attr `Cd` by blending color0->color1 across a Y range (auto range if min==max).", 1, D::Smooth, G::PerPoint, vec![
@@ -92,6 +99,7 @@ pub fn schemas() -> Vec<NodeSchema> {
     let mut v = base_schemas();
     v.extend(prims::schemas());
     v.extend(deform::schemas());
+    v.extend(assets::schemas());
     v.extend(attrs::schemas());
     v.extend(topo::schemas());
     v.extend(terrain::schemas());
@@ -109,6 +117,7 @@ pub fn schema(kind: &str) -> Option<NodeSchema> {
 pub fn min_inputs(kind: &str) -> usize {
     match kind {
         "merge" | "pop_sim" | "cloth_sim" | "switch" => 1,
+        "copy_variants" => 2,
         _ => schema(kind).map_or(0, |s| s.inputs),
     }
 }
@@ -158,6 +167,7 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Res {
         }
         "scatter" => return scatter(inp(0)?, p),
         "copy_to_points" => return copy_to_points(inp(0)?, inp(1)?, p),
+        "copy_variants" => return copy_variants(inputs, p),
         "realize" => return Ok(inp(0)?.realize()),
         "normals" => {
             let mut g = inp(0)?.clone();
@@ -173,6 +183,9 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Res {
         return r;
     }
     if let Some(r) = deform::cook(kind, p, inputs) {
+        return r;
+    }
+    if let Some(r) = assets::cook(kind, p, inputs) {
         return r;
     }
     if let Some(r) = attrs::cook(kind, p, inputs) {
@@ -312,14 +325,15 @@ fn scatter(src: &Geometry, p: &Params) -> Res {
     Ok(g)
 }
 
-fn copy_to_points(src: &Geometry, targets: &Geometry, p: &Params) -> Res {
+/// One transform per target point: random Y rotation, optional alignment of +Y to `N`, scale from `pscale`, translation from P.
+fn instance_xforms(targets: &Geometry, p: &Params) -> Vec<Mat34> {
     let seed = p.i("seed");
     let rot = math::to_radians(p.f("rot_y_random"));
     let orient = p.i("orient_to_normal") != 0;
     let ps = targets.point.get("pscale").and_then(Column::as_f32);
     let nrm = targets.point.get("N").and_then(Column::as_v3);
     let tp = targets.p();
-    let xf: Vec<Mat34> = (0..tp.len())
+    (0..tp.len())
         .into_par_iter()
         .with_min_len(4096)
         .map(|k| {
@@ -343,12 +357,56 @@ fn copy_to_points(src: &Geometry, targets: &Geometry, p: &Params) -> Res {
             m[11] = tp[k][2];
             m
         })
-        .collect();
+        .collect()
+}
+
+fn instance_attrs(targets: &Geometry) -> pt_core::AttrSet {
     let mut attrs = targets.point.clone();
     attrs.remove("P");
     attrs.remove("__src");
+    attrs
+}
+
+fn copy_to_points(src: &Geometry, targets: &Geometry, p: &Params) -> Res {
+    let xf = instance_xforms(targets, p);
+    let n = xf.len();
     let mut g = Geometry::new();
-    g.instances = Some(Instances { protos: vec![Arc::new(src.clone())], proto_id: Arc::new(vec![0; tp.len()]), xf: Arc::new(xf), attrs });
+    g.instances = Some(Instances { protos: vec![Arc::new(src.clone())], proto_id: Arc::new(vec![0; n]), xf: Arc::new(xf), attrs: instance_attrs(targets) });
+    Ok(g)
+}
+
+/// Several prototypes, one picked per point by weight (deterministic: Philox keyed by seed and point index).
+fn copy_variants(inputs: Inputs, p: &Params) -> Res {
+    let targets = inputs.first().and_then(|g| g.as_deref()).ok_or("copy_variants: input 0 (target points) is not connected")?;
+    let protos: Vec<Arc<Geometry>> = inputs.iter().skip(1).flatten().cloned().collect();
+    if protos.is_empty() {
+        return Err("copy_variants: connect at least one prototype to input 1".into());
+    }
+    let w: Vec<f32> = (0..protos.len()).map(|i| p.get("weights").and_then(|v| v.get(i)).and_then(Value::as_f64).map_or(1.0, |x| x.max(0.0) as f32)).collect();
+    let total: f32 = w.iter().sum();
+    if total <= 0.0 {
+        return Err("copy_variants: weights must not all be zero".into());
+    }
+    // a prototype with weight 0 is never picked, so it is not carried at all (smaller exports, honest statistics)
+    let (protos, w): (Vec<Arc<Geometry>>, Vec<f32>) = protos.into_iter().zip(w).filter(|(_, wi)| *wi > 0.0).unzip();
+    let seed = p.i("seed");
+    let proto_id: Vec<u32> = (0..targets.n_points())
+        .map(|k| {
+            let t = rand4(seed, 7, k as u64)[0] * total;
+            let (mut acc, mut pick) = (0.0f32, protos.len() - 1);
+            for (i, wi) in w.iter().enumerate() {
+                acc += wi;
+                if t < acc {
+                    pick = i;
+                    break;
+                }
+            }
+            pick as u32
+        })
+        .collect();
+    let xf = instance_xforms(targets, p);
+    let mut g = Geometry::new();
+    g.instances = Some(Instances { protos, proto_id: Arc::new(proto_id), xf: Arc::new(xf), attrs: instance_attrs(targets) });
     Ok(g)
 }
 
@@ -538,6 +596,93 @@ mod tests {
         let n0 = g.n_points();
         let b = cook1("blast", &[("group", json!("left"))], &[g]);
         assert!(b.n_points() < n0 && b.p().iter().all(|p| p[0] >= 0.0));
+    }
+
+    #[test]
+    fn set_material_is_exclusive_survives_merge_and_realize() {
+        let b = cook1("box", &[], &[]);
+        let all = cook1("set_material", &[("name", json!("stone"))], &[b.clone()]);
+        assert_eq!(all.material_names(), ["stone"]);
+        // a point group re-binds only the faces whose points are all inside it
+        let g = cook1("group_by_expression", &[("name", json!("top")), ("expression", json!("@P.y > 0.0"))], &[all]);
+        let top = cook1("set_material", &[("name", json!("grass")), ("group", json!("top")), ("class", json!("point"))], &[g]);
+        let m = top.prim_materials();
+        assert_eq!(m.iter().filter(|x| **x == Some("grass")).count(), 1, "only the top face has all four points above 0");
+        assert_eq!(m.iter().filter(|x| **x == Some("stone")).count(), 5);
+        // materials survive merge with an unpainted box, and realize of instances
+        let both = cook1("merge", &[], &[top.clone(), b.clone()]);
+        assert_eq!(both.n_prims(), 12);
+        assert_eq!(both.prim_materials().iter().filter(|x| x.is_none()).count(), 6);
+        let pts = cook1("scatter", &[("count", json!(5))], &[cook1("grid", &[], &[])]);
+        let inst = cook1("copy_to_points", &[], &[top, pts]);
+        let real = inst.realize();
+        assert_eq!(real.prim_materials().iter().filter(|x| **x == Some("grass")).count(), 5);
+        // painting an instanced geometry (no group) reaches the prototypes
+        let painted = cook1("set_material", &[("name", json!("brick"))], &[inst.clone()]);
+        assert!(painted.realize().prim_materials().iter().all(|x| *x == Some("brick")));
+        // bad names and missing groups say what to do
+        let mut p = Params::new();
+        p.insert("name".into(), json!("Rock Granite"));
+        assert!(cook("set_material", &p, &[Some(Arc::new(b.clone()))]).unwrap_err().contains("valid material name"));
+        p.insert("name".into(), json!("ok_name"));
+        p.insert("group".into(), json!("nope"));
+        p.insert("class".into(), json!("prim"));
+        assert!(cook("set_material", &p, &[Some(Arc::new(b))]).unwrap_err().contains("does not exist"));
+    }
+
+    #[test]
+    fn blend_materials_normalises_weights_and_exports_them() {
+        let g = cook1("grid", &[("rows", json!(4)), ("cols", json!(4)), ("size", json!([4.0, 4.0]))], &[]);
+        let w = cook1("wrangle", &[("code", json!("@w_grass = 2.0; @w_rock = smoothstep(-1.0, 1.0, @P.x); @w_snow = 0.0;"))], &[g.clone()]);
+        let b = cook1("blend_materials", &[("name", json!("terrain_blend")), ("layers", json!("grass rock snow")), ("group", json!("")), ("class", json!("prim"))], &[w.clone()]);
+        let Some(pt_core::Column::V4(wt)) = b.point.get("Wt0") else { panic!("Wt0 missing") };
+        for v in wt.iter() {
+            assert!((v[0] + v[1] + v[2] + v[3] - 1.0).abs() < 1e-5, "weights sum to 1: {v:?}");
+        }
+        let left = b.p().iter().position(|p| p[0] < -1.9).unwrap();
+        let right = b.p().iter().position(|p| p[0] > 1.9).unwrap();
+        assert!(wt[left][1] < 0.01 && wt[right][1] > 0.25, "rock grows with x: {:?} {:?}", wt[left], wt[right]);
+        assert!(b.point.get("Wt1").is_none(), "three layers need one weight column");
+        let Some(pt_core::Column::V2(uv)) = b.point.get("uv") else { panic!("planar uv missing") };
+        assert!(uv.iter().all(|t| (0.0..=1.0).contains(&t[0]) && (0.0..=1.0).contains(&t[1])) && uv.iter().any(|t| t[0] < 0.01) && uv.iter().any(|t| t[0] > 0.99), "uv spans the footprint");
+        assert_eq!(b.material_names(), ["terrain_blend"]);
+        assert_eq!(b.detail["layers:terrain_blend"], json!(["grass", "rock", "snow"]));
+        let (doc, _) = pt_core::gltf::build(&b, 10);
+        assert!(doc["meshes"][0]["primitives"][0]["attributes"].get("_WEIGHTS_0").is_some());
+        assert_eq!(doc["materials"][0]["extras"]["proteus_layers"][1], "rock");
+        // all weights missing, a single layer, and a bad role all say what to do
+        let mut p = Params::new();
+        for (k, v) in [("name", json!("t")), ("layers", json!("a b")), ("group", json!("")), ("class", json!("prim"))] {
+            p.insert(k.into(), v);
+        }
+        assert!(cook("blend_materials", &p, &[Some(Arc::new(g.clone()))]).unwrap_err().contains("write them with a wrangle"));
+        p.insert("layers".into(), json!("only_one"));
+        assert!(cook("blend_materials", &p, &[Some(Arc::new(w.clone()))]).unwrap_err().contains("2 to 8"));
+        p.insert("layers".into(), json!("a bad-role"));
+        assert!(cook("blend_materials", &p, &[Some(Arc::new(w))]).unwrap_err().contains("not a valid role name"));
+    }
+
+    #[test]
+    fn copy_variants_picks_by_weight_and_is_deterministic() {
+        let pts = cook1("scatter", &[("count", json!(3000)), ("seed", json!(5))], &[cook1("grid", &[], &[])]);
+        let (a, b) = (cook1("box", &[], &[]), cook1("sphere", &[], &[]));
+        let params = [("weights", json!([3.0, 1.0])), ("seed", json!(2)), ("rot_y_random", json!(360.0)), ("orient_to_normal", json!(0))];
+        let g = cook1("copy_variants", &params, &[pts.clone(), a.clone(), b.clone()]);
+        let inst = g.instances.as_ref().unwrap();
+        assert_eq!((inst.protos.len(), inst.len()), (2, 3000));
+        let n0 = inst.proto_id.iter().filter(|&&i| i == 0).count() as f32 / 3000.0;
+        assert!((n0 - 0.75).abs() < 0.05, "weights 3:1 should give about 75% of the first prototype, got {n0}");
+        let again = cook1("copy_variants", &params, &[pts.clone(), a.clone(), b]);
+        assert_eq!(again.content_hash(), cook1("copy_variants", &params, &[pts.clone(), a.clone(), cook1("sphere", &[], &[])]).content_hash());
+        // a zero-weight prototype is dropped, not carried around unused
+        let zero = cook1("copy_variants", &[("weights", json!([1.0, 0.0])), ("seed", json!(2)), ("rot_y_random", json!(0.0)), ("orient_to_normal", json!(0))], &[pts.clone(), a.clone(), cook1("sphere", &[], &[])]);
+        let zi = zero.instances.as_ref().unwrap();
+        assert_eq!((zi.protos.len(), zi.proto_id.iter().filter(|&&i| i != 0).count()), (1, 0));
+        // an unconnected middle slot is skipped; no prototype at all is an error that says what to do
+        let single = cook("copy_variants", &Params::from_iter([("weights".to_string(), json!([1.0])), ("seed".to_string(), json!(1)), ("rot_y_random".to_string(), json!(0.0)), ("orient_to_normal".to_string(), json!(0))]), &[Some(Arc::new(pts.clone())), None, Some(Arc::new(a))]).unwrap();
+        assert_eq!(single.instances.unwrap().protos.len(), 1);
+        let err = cook("copy_variants", &Params::new(), &[Some(Arc::new(pts))]).unwrap_err();
+        assert!(err.contains("connect at least one prototype"), "{err}");
     }
 
     #[test]

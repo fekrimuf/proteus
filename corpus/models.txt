@@ -1,0 +1,20 @@
+# Poly Haven CC0 models used as world assets (steel thread). One id per line; `corpus/tools/make_models_manifest.ps1` turns this into the manifest.
+# Chosen for polycount (under ~400k triangles) so they can be instanced thousands of times; triangle counts are in the script output.
+rock_09
+rock_moss_set_01
+rock_moss_set_02
+namaqualand_boulder_03
+fern_02
+shrub_sorrel_01
+shrub_04
+dry_branches_medium_01
+tree_stump_01
+dead_tree_trunk
+weed_plant_02
+nettle_plant
+flower_empodium
+jacaranda_tree
+pine_sapling_small
+searsia_lucida
+othonna_cerarioides
+pachira_aquatica_01

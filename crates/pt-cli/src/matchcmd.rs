@@ -231,7 +231,9 @@ pub fn refine_cmd(args: &[String]) -> Result<(), String> {
 
 /// `pt export <recipe-name-or-file> <out.obj|glb|gltf|usda>`
 pub fn export_cmd(args: &[String]) -> Result<(), String> {
-    let [name, out] = args else { return Err("usage: pt export <recipe-name-or-file> <out.obj|out.glb|out.gltf|out.usda>".into()) };
+    let lod = args.iter().any(|a| a == "--lod");
+    let pos: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
+    let [name, out] = pos[..] else { return Err("usage: pt export <recipe-name-or-file> <out.obj|out.glb|out.gltf|out.usda> [--lod]".into()) };
     let path = if Path::new(name).exists() {
         PathBuf::from(name)
     } else {
@@ -241,6 +243,7 @@ pub fn export_cmd(args: &[String]) -> Result<(), String> {
     let ext = Path::new(out).extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase();
     match ext.as_str() {
         "obj" => std::fs::write(out, pt_core::io::to_obj(&geo)).map_err(|e| e.to_string())?,
+        "glb" if lod => std::fs::write(out, pt_core::gltf::to_glb_lod(&geo, &pt_core::lod::LodPolicy { cache_dir: Some("out/lod_cache".into()), ..Default::default() })).map_err(|e| e.to_string())?,
         "glb" => std::fs::write(out, pt_core::gltf::to_glb(&geo)).map_err(|e| e.to_string())?,
         "gltf" => std::fs::write(out, pt_core::io::to_gltf(&geo)).map_err(|e| e.to_string())?,
         "usda" | "usd" => std::fs::write(out, pt_core::io::to_usda(&geo)).map_err(|e| e.to_string())?,

@@ -1,0 +1,16 @@
+{
+ "name": "alpine_meadow",
+ "version": 1,
+ "note": "Clear morning in a green alpine valley. Roles are what recipes ask for (set_material(name=\"ground_flat\")); this file decides what they look like.",
+ "materials": {
+  "ground_flat":   {"use": "grass_lush",   "tint": [0.42, 0.78, 0.34], "scale_m": 2.5},
+  "ground_forest": {"use": "forest_floor", "tint": [0.62, 0.72, 0.52]},
+  "ground_dirt":   {"use": "dirt",         "tint": [0.55, 0.48, 0.40]},
+  "ground_gravel": {"use": "gravel",       "tint": [0.62, 0.62, 0.64]},
+  "ground_rock":   {"use": "rock_mossy",   "tint": [0.66, 0.68, 0.72], "scale_m": 3.5, "bump": 1.2},
+  "ground_snow":   {"use": "snow"}
+ },
+ "lighting": {"sky": "nishita", "sun_elevation": 27, "sun_azimuth": 150, "dust": 0.7, "fog_density": 0.00024, "fog_height": 220, "fog_extent": 400000, "fog_color": [0.72, 0.82, 0.95]},
+ "render": {"samples": 128, "resolution": [1600, 900], "exposure": 0.0},
+ "ground": {"material": "ground_flat"}
+}

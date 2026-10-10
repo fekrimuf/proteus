@@ -317,7 +317,56 @@ pub fn gather_groups(g: &BTreeMap<String, Arc<Vec<bool>>>, idx: &[u32]) -> BTree
     g.iter().map(|(k, v)| (k.clone(), Arc::new(idx.iter().map(|&i| v[i as usize]).collect()))).collect()
 }
 
+/// Prefix of the primitive groups that carry material names: a primitive in group `mat:rock_granite` is
+/// bound to the material `rock_granite`. Groups survive merge, filter, blast and realize, so materials
+/// need no attribute type of their own.
+pub const MATERIAL_PREFIX: &str = "mat:";
+
+/// A material name is a plain identifier, valid unchanged in glTF, USD, OBJ and Blender.
+pub fn valid_material_name(n: &str) -> bool {
+    let mut c = n.chars();
+    c.next().is_some_and(|f| f.is_ascii_alphabetic()) && c.all(|x| x.is_ascii_alphanumeric() || x == '_') && n.len() <= 64
+}
+
 impl Geometry {
+    /// Sorted names of the materials present on the base geometry (instance prototypes not included).
+    pub fn material_names(&self) -> Vec<String> {
+        self.prim_groups.keys().filter_map(|k| k.strip_prefix(MATERIAL_PREFIX)).map(String::from).collect()
+    }
+
+    /// Material of every primitive: the first `mat:` group (alphabetical) that holds it, `None` if unassigned.
+    pub fn prim_materials(&self) -> Vec<Option<&str>> {
+        let mut out: Vec<Option<&str>> = vec![None; self.n_prims()];
+        for (k, bits) in &self.prim_groups {
+            let Some(name) = k.strip_prefix(MATERIAL_PREFIX) else { continue };
+            for (slot, &b) in out.iter_mut().zip(bits.iter()) {
+                if b && slot.is_none() {
+                    *slot = Some(name);
+                }
+            }
+        }
+        out
+    }
+
+    /// Bind `name` to the selected primitives, taking them out of every other material (a primitive has one material).
+    pub fn assign_material(&mut self, name: &str, sel: &[bool]) {
+        let key = format!("{MATERIAL_PREFIX}{name}");
+        let mut bits: Vec<bool> = self.prim_groups.get(&key).map_or_else(|| vec![false; sel.len()], |g| g.to_vec());
+        bits.resize(sel.len(), false);
+        for (k, g) in self.prim_groups.iter_mut() {
+            if k.starts_with(MATERIAL_PREFIX) && *k != key && g.iter().zip(sel).any(|(&a, &s)| a && s) {
+                for (a, &s) in Arc::make_mut(g).iter_mut().zip(sel) {
+                    *a &= !s;
+                }
+            }
+        }
+        for (b, &s) in bits.iter_mut().zip(sel) {
+            *b |= s;
+        }
+        self.prim_groups.insert(key, Arc::new(bits));
+        self.prim_groups.retain(|k, g| !k.starts_with(MATERIAL_PREFIX) || g.iter().any(|&b| b));
+    }
+
     /// Keep selected points and primitives (a primitive also needs all of its points kept).
     /// Attributes and groups are gathered; instances and detail are preserved.
     pub fn filter(&self, point_keep: &[bool], prim_keep: &[bool]) -> Geometry {

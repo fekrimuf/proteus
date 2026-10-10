@@ -54,7 +54,7 @@ fn pct(k: usize, n: usize) -> String {
     }
 }
 
-fn esc(t: &str) -> String {
+pub(crate) fn esc(t: &str) -> String {
     t.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }
 
@@ -117,14 +117,14 @@ fn md(text: &str) -> String {
     html
 }
 
-fn img_tag(path: &Path, alt: &str, width: &str) -> String {
+pub(crate) fn img_tag(path: &Path, alt: &str, width: &str) -> String {
     match std::fs::read(path) {
         Ok(b) => format!("<img alt=\"{}\" style=\"width:{}\" src=\"data:image/png;base64,{}\">", esc(alt), width, pt_core::io::base64_encode(&b)),
         Err(_) => format!("<div class=\"missing\">image missing: {}</div>", esc(&path.display().to_string())),
     }
 }
 
-const CSS: &str = r#"
+pub(crate) const CSS: &str = r#"
 :root{--bg:#fbfaf7;--fg:#1d1d1f;--mut:#65656b;--card:#ffffff;--line:#e3e1db;--green:#1f7a45;--amber:#9a6412;--red:#b3261e;--bar:#3b6fb6;--chipfg:#ffffff}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16171a;--fg:#ececee;--mut:#9a9aa2;--card:#1f2023;--line:#34353a;--green:#58c98a;--amber:#e3ae52;--red:#f07468;--bar:#7aa6e8;--chipfg:#101114;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#16171a;--fg:#ececee;--mut:#9a9aa2;--card:#1f2023;--line:#34353a;--green:#58c98a;--amber:#e3ae52;--red:#f07468;--bar:#7aa6e8;--chipfg:#101114;color-scheme:dark}

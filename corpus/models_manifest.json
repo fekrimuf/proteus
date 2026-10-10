@@ -1,0 +1,648 @@
+{
+    "version":  1,
+    "note":  "CC0 Poly Haven models used as world assets (import_asset). Ids listed in corpus/models.txt.",
+    "assets":  [
+                   {
+                       "id":  "polyhaven/models/rock_09",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,rocks,collection: verdant_trail",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/rock_09/rock_09_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/rock_09/rock_09_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_09/rock_09_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_09/textures/rock_09_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_09/rock_09_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_09/textures/rock_09_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_09/rock_09_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_09/textures/rock_09_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_09/rock_09_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_09/rock_09.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_09/rock_09.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/rock_moss_set_01",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "rocks,nature,collection: pine_forest",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_moss_set_01/rock_moss_set_01_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_01/textures/rock_moss_set_01_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_01/rock_moss_set_01.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_moss_set_01/rock_moss_set_01.bin"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_01/textures/rock_moss_set_01_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_01/textures/rock_moss_set_01_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_01/rock_moss_set_01_diff_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/rock_moss_set_02",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "rocks,nature,collection: pine_forest",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/rock_moss_set_02/rock_moss_set_02_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_02/rock_moss_set_02_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_moss_set_02/rock_moss_set_02_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_02/textures/rock_moss_set_02_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_02/rock_moss_set_02_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_02/textures/rock_moss_set_02_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_02/rock_moss_set_02_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_02/textures/rock_moss_set_02_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_moss_set_02/rock_moss_set_02_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/rock_moss_set_02/rock_moss_set_02.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_moss_set_02/rock_moss_set_02.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/namaqualand_boulder_03",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,rocks,collection: namaqualand",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/namaqualand_boulder_03/namaqualand_boulder_03_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/namaqualand_boulder_03/namaqualand_boulder_03_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/namaqualand_boulder_03/namaqualand_boulder_03_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/namaqualand_boulder_03/textures/namaqualand_boulder_03_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/namaqualand_boulder_03/namaqualand_boulder_03_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/namaqualand_boulder_03/textures/namaqualand_boulder_03_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/namaqualand_boulder_03/namaqualand_boulder_03_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/namaqualand_boulder_03/namaqualand_boulder_03.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/namaqualand_boulder_03/namaqualand_boulder_03.bin"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/namaqualand_boulder_03/textures/namaqualand_boulder_03_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/namaqualand_boulder_03/namaqualand_boulder_03_arm_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/fern_02",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "plants,nature,collection: smugglers_cove,collection: pine_forest",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/fern_02/fern_02_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/fern_02/fern_02_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fern_02/fern_02_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/fern_02/textures/fern_02_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/fern_02/textures/fern_02_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/fern_02/textures/fern_02_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/fern_02/fern_02_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/fern_02/fern_02.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/fern_02/fern_02.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/shrub_sorrel_01",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "plants,flowers,nature,collection: smugglers_cove",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/shrub_sorrel_01/shrub_sorrel_01_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/shrub_sorrel_01/shrub_sorrel_01_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/shrub_sorrel_01/shrub_sorrel_01_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/shrub_sorrel_01/textures/shrub_sorrel_01_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_sorrel_01/shrub_sorrel_01_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/shrub_sorrel_01/shrub_sorrel_01.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/shrub_sorrel_01/shrub_sorrel_01.bin"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/shrub_sorrel_01/textures/shrub_sorrel_01_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_sorrel_01/shrub_sorrel_01_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/shrub_sorrel_01/textures/shrub_sorrel_01_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_sorrel_01/shrub_sorrel_01_diff_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/shrub_04",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,ground cover,collection: verdant_trail",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/shrub_04/shrub_04_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/shrub_04/shrub_04_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/shrub_04/shrub_04_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/shrub_04/textures/shrub_04_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/shrub_04/textures/shrub_04_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/shrub_04/textures/shrub_04_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_04/shrub_04_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/shrub_04/shrub_04.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/shrub_04/shrub_04.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/dry_branches_medium_01",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "props,nature,plants,ground cover,collection: pine_forest,collection: verdant_trail",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/dry_branches_medium_01/dry_branches_medium_01_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/dry_branches_medium_01/dry_branches_medium_01_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/dry_branches_medium_01/dry_branches_medium_01_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/dry_branches_medium_01/textures/dry_branches_medium_01_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dry_branches_medium_01/dry_branches_medium_01_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/dry_branches_medium_01/textures/dry_branches_medium_01_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dry_branches_medium_01/dry_branches_medium_01_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/dry_branches_medium_01/textures/dry_branches_medium_01_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dry_branches_medium_01/dry_branches_medium_01_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/dry_branches_medium_01/dry_branches_medium_01.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/dry_branches_medium_01/dry_branches_medium_01.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/tree_stump_01",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,ground cover,trees,collection: pine_forest",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/tree_stump_01/tree_stump_01_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/tree_stump_01/tree_stump_01_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/tree_stump_01/tree_stump_01_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/tree_stump_01/tree_stump_01.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/tree_stump_01/tree_stump_01.bin"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/tree_stump_01/textures/tree_stump_01_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_01/tree_stump_01_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/tree_stump_01/textures/tree_stump_01_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_01/tree_stump_01_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/tree_stump_01/textures/tree_stump_01_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_01/tree_stump_01_arm_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/dead_tree_trunk",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,ground cover,collection: pine_forest,collection: verdant_trail",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/dead_tree_trunk/dead_tree_trunk_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/dead_tree_trunk/dead_tree_trunk_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/dead_tree_trunk/dead_tree_trunk_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/dead_tree_trunk/textures/dead_tree_trunk_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/dead_tree_trunk/textures/dead_tree_trunk_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/dead_tree_trunk/textures/dead_tree_trunk_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/dead_tree_trunk/dead_tree_trunk_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/dead_tree_trunk/dead_tree_trunk.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/dead_tree_trunk/dead_tree_trunk.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/weed_plant_02",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,ground cover,collection: the_shed",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/weed_plant_02/weed_plant_02_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/weed_plant_02/weed_plant_02_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/weed_plant_02/weed_plant_02_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/weed_plant_02/textures/weed_plant_02_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/weed_plant_02/weed_plant_02_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/weed_plant_02/textures/weed_plant_02_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/weed_plant_02/weed_plant_02_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/weed_plant_02/textures/weed_plant_02_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/weed_plant_02/weed_plant_02_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/weed_plant_02/weed_plant_02.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/weed_plant_02/weed_plant_02.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/nettle_plant",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,ground cover,collection: the_shed",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/nettle_plant/nettle_plant_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/nettle_plant/nettle_plant_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/nettle_plant/nettle_plant_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/nettle_plant/textures/nettle_plant_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/nettle_plant/nettle_plant_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/nettle_plant/textures/nettle_plant_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/nettle_plant/nettle_plant_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/nettle_plant/textures/nettle_plant_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/nettle_plant/nettle_plant_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/nettle_plant/nettle_plant.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/nettle_plant/nettle_plant.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/flower_empodium",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,flowers,ground cover,collection: namaqualand",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/flower_empodium/flower_empodium_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/flower_empodium/flower_empodium_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/flower_empodium/flower_empodium_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/flower_empodium/textures/flower_empodium_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/flower_empodium/flower_empodium_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/flower_empodium/textures/flower_empodium_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/flower_empodium/flower_empodium_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/flower_empodium/flower_empodium.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/flower_empodium/flower_empodium.bin"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/flower_empodium/textures/flower_empodium_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/flower_empodium/flower_empodium_nor_gl_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/jacaranda_tree",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,trees,collection: verdant_trail",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/jacaranda_tree/jacaranda_tree_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/jacaranda_tree_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/jacaranda_tree/jacaranda_tree_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_branches_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_branches_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_branches_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_branches_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_branches_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_branches_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_trunk_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_trunk_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_trunk_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_trunk_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_trunk_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_trunk_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_leaves_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_leaves_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_leaves_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_leaves_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/textures/jacaranda_tree_leaves_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/jacaranda_tree/jacaranda_tree_leaves_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/jacaranda_tree/jacaranda_tree.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/jacaranda_tree/jacaranda_tree.bin"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/pine_sapling_small",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,trees,collection: pine_forest",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/pine_sapling_small/pine_sapling_small_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/pine_sapling_small/pine_sapling_small_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/pine_sapling_small/pine_sapling_small_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pine_sapling_small/textures/pine_sapling_small_twig_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_sapling_small/pine_sapling_small_twig_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pine_sapling_small/textures/pine_sapling_small_twig_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_sapling_small/pine_sapling_small_twig_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pine_sapling_small/textures/pine_sapling_small_bark_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_sapling_small/pine_sapling_small_bark_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pine_sapling_small/pine_sapling_small.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/pine_sapling_small/pine_sapling_small.bin"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pine_sapling_small/textures/pine_sapling_small_bark_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_sapling_small/pine_sapling_small_bark_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pine_sapling_small/textures/pine_sapling_small_bark_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_sapling_small/pine_sapling_small_bark_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pine_sapling_small/textures/pine_sapling_small_twig_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pine_sapling_small/pine_sapling_small_twig_nor_gl_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/searsia_lucida",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,trees,collection: namaqualand",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/searsia_lucida/searsia_lucida_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/searsia_lucida/searsia_lucida_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/searsia_lucida/searsia_lucida_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/searsia_lucida/searsia_lucida.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/searsia_lucida/searsia_lucida.bin"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/searsia_lucida/textures/searsia_lucida_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/searsia_lucida/searsia_lucida_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/searsia_lucida/textures/searsia_lucida_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/searsia_lucida/searsia_lucida_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/searsia_lucida/textures/searsia_lucida_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/searsia_lucida/searsia_lucida_arm_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/othonna_cerarioides",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "nature,plants,trees,collection: namaqualand",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/othonna_cerarioides/othonna_cerarioides_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/othonna_cerarioides/othonna_cerarioides_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/othonna_cerarioides/othonna_cerarioides_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/othonna_cerarioides/textures/othonna_cerarioides_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/othonna_cerarioides/othonna_cerarioides_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/othonna_cerarioides/textures/othonna_cerarioides_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/othonna_cerarioides/othonna_cerarioides_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/othonna_cerarioides/othonna_cerarioides.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/othonna_cerarioides/othonna_cerarioides.bin"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/othonna_cerarioides/textures/othonna_cerarioides_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/othonna_cerarioides/othonna_cerarioides_arm_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/models/pachira_aquatica_01",
+                       "source":  "polyhaven",
+                       "set":  "models",
+                       "category":  "plants,nature,collection: smugglers_cove",
+                       "difficulty":  "asset",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/models/pachira_aquatica_01/pachira_aquatica_01_1k.gltf",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/models/pachira_aquatica_01/pachira_aquatica_01_1k.gltf",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/pachira_aquatica_01/pachira_aquatica_01_1k.gltf"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pachira_aquatica_01/textures/pachira_aquatica_01_bark_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pachira_aquatica_01/pachira_aquatica_01_bark_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pachira_aquatica_01/textures/pachira_aquatica_01_leaves_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pachira_aquatica_01/pachira_aquatica_01_leaves_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pachira_aquatica_01/textures/pachira_aquatica_01_leaves_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pachira_aquatica_01/pachira_aquatica_01_leaves_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pachira_aquatica_01/textures/pachira_aquatica_01_bark_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pachira_aquatica_01/pachira_aquatica_01_bark_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pachira_aquatica_01/textures/pachira_aquatica_01_bark_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pachira_aquatica_01/pachira_aquatica_01_bark_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pachira_aquatica_01/textures/pachira_aquatica_01_leaves_arm_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/pachira_aquatica_01/pachira_aquatica_01_leaves_arm_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/models/pachira_aquatica_01/pachira_aquatica_01.bin",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/pachira_aquatica_01/pachira_aquatica_01.bin"
+                                     }
+                                 ]
+                   }
+               ]
+}

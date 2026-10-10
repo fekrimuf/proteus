@@ -1,0 +1,888 @@
+{
+  "audit": {
+    "area_km2": 0.8316330903414935,
+    "base_triangles": 405000,
+    "external_triangles": 1923232054,
+    "external_unique_triangles": 4728232,
+    "instances": 8859,
+    "ledger_missing": [],
+    "max_local_repeats": 11,
+    "max_repeats": 1904,
+    "protos": [
+      {
+        "index": 0,
+        "instances": 461,
+        "lod": true,
+        "lod_triangles": [
+          198693,
+          68298,
+          23430,
+          7850
+        ],
+        "source": "polyhaven/models/jacaranda_tree/jacaranda_tree_1k.gltf",
+        "triangles": 3863832
+      },
+      {
+        "index": 1,
+        "instances": 27,
+        "lod": true,
+        "lod_triangles": [
+          142506,
+          49882,
+          17090,
+          5706
+        ],
+        "source": "polyhaven/models/pine_sapling_small/pine_sapling_small_1k.gltf",
+        "triangles": 142506
+      },
+      {
+        "index": 2,
+        "instances": 24,
+        "lod": true,
+        "lod_triangles": [
+          122235,
+          42796,
+          14654,
+          4901
+        ],
+        "source": "polyhaven/models/pine_sapling_small/pine_sapling_small_1k.gltf",
+        "triangles": 122235
+      },
+      {
+        "index": 3,
+        "instances": 23,
+        "lod": true,
+        "lod_triangles": [
+          133403,
+          46734,
+          16004,
+          5333
+        ],
+        "source": "polyhaven/models/pine_sapling_small/pine_sapling_small_1k.gltf",
+        "triangles": 133403
+      },
+      {
+        "index": 4,
+        "instances": 259,
+        "lod": true,
+        "lod_triangles": [
+          113405,
+          37971,
+          13073,
+          4036
+        ],
+        "source": "polyhaven/models/searsia_lucida/searsia_lucida_1k.gltf",
+        "triangles": 113405
+      },
+      {
+        "index": 5,
+        "instances": 252,
+        "lod": true,
+        "lod_triangles": [
+          56320,
+          19108,
+          6447,
+          2063
+        ],
+        "source": "polyhaven/models/searsia_lucida/searsia_lucida_1k.gltf",
+        "triangles": 56320
+      },
+      {
+        "index": 6,
+        "instances": 269,
+        "lod": true,
+        "lod_triangles": [
+          7232,
+          2476,
+          851,
+          284
+        ],
+        "source": "polyhaven/models/searsia_lucida/searsia_lucida_1k.gltf",
+        "triangles": 7232
+      },
+      {
+        "index": 7,
+        "instances": 373,
+        "lod": true,
+        "lod_triangles": [
+          29175,
+          10196,
+          3502,
+          1130
+        ],
+        "source": "polyhaven/models/othonna_cerarioides/othonna_cerarioides_1k.gltf",
+        "triangles": 29175
+      },
+      {
+        "index": 8,
+        "instances": 396,
+        "lod": true,
+        "lod_triangles": [
+          3834,
+          1337,
+          453,
+          152
+        ],
+        "source": "polyhaven/models/othonna_cerarioides/othonna_cerarioides_1k.gltf",
+        "triangles": 3834
+      },
+      {
+        "index": 9,
+        "instances": 359,
+        "lod": true,
+        "lod_triangles": [
+          3124,
+          1081,
+          375,
+          108
+        ],
+        "source": "polyhaven/models/othonna_cerarioides/othonna_cerarioides_1k.gltf",
+        "triangles": 3124
+      },
+      {
+        "index": 10,
+        "instances": 633,
+        "lod": false,
+        "lod_triangles": [
+          784
+        ],
+        "source": "polyhaven/models/fern_02/fern_02_1k.gltf",
+        "triangles": 784
+      },
+      {
+        "index": 11,
+        "instances": 644,
+        "lod": true,
+        "lod_triangles": [
+          2248,
+          816,
+          272,
+          128
+        ],
+        "source": "polyhaven/models/fern_02/fern_02_1k.gltf",
+        "triangles": 2248
+      },
+      {
+        "index": 12,
+        "instances": 627,
+        "lod": false,
+        "lod_triangles": [
+          816
+        ],
+        "source": "polyhaven/models/fern_02/fern_02_1k.gltf",
+        "triangles": 816
+      },
+      {
+        "index": 13,
+        "instances": 1904,
+        "lod": true,
+        "lod_triangles": [
+          27327,
+          9586,
+          3301,
+          1101
+        ],
+        "source": "polyhaven/models/shrub_04/shrub_04_1k.gltf",
+        "triangles": 27327
+      },
+      {
+        "index": 14,
+        "instances": 185,
+        "lod": false,
+        "lod_triangles": [
+          758
+        ],
+        "source": "polyhaven/models/flower_empodium/flower_empodium_1k.gltf",
+        "triangles": 758
+      },
+      {
+        "index": 15,
+        "instances": 181,
+        "lod": true,
+        "lod_triangles": [
+          2967,
+          1071,
+          372,
+          124
+        ],
+        "source": "polyhaven/models/weed_plant_02/weed_plant_02_1k.gltf",
+        "triangles": 2967
+      },
+      {
+        "index": 16,
+        "instances": 178,
+        "lod": true,
+        "lod_triangles": [
+          5896,
+          2080,
+          720,
+          248
+        ],
+        "source": "polyhaven/models/nettle_plant/nettle_plant_1k.gltf",
+        "triangles": 5896
+      },
+      {
+        "index": 17,
+        "instances": 158,
+        "lod": false,
+        "lod_triangles": [
+          360
+        ],
+        "source": "polyhaven/models/flower_empodium/flower_empodium_1k.gltf",
+        "triangles": 360
+      },
+      {
+        "index": 18,
+        "instances": 198,
+        "lod": false,
+        "lod_triangles": [
+          1766
+        ],
+        "source": "polyhaven/models/weed_plant_02/weed_plant_02_1k.gltf",
+        "triangles": 1766
+      },
+      {
+        "index": 19,
+        "instances": 184,
+        "lod": true,
+        "lod_triangles": [
+          6984,
+          2448,
+          872,
+          320
+        ],
+        "source": "polyhaven/models/nettle_plant/nettle_plant_1k.gltf",
+        "triangles": 6984
+      },
+      {
+        "index": 20,
+        "instances": 267,
+        "lod": false,
+        "lod_triangles": [
+          758
+        ],
+        "source": "polyhaven/models/flower_empodium/flower_empodium_1k.gltf",
+        "triangles": 758
+      },
+      {
+        "index": 21,
+        "instances": 273,
+        "lod": true,
+        "lod_triangles": [
+          2182,
+          796,
+          308,
+          108
+        ],
+        "source": "polyhaven/models/weed_plant_02/weed_plant_02_1k.gltf",
+        "triangles": 2182
+      },
+      {
+        "index": 22,
+        "instances": 139,
+        "lod": true,
+        "lod_triangles": [
+          11000,
+          3850,
+          1320,
+          440
+        ],
+        "source": "polyhaven/models/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+        "triangles": 11000
+      },
+      {
+        "index": 23,
+        "instances": 159,
+        "lod": true,
+        "lod_triangles": [
+          10589,
+          3706,
+          1270,
+          424
+        ],
+        "source": "polyhaven/models/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+        "triangles": 10589
+      },
+      {
+        "index": 24,
+        "instances": 143,
+        "lod": true,
+        "lod_triangles": [
+          7894,
+          2762,
+          946,
+          316
+        ],
+        "source": "polyhaven/models/rock_moss_set_02/rock_moss_set_02_1k.gltf",
+        "triangles": 7894
+      },
+      {
+        "index": 25,
+        "instances": 130,
+        "lod": true,
+        "lod_triangles": [
+          10996,
+          3842,
+          1314,
+          440
+        ],
+        "source": "polyhaven/models/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+        "triangles": 10996
+      },
+      {
+        "index": 26,
+        "instances": 169,
+        "lod": true,
+        "lod_triangles": [
+          7999,
+          2800,
+          960,
+          320
+        ],
+        "source": "polyhaven/models/rock_moss_set_02/rock_moss_set_02_1k.gltf",
+        "triangles": 7999
+      },
+      {
+        "index": 27,
+        "instances": 153,
+        "lod": true,
+        "lod_triangles": [
+          8994,
+          3148,
+          1078,
+          360
+        ],
+        "source": "polyhaven/models/rock_moss_set_01/rock_moss_set_01_1k.gltf",
+        "triangles": 8994
+      },
+      {
+        "index": 28,
+        "instances": 36,
+        "lod": true,
+        "lod_triangles": [
+          101802,
+          35630,
+          12216,
+          4072
+        ],
+        "source": "polyhaven/models/dead_tree_trunk/dead_tree_trunk_1k.gltf",
+        "triangles": 101802
+      },
+      {
+        "index": 29,
+        "instances": 55,
+        "lod": true,
+        "lod_triangles": [
+          41046,
+          14366,
+          4923,
+          1642
+        ],
+        "source": "polyhaven/models/tree_stump_01/tree_stump_01_1k.gltf",
+        "triangles": 41046
+      }
+    ],
+    "total_triangles": 1923637054,
+    "unique_triangles": 5133232
+  },
+  "baked": {
+    "materials": {
+      "terrain_blend": {
+        "albedo": "D:\\Fekri\\Houdini-clone\\out/steelthread/v1\\bake\\terrain_blend_albedo.png",
+        "albedo_seconds": 13.94,
+        "normal": "D:\\Fekri\\Houdini-clone\\out/steelthread/v1\\bake\\terrain_blend_normal.png",
+        "normal_seconds": 14.35,
+        "resolution": 4096
+      }
+    },
+    "seconds": 40.1071526
+  },
+  "engine_export_s": 1.8084548,
+  "engine_lod": true,
+  "engine_materials": {
+    "materials": 20,
+    "untextured": []
+  },
+  "fps": {
+    "available": true,
+    "bounds_min": [
+      -457.891296386719,
+      -5.96665382385254,
+      -456.986267089844
+    ],
+    "bounds_size": [
+      916.37939453125,
+      316.571807861328,
+      907.70751953125
+    ],
+    "bytes": 209461584,
+    "errors": [],
+    "fps": {
+      "adapter": "NVIDIA GeForce RTX 2070 SUPER",
+      "camera": [
+        -250.0,
+        4.60624980926514,
+        -40.0
+      ],
+      "draw_calls": 1408,
+      "fps": 120.1,
+      "frames": 60,
+      "objects": 5998,
+      "primitives": 18515018,
+      "seconds": 0.5,
+      "size": [
+        1280,
+        720
+      ],
+      "video_mem_mb": 544.1
+    },
+    "godot": "4.7.2-stable (official)",
+    "import_ms": 2305,
+    "lod_ranges_applied": 29232,
+    "lower_lod_nodes": 20373,
+    "materials": 20,
+    "mesh_instances": 29233,
+    "model": "D:/Fekri/Houdini-clone/out/steelthread/v1/world.engine.glb",
+    "nodes": 29234,
+    "ok": true,
+    "scene_ms": 105594,
+    "shot": "D:/Fekri/Houdini-clone/out/steelthread/v1/engine_eye.png",
+    "texture_mb_estimate": 442.7,
+    "textures": 53,
+    "triangles_total": 234007975,
+    "triangles_unique": 2002230,
+    "unique_meshes": 103
+  },
+  "glb_mb": {
+    "engine": 199.7581329345703,
+    "render": 306.36632919311523
+  },
+  "godot": {
+    "available": true,
+    "bounds_min": [
+      -457.891296386719,
+      -5.96665382385254,
+      -456.986267089844
+    ],
+    "bounds_size": [
+      916.37939453125,
+      316.571807861328,
+      907.70751953125
+    ],
+    "bytes": 209461584,
+    "errors": [],
+    "godot": "4.7.2-stable (official)",
+    "import_ms": 1998,
+    "lod_ranges_applied": 29232,
+    "lower_lod_nodes": 20373,
+    "materials": 20,
+    "mesh_instances": 29233,
+    "model": "D:/Fekri/Houdini-clone/out/steelthread/v1/world.engine.glb",
+    "navmesh": {
+      "agent_radius": 1.0,
+      "area_m2": 290071.0,
+      "bake_ms": 949,
+      "coverage": 0.745,
+      "coverage_intended": 0.954,
+      "intended_m2": 274097.0,
+      "intended_slope_deg": 25.0,
+      "max_slope_deg": 40.0,
+      "polygons": 20212,
+      "samples": 20000,
+      "terrain_m2": 810000.0,
+      "walkable_terrain_m2": 389511.0
+    },
+    "nodes": 29234,
+    "ok": true,
+    "scene_ms": 111134,
+    "texture_mb_estimate": 442.7,
+    "textures": 53,
+    "triangles_total": 234007975,
+    "triangles_unique": 2002230,
+    "unique_meshes": 103
+  },
+  "measures": [
+    {
+      "bar": "at least 99%",
+      "draft_bar": true,
+      "family": "Visual",
+      "id": "v_coverage",
+      "label": "Surfaces with a real material",
+      "route": "give every role a library material or an authored asset material",
+      "shown": "100.0%",
+      "status": "pass",
+      "value": 1.0
+    },
+    {
+      "bar": "0",
+      "draft_bar": true,
+      "family": "Visual",
+      "id": "v_unresolved",
+      "label": "Material names nobody could resolve",
+      "route": "add the name to the library or the style",
+      "shown": "0",
+      "status": "pass",
+      "value": 0.0
+    },
+    {
+      "bar": "sky and haze on",
+      "draft_bar": true,
+      "family": "Visual",
+      "id": "v_atmosphere",
+      "label": "Physical sky, shadows and depth haze on",
+      "route": "set lighting.sky and lighting.fog_density in the style",
+      "shown": "sky nishita, haze on",
+      "status": "pass",
+      "value": 1.0
+    },
+    {
+      "bar": "a named style",
+      "draft_bar": true,
+      "family": "Art coherence",
+      "id": "a_style",
+      "label": "A style drove the look",
+      "route": "give the scene a style file",
+      "shown": "alpine_meadow",
+      "status": "pass",
+      "value": 1.0
+    },
+    {
+      "bar": "at least 12",
+      "draft_bar": true,
+      "family": "Art coherence",
+      "id": "a_variety",
+      "label": "Distinct prototypes in the world",
+      "route": "more prototypes per role (generator families)",
+      "shown": "30",
+      "status": "pass",
+      "value": 30.0
+    },
+    {
+      "bar": "at least 90%",
+      "draft_bar": true,
+      "family": "World function",
+      "id": "w_nav",
+      "label": "Intended walkable ground (slope under 25 degrees) the navigation mesh reaches",
+      "route": "explorer bots for stuck points; obstacles (trunks, rocks) in the bake",
+      "shown": "95.4%",
+      "status": "pass",
+      "value": 0.954
+    },
+    {
+      "bar": "at least 60 fps",
+      "draft_bar": true,
+      "family": "Performance",
+      "id": "p_fps",
+      "label": "Frame rate in the engine (RTX 2070 SUPER, 1280x720, eye height)",
+      "route": "LOD chains and a triangle budget (decimate node, then import with LODs)",
+      "shown": "120.1 fps",
+      "status": "pass",
+      "value": 120.1
+    },
+    {
+      "bar": "at most 20 million",
+      "draft_bar": true,
+      "family": "Performance",
+      "id": "p_tris",
+      "label": "Triangles in one frame",
+      "route": "LOD chains and a triangle budget (decimate node, then import with LODs)",
+      "shown": "18.5 million",
+      "status": "pass",
+      "value": 18515018.0
+    },
+    {
+      "bar": "at most 3000",
+      "draft_bar": true,
+      "family": "Performance",
+      "id": "p_draw",
+      "label": "Draw calls in one frame",
+      "route": "merge small props, GPU instancing",
+      "shown": "1408",
+      "status": "pass",
+      "value": 1408.0
+    },
+    {
+      "bar": "at most 6000 MB",
+      "draft_bar": true,
+      "family": "Performance",
+      "id": "p_vram",
+      "label": "Video memory",
+      "route": "lower texture resolution on distant assets, atlas props",
+      "shown": "544 MB",
+      "status": "pass",
+      "value": 544.1
+    },
+    {
+      "bar": "at least 15",
+      "draft_bar": true,
+      "family": "Content breadth",
+      "id": "b_unique",
+      "label": "Distinct prototypes per square kilometre",
+      "route": "more generator families",
+      "shown": "36.1",
+      "status": "pass",
+      "value": 36.073600664063406
+    },
+    {
+      "bar": "at most 12",
+      "draft_bar": true,
+      "family": "Content breadth",
+      "id": "b_repeat",
+      "label": "Most copies of one large prototype (over 2 m) in a 50 m square",
+      "route": "more tree and rock variants (generator families), scale and tint variation",
+      "shown": "11",
+      "status": "pass",
+      "value": 11.0
+    },
+    {
+      "bar": "100%",
+      "draft_bar": true,
+      "family": "Content breadth",
+      "id": "b_lod",
+      "label": "Heavy meshes (over 2000 triangles) that have an LOD chain",
+      "route": "decimate node and LOD generation on import",
+      "shown": "100% (24 of 24)",
+      "status": "pass",
+      "value": 1.0
+    },
+    {
+      "bar": "0 errors",
+      "draft_bar": true,
+      "family": "Delivery",
+      "id": "d_validator",
+      "label": "glTF validator errors",
+      "route": "fix the exporter",
+      "shown": "0 errors, 0 warnings",
+      "status": "pass",
+      "value": 0.0
+    },
+    {
+      "bar": "0 errors",
+      "draft_bar": true,
+      "family": "Delivery",
+      "id": "d_engine",
+      "label": "Engine import errors",
+      "route": "fix the exporter",
+      "shown": "imported cleanly",
+      "status": "pass",
+      "value": 0.0
+    },
+    {
+      "bar": "0",
+      "draft_bar": true,
+      "family": "Delivery",
+      "id": "d_textured",
+      "label": "Materials in the engine file with no texture",
+      "route": "bake layered materials to textures for the engine export",
+      "shown": "none",
+      "status": "pass",
+      "value": 0.0
+    },
+    {
+      "bar": "100%",
+      "draft_bar": true,
+      "family": "Delivery",
+      "id": "d_ledger",
+      "label": "External files with a licence ledger row",
+      "route": "fetch through `pt corpus fetch` so each file gets a row",
+      "shown": "19 of 19",
+      "status": "pass",
+      "value": 1.0
+    },
+    {
+      "bar": "reported (falls as generators replace assets)",
+      "draft_bar": true,
+      "family": "Delivery",
+      "id": "d_cc0_share",
+      "label": "Unique triangles that come from CC0 files (the rest are ours)",
+      "route": "generator families replace CC0 assets (B15a)",
+      "shown": "92.1%",
+      "status": "info",
+      "value": 0.921102338643568
+    }
+  ],
+  "pass": 17,
+  "recipe": "scenes/valley.hcs",
+  "render": {
+    "blender": "4.5.14 LTS",
+    "device": "OPTIX",
+    "frames": [
+      {
+        "file": "D:\\Fekri\\Houdini-clone\\out\\steelthread\\v1\\frame_hero.png",
+        "name": "hero",
+        "seconds": 35.15
+      },
+      {
+        "file": "D:\\Fekri\\Houdini-clone\\out\\steelthread\\v1\\frame_valley.png",
+        "name": "valley",
+        "seconds": 28.1
+      },
+      {
+        "file": "D:\\Fekri\\Houdini-clone\\out\\steelthread\\v1\\frame_eye.png",
+        "name": "eye",
+        "seconds": 31.49
+      }
+    ],
+    "lod_nodes_dropped": 0,
+    "material_coverage": 1.0,
+    "materials": {
+      "dead_tree_trunk__dead_tree_trunk": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 3664872
+      },
+      "fern_02__fern_02": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 2455616
+      },
+      "flower_empodium__flower_empodium": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 399496
+      },
+      "jacaranda_tree__jacaranda_tree_branches": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 567622846
+      },
+      "jacaranda_tree__jacaranda_tree_leaves": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 1107522074
+      },
+      "jacaranda_tree__jacaranda_tree_trunk": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 106081632
+      },
+      "nettle_plant__nettle_plant": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 2334544
+      },
+      "othonna_cerarioides__othonna_cerarioides": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 5406927
+      },
+      "othonna_cerarioides__othonna_cerarioides_leaves": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 8115128
+      },
+      "pine_sapling_small__pine_sapling_small_bark": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 38388
+      },
+      "pine_sapling_small__pine_sapling_small_twig": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 9811183
+      },
+      "rock_moss_set_01__rock_moss_set_01": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 6018213
+      },
+      "rock_moss_set_02__rock_moss_set_02": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 2480673
+      },
+      "searsia_lucida__searsia_lucida": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 29286237
+      },
+      "searsia_lucida__searsia_lucida_leaves": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 13250976
+      },
+      "searsia_lucida__searsia_lucida_twigs": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 2972730
+      },
+      "shrub_04__shrub_04": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 52030608
+      },
+      "terrain_blend": {
+        "layered": [
+          "ground_flat",
+          "ground_forest",
+          "ground_dirt",
+          "ground_gravel",
+          "ground_rock",
+          "ground_snow"
+        ],
+        "resolved": true,
+        "textured": true,
+        "triangles": 405000
+      },
+      "tree_stump_01__tree_stump_01": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 2257530
+      },
+      "weed_plant_02__weed_plant_02": {
+        "authored": true,
+        "resolved": true,
+        "textured": true,
+        "triangles": 1482381
+      }
+    },
+    "model": "D:\\Fekri\\Houdini-clone\\out/steelthread/v1\\world.glb",
+    "objects": 8860,
+    "resolution": [
+      1600,
+      900
+    ],
+    "samples": 128,
+    "sky": "nishita",
+    "style": "alpine_meadow",
+    "total_seconds": 108.48,
+    "triangles": 1923637054,
+    "unique_meshes": 31,
+    "unknown_materials": [],
+    "unresolved": [],
+    "warnings": []
+  },
+  "scene": "scenes/valley.scene.json",
+  "style": "alpine_meadow",
+  "timings_s": {
+    "cook": 3.5883454,
+    "total": 382.6776881
+  },
+  "title": "Readiness Scorecard",
+  "total": 17,
+  "validator": {
+    "available": true,
+    "codes": {},
+    "errors": 0,
+    "warnings": 0
+  },
+  "when": "2026-10-10T17:33:59Z"
+}

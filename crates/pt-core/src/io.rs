@@ -12,7 +12,13 @@ pub fn to_obj(g: &Geometry) -> String {
     for p in g.p() {
         let _ = writeln!(s, "v {} {} {}", p[0], p[1], p[2]);
     }
-    for i in 0..g.n_prims() {
+    let mats = g.prim_materials();
+    let mut current: Option<&str> = None;
+    for (i, m) in mats.iter().enumerate() {
+        if *m != current {
+            current = *m;
+            let _ = writeln!(s, "usemtl {}", current.unwrap_or("none"));
+        }
         let _ = write!(s, "f");
         for v in g.prim_points(i) {
             let _ = write!(s, " {}", v + 1);
@@ -39,39 +45,13 @@ pub fn base64_encode(data: &[u8]) -> String {
     base64(data)
 }
 
+/// `.gltf` text with the buffer embedded as a data URI (same content as [`crate::gltf::to_glb`]).
 pub fn to_gltf(g: &Geometry) -> String {
-    let g = g.realize();
-    let tris = g.triangles();
-    let mut buf: Vec<u8> = Vec::new();
-    for p in g.p() {
-        for c in p {
-            buf.extend_from_slice(&c.to_le_bytes());
-        }
+    let (mut doc, bin) = crate::gltf::build(g, crate::gltf::INSTANCE_NODE_LIMIT);
+    if let Some(b) = doc.get_mut("buffers").and_then(|b| b.get_mut(0)) {
+        b["uri"] = json!(format!("data:application/octet-stream;base64,{}", base64(&bin)));
     }
-    let pos_len = buf.len();
-    for t in &tris {
-        for i in t {
-            buf.extend_from_slice(&i.to_le_bytes());
-        }
-    }
-    let idx_len = buf.len() - pos_len;
-    let (lo, hi) = g.base_bounds().unwrap_or(([0.0; 3], [0.0; 3]));
-    json!({
-        "asset": {"version": "2.0", "generator": "proteus"},
-        "scene": 0,
-        "scenes": [{"nodes": [0]}],
-        "nodes": [{"mesh": 0}],
-        "meshes": [{"primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}],
-        "buffers": [{"byteLength": buf.len(),
-            "uri": format!("data:application/octet-stream;base64,{}", base64(&buf))}],
-        "bufferViews": [
-            {"buffer": 0, "byteOffset": 0, "byteLength": pos_len, "target": 34962},
-            {"buffer": 0, "byteOffset": pos_len, "byteLength": idx_len, "target": 34963}],
-        "accessors": [
-            {"bufferView": 0, "componentType": 5126, "count": g.n_points(), "type": "VEC3", "min": lo, "max": hi},
-            {"bufferView": 1, "componentType": 5125, "count": tris.len() * 3, "type": "SCALAR"}],
-    })
-    .to_string()
+    doc.to_string()
 }
 
 // ---- native binary format (used by the persistent cook cache) ----
@@ -215,9 +195,11 @@ pub fn from_bytes(b: &[u8]) -> Result<Geometry, String> {
 /// Parse a Wavefront OBJ (vertices and faces; texture/normal indices are ignored).
 pub fn load_obj(text: &str) -> Result<Geometry, String> {
     let (mut pts, mut polys): (Vec<[f32; 3]>, Vec<Vec<u32>>) = (vec![], vec![]);
+    let (mut current, mut poly_mat): (Option<String>, Vec<Option<String>>) = (None, vec![]);
     for (ln, line) in text.lines().enumerate() {
         let mut it = line.split_whitespace();
         match it.next() {
+            Some("usemtl") => current = it.next().filter(|n| *n != "none").map(crate::gltf::material_identifier),
             Some("v") => {
                 let v: Vec<f32> = it.take(3).map(|s| s.parse::<f32>().map_err(|_| format!("line {}: bad vertex", ln + 1))).collect::<Result<_, _>>()?;
                 if v.len() != 3 {
@@ -237,17 +219,23 @@ pub fn load_obj(text: &str) -> Result<Geometry, String> {
                 }
                 if poly.len() >= 3 {
                     polys.push(poly);
+                    poly_mat.push(current.clone());
                 }
             }
             _ => {}
         }
     }
-    Ok(Geometry::from_polys(pts, &polys))
+    let mut g = Geometry::from_polys(pts, &polys);
+    let names: std::collections::BTreeSet<&String> = poly_mat.iter().flatten().collect();
+    for n in names {
+        g.prim_groups.insert(format!("{}{n}", crate::geo::MATERIAL_PREFIX), Arc::new(poly_mat.iter().map(|m| m.as_ref() == Some(n)).collect()));
+    }
+    Ok(g)
 }
 
 // ---- USD (ASCII .usda) ----
 
-fn quat_from_cols(m: &crate::math::Mat34) -> ([f32; 4], [f32; 3]) {
+pub(crate) fn quat_from_cols(m: &crate::math::Mat34) -> ([f32; 4], [f32; 3]) {
     // Columns are the scaled basis vectors; remove scale, then convert the rotation to a quaternion.
     let col = |c: usize| [m[c], m[4 + c], m[8 + c]];
     let len = |v: [f32; 3]| (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
@@ -288,13 +276,53 @@ fn usd_mesh(out: &mut String, indent: &str, name: &str, g: &Geometry) {
         let _ = writeln!(out, "{indent}    color3f[] primvars:displayColor = [{}] (interpolation = \"vertex\")", cs.join(", "));
     }
     let _ = writeln!(out, "{indent}    uniform token subdivisionScheme = \"none\"");
+    let mut by_mat: std::collections::BTreeMap<&str, Vec<usize>> = std::collections::BTreeMap::new();
+    for (i, m) in g.prim_materials().into_iter().enumerate() {
+        if let Some(m) = m {
+            by_mat.entry(m).or_default().push(i);
+        }
+    }
+    if !by_mat.is_empty() {
+        let _ = writeln!(out, "{indent}    uniform token subsetFamily:materialBind:type = \"nonOverlapping\"");
+    }
+    for (m, faces) in by_mat {
+        let ids: Vec<String> = faces.iter().map(usize::to_string).collect();
+        let _ = writeln!(out, "{indent}    def GeomSubset \"mat_{m}\" (\n{indent}        prepend apiSchemas = [\"MaterialBindingAPI\"]\n{indent}    )\n{indent}    {{");
+        let _ = writeln!(out, "{indent}        uniform token elementType = \"face\"\n{indent}        uniform token familyName = \"materialBind\"");
+        let _ = writeln!(out, "{indent}        int[] indices = [{}]", ids.join(", "));
+        let _ = writeln!(out, "{indent}        rel material:binding = </World/Materials/{m}>\n{indent}    }}");
+    }
     let _ = writeln!(out, "{indent}}}");
+}
+
+/// A `Materials` scope with one UsdPreviewSurface per material name (grey placeholder; the renderer binds the real set by name).
+fn usd_materials(out: &mut String, names: &std::collections::BTreeSet<String>) {
+    if names.is_empty() {
+        return;
+    }
+    let _ = writeln!(out, "    def Scope \"Materials\"\n    {{");
+    for n in names {
+        let _ = writeln!(out, "        def Material \"{n}\"\n        {{");
+        let _ = writeln!(out, "            custom string proteus:material = \"{n}\"");
+        let _ = writeln!(out, "            token outputs:surface.connect = </World/Materials/{n}/Preview.outputs:surface>");
+        let _ = writeln!(out, "            def Shader \"Preview\"\n            {{");
+        let _ = writeln!(out, "                uniform token info:id = \"UsdPreviewSurface\"");
+        let _ = writeln!(out, "                color3f inputs:diffuseColor = (0.8, 0.8, 0.8)");
+        let _ = writeln!(out, "                float inputs:roughness = 0.8");
+        let _ = writeln!(out, "                token outputs:surface\n            }}\n        }}");
+    }
+    let _ = writeln!(out, "    }}");
 }
 
 /// ASCII USD: the base mesh as a `Mesh`, lazy instances as a native `PointInstancer`
 /// (positions/orientations/scales per instance + prototype meshes), so instancing survives export.
 pub fn to_usda(g: &Geometry) -> String {
     let mut s = String::from("#usda 1.0\n(\n    defaultPrim = \"World\"\n    metersPerUnit = 1\n    upAxis = \"Y\"\n    doc = \"exported by proteus\"\n)\n\ndef Xform \"World\"\n{\n");
+    let mut names: std::collections::BTreeSet<String> = g.material_names().into_iter().collect();
+    for p in g.instances.iter().flat_map(|i| i.protos.iter()) {
+        names.extend(p.realize().material_names());
+    }
+    usd_materials(&mut s, &names);
     if g.n_prims() > 0 {
         usd_mesh(&mut s, "    ", "Geometry", g);
     }
@@ -345,6 +373,33 @@ mod usd_tests {
                 assert!((rot[r][c] - m[r * 4 + c] / 2.0).abs() < 1e-4, "R[{r}][{c}]");
             }
         }
+    }
+
+    fn painted_quad_pair() -> Geometry {
+        let mut g = Geometry::from_polys(vec![[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [2.0, 0.0, 0.0], [2.0, 1.0, 0.0]], &[vec![0, 1, 2, 3], vec![1, 4, 5, 2]]);
+        g.assign_material("stone", &[true, false]);
+        g.assign_material("grass", &[false, true]);
+        g
+    }
+
+    #[test]
+    fn usda_binds_materials_by_name_with_geom_subsets() {
+        let u = to_usda(&painted_quad_pair());
+        assert!(u.contains("def Material \"stone\"") && u.contains("def Material \"grass\""));
+        assert_eq!(u.matches("def GeomSubset").count(), 2);
+        assert!(u.contains("rel material:binding = </World/Materials/stone>") && u.contains("int[] indices = [1]"));
+        assert!(u.contains("subsetFamily:materialBind:type = \"nonOverlapping\""));
+        assert_eq!(u.matches('{').count(), u.matches('}').count(), "balanced braces");
+        assert!(!to_usda(&Geometry::new()).contains("Materials"), "no materials, no scope");
+    }
+
+    #[test]
+    fn obj_writes_usemtl_and_reads_it_back() {
+        let o = to_obj(&painted_quad_pair());
+        assert_eq!(o.matches("usemtl").count(), 2);
+        let back = load_obj(&o).unwrap();
+        assert_eq!(back.material_names(), ["grass", "stone"]);
+        assert_eq!(back.prim_materials(), vec![Some("stone"), Some("grass")]);
     }
 
     #[test]

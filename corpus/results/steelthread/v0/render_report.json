@@ -1,0 +1,133 @@
+{
+ "blender": "4.5.14 LTS",
+ "warnings": [],
+ "device": "OPTIX",
+ "samples": 128,
+ "resolution": [
+  1600,
+  900
+ ],
+ "objects": 4374,
+ "unique_meshes": 16,
+ "materials": {
+  "terrain_blend": {
+   "resolved": true,
+   "textured": true,
+   "layered": [
+    "ground_flat",
+    "ground_forest",
+    "ground_dirt",
+    "ground_gravel",
+    "ground_rock",
+    "ground_snow"
+   ],
+   "triangles": 405000
+  },
+  "jacaranda_tree__jacaranda_tree_branches": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 567622846
+  },
+  "jacaranda_tree__jacaranda_tree_leaves": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 1107522074
+  },
+  "jacaranda_tree__jacaranda_tree_trunk": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 106081632
+  },
+  "fern_02__fern_02": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 2056688
+  },
+  "shrub_04__shrub_04": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 14838561
+  },
+  "flower_empodium__flower_empodium": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 200870
+  },
+  "weed_plant_02__weed_plant_02": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 2027188
+  },
+  "nettle_plant__nettle_plant": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 1002320
+  },
+  "rock_moss_set_01__rock_moss_set_01": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 3211418
+  },
+  "rock_moss_set_02__rock_moss_set_02": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 1128842
+  },
+  "dead_tree_trunk__dead_tree_trunk": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 4275684
+  },
+  "tree_stump_01__tree_stump_01": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 2011254
+  },
+  "pine_sapling_small__pine_sapling_small_bark": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 38016
+  },
+  "pine_sapling_small__pine_sapling_small_twig": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 9777672
+  }
+ },
+ "triangles": 1822200065,
+ "material_coverage": 1.0,
+ "unresolved": [],
+ "sky": "nishita",
+ "frames": [
+  {
+   "name": "hero",
+   "file": "D:\\Fekri\\Houdini-clone\\out\\steelthread\\v0\\frame_hero.png",
+   "seconds": 23.98
+  },
+  {
+   "name": "valley",
+   "file": "D:\\Fekri\\Houdini-clone\\out\\steelthread\\v0\\frame_valley.png",
+   "seconds": 20.9
+  },
+  {
+   "name": "eye",
+   "file": "D:\\Fekri\\Houdini-clone\\out\\steelthread\\v0\\frame_eye.png",
+   "seconds": 23.21
+  }
+ ],
+ "total_seconds": 78.54
+}

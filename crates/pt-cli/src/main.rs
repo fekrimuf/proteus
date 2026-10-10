@@ -165,6 +165,8 @@ fn main() {
         Some("recipes") => recipes_cmd(&args[2..]),
         Some("recipes-accept") => recipes_accept_cmd(&args[2..]),
         Some("shot") => shot_cmd(&args[2..]),
+        Some("render-scene") => pt_cli::blender::render_scene_cmd(&args[2..]),
+        Some("scorecard") => pt_cli::scorecard::scorecard_cmd(&args[2..]),
         Some("gym") => {
             gym::serve();
             Ok(())

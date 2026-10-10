@@ -1,0 +1,29 @@
+{
+ "version": 1,
+ "note": "Material NAME -> CC0 PBR set (Poly Haven, 1k). A recipe says set_material(name=\"rock_cliff\"); the Blender render (corpus/tools/render_scene.py) binds the set with box (triplanar) projection, so no UVs are needed. scale_m = real-world size of one texture tile in metres (from the Poly Haven info endpoint). fallback = flat base colour when the files are not on disk. Files live in $PT_CORPUS/polyhaven/materials/<id>/ and are fetched by `pt corpus fetch corpus/materials_manifest.json` (ledger rows, CC0 only). Procedural replacements fitted to these scans come later (PRO_QUALITY_PLAN B12.2 step 4, B15a).",
+ "materials": {
+  "rock_boulder":     {"polyhaven": "rock_boulder_cracked",   "scale_m": 1.39, "bump": 0.8, "fallback": [0.42, 0.37, 0.32], "roughness": 0.85},
+  "rock_cliff":       {"polyhaven": "rock_face_03",           "scale_m": 2.70, "bump": 0.8, "fallback": [0.45, 0.42, 0.40], "roughness": 0.9},
+  "rock_mossy":       {"polyhaven": "mossy_rock",             "scale_m": 3.00, "bump": 0.8, "fallback": [0.30, 0.34, 0.24], "roughness": 0.9},
+  "grass":            {"polyhaven": "grass_path_2",           "scale_m": 1.00, "bump": 0.3, "fallback": [0.22, 0.34, 0.12], "roughness": 0.95},
+  "grass_lush":       {"polyhaven": "leafy_grass",            "scale_m": 2.00, "bump": 0.3, "fallback": [0.18, 0.32, 0.10], "roughness": 0.95},
+  "forest_floor":     {"polyhaven": "forrest_ground_01",      "scale_m": 2.00, "bump": 0.5, "fallback": [0.26, 0.20, 0.12], "roughness": 0.95},
+  "dirt":             {"polyhaven": "brown_mud_dry",          "scale_m": 1.30, "bump": 0.5, "fallback": [0.34, 0.25, 0.17], "roughness": 0.95},
+  "sand":             {"polyhaven": "sand_01",                "scale_m": 1.50, "bump": 0.3, "fallback": [0.70, 0.60, 0.42], "roughness": 0.95},
+  "snow":             {"polyhaven": "snow_02",                "scale_m": 2.00, "bump": 0.2, "fallback": [0.90, 0.92, 0.95], "roughness": 0.7},
+  "gravel":           {"polyhaven": "gravelly_sand",          "scale_m": 2.48, "bump": 0.6, "fallback": [0.45, 0.40, 0.34], "roughness": 0.95},
+  "cobblestone":      {"polyhaven": "cobblestone_floor_04",   "scale_m": 1.50, "bump": 0.8, "fallback": [0.38, 0.37, 0.34], "roughness": 0.85},
+  "wood_planks":      {"polyhaven": "weathered_brown_planks", "scale_m": 1.80, "bump": 0.5, "fallback": [0.30, 0.20, 0.12], "roughness": 0.8},
+  "bark":             {"polyhaven": "bark_brown_02",          "scale_m": 1.00, "bump": 0.9, "fallback": [0.22, 0.16, 0.11], "roughness": 0.9},
+  "brick_red":        {"polyhaven": "red_brick_03",           "scale_m": 1.00, "bump": 0.6, "fallback": [0.50, 0.22, 0.16], "roughness": 0.85},
+  "stone_blocks":     {"polyhaven": "castle_wall_slates",     "scale_m": 2.50, "bump": 0.8, "fallback": [0.40, 0.38, 0.35], "roughness": 0.9},
+  "stone_blocks_light": {"polyhaven": "sandstone_blocks_05",  "scale_m": 3.00, "bump": 0.7, "fallback": [0.62, 0.55, 0.43], "roughness": 0.9},
+  "plaster":          {"polyhaven": "painted_plaster_wall",   "scale_m": 2.00, "bump": 0.4, "fallback": [0.70, 0.66, 0.58], "roughness": 0.9},
+  "plaster_smooth":   {"polyhaven": "beige_wall_001",         "scale_m": 3.00, "bump": 0.2, "fallback": [0.72, 0.66, 0.55], "roughness": 0.85},
+  "roof_clay":        {"polyhaven": "roof_09",                "scale_m": 4.00, "bump": 0.7, "fallback": [0.45, 0.20, 0.13], "roughness": 0.8},
+  "roof_slate":       {"polyhaven": "roof_slates_03",         "scale_m": 3.00, "bump": 0.6, "fallback": [0.22, 0.23, 0.25], "roughness": 0.7},
+  "metal_plate":      {"polyhaven": "metal_plate",            "scale_m": 0.50, "bump": 0.4, "fallback": [0.45, 0.46, 0.48], "roughness": 0.5, "metallic": 1.0},
+  "metal_rust":       {"polyhaven": "rusty_metal_02",         "scale_m": 1.00, "bump": 0.5, "fallback": [0.40, 0.22, 0.14], "roughness": 0.7, "metallic": 0.6},
+  "concrete":         {"polyhaven": "concrete_floor_02",      "scale_m": 2.00, "bump": 0.4, "fallback": [0.52, 0.52, 0.50], "roughness": 0.9}
+ }
+}

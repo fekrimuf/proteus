@@ -1,0 +1,10 @@
+; Proteus engine referee: a minimal Godot project whose scripts load a delivered glTF/GLB headlessly, count what the engine
+; actually got, bake a navigation mesh over the terrain and (windowed) measure the frame rate. Run via `pt referee`.
+config_version=5
+
+[application]
+config/name="proteus-referee"
+config/features=PackedStringArray("4.7")
+
+[rendering]
+renderer/rendering_method="forward_plus"

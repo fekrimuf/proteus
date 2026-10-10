@@ -49,7 +49,7 @@ fn tool_defs() -> Value {
         t("validate", "Cook a node and check it: NaNs, bad indices, degenerate faces, non-manifold edges, scale sanity, instances. Each issue has a fix hint.", json!({"node": str_()}), json!(["node"])),
         t("explain", "Which node created point/primitive/instance #index of a node's output, and the path to it (needs provenance on).", json!({"node": str_(), "domain": str_(), "index": {"type": "integer"}}), json!(["node", "domain", "index"])),
         t("render_preview", "Render a PNG preview you can look at. mode: shaded|wire|height|<attribute name>; sheet=true gives 4 views. Large instance sets are subsampled (reported).", json!({"node": str_(), "mode": str_(), "azimuth": {"type": "number"}, "elevation": {"type": "number"}, "width": {"type": "integer"}, "height": {"type": "integer"}, "sheet": {"type": "boolean"}, "path": str_()}), json!(["node"])),
-        t("export", "Cook a node and write it to disk. format: obj | gltf | usda (USD with native PointInstancer) | ptgeo.", json!({"node": str_(), "path": str_(), "format": str_()}), json!(["node", "path"])),
+        t("export", "Cook a node and write it to disk. format: obj | gltf | glb | usda (USD with native PointInstancer) | ptgeo. Material names from set_material are kept (glTF materials, USD GeomSubset bindings, OBJ usemtl); instances stay instances.", json!({"node": str_(), "path": str_(), "format": str_()}), json!(["node", "path"])),
         t("run_hcs", "Run an hcs program (Python syntax; see get_guide). Replaces the scene unless replace=false; a failed run changes nothing. Returns outputs' stats, flow diagnostics, spec results.", json!({"code": str_(), "replace": {"type": "boolean"}}), json!(["code"])),
         t("check_hcs", "Statically check an hcs program WITHOUT changing the scene or cooking: syntax, names, parameters and attribute flow, with line numbers and fixes.", json!({"code": str_()}), json!(["code"])),
         t("graph_to_hcs", "Print the current graph as an hcs program (round-trips).", json!({}), json!([])),
@@ -64,6 +64,7 @@ fn tool_defs() -> Value {
         t("fit_wrangle", "Differentiable fit: tune a point wrangle's `channels` by gradient descent (forward-mode autodiff, <=8 channels) so its output attribute matches the same attribute on target_node (same point count). The fitted channels are applied.", json!({"node": str_(), "attr": str_(), "component": {"type": "integer"}, "target_node": str_(), "steps": {"type": "integer"}, "lr": {"type": "number"}}), json!(["node", "attr", "target_node"])),
         t("render_final", "Path-traced render (sun + sky + ground, soft shadows, glossy coat) for lookdev and final stills. turntable>1 renders that many azimuths into one sheet. Deterministic: same inputs, same pixels. Quality scales with spp (try 16 for drafts, 64+ for finals).", json!({"node": str_(), "width": {"type": "integer"}, "height": {"type": "integer"}, "spp": {"type": "integer"}, "azimuth": {"type": "number"}, "elevation": {"type": "number"}, "sun_azimuth": {"type": "number"}, "sun_elevation": {"type": "number"}, "sun_intensity": {"type": "number"}, "ground": {"type": "boolean"}, "roughness": {"type": "number"}, "turntable": {"type": "integer"}, "mode": str_(), "path": str_()}), json!(["node"])),
         t("render_compare", "Render 2-4 nodes side by side under ONE shared camera (framed on the first node, or on all nodes with frame=\"union\") so differences in size, proportion and count are visible. Cells go left-to-right, top-to-bottom in the order given; the result lists each node's true size in meters. Use it to compare variants or a result against a target.", json!({"nodes": {"type": "array", "items": {"type": "string"}}, "frame": str_(), "mode": str_(), "azimuth": {"type": "number"}, "elevation": {"type": "number"}, "path": str_()}), json!(["nodes"])),
+        t("render_scene", "Photographic render of a node with Blender Cycles (about 10 s on the GPU): real sky and sun, shadows, haze, and your material NAMES (set_material) bound to CC0 PBR sets (names listed in get_guide, section 'Materials, light and photographic renders'; unknown names get a flat colour and are reported). `scene` is the description (object, or a path to a .json): lighting {sky:'nishita'|'hdri'|'flat', sun_elevation, sun_azimuth, fog_density...}, camera {location, look_at, lens} or {eye:{at:[x,z], height, yaw}} or `cameras` (a list, each with a name), render {samples, resolution, exposure}, ground, materials overrides. Empty scene = framed 3/4 view in daylight. Returns the first frame as a picture plus the report: frames, triangles, material_coverage, unresolved and unknown materials, warnings. quick=true renders at quarter samples and half size.", json!({"node": str_(), "scene": {}, "quick": {"type": "boolean"}, "samples": {"type": "integer"}, "lod": {"type": "boolean"}, "path": str_()}), json!(["node"])),
         t("critique", "Image-hygiene check of a node's render (framing, centering, contrast, clipping, detail) with a pass/fail rubric. It does NOT judge whether the model matches the brief (measured: chance-level agreement with spec results, see gym/critique_experiment.json); use spec(...) for that and render_compare to look. With a reference PNG it adds SSIM/PSNR/MSE.", json!({"node": str_(), "reference": str_(), "azimuth": {"type": "number"}, "elevation": {"type": "number"}}), json!(["node"])),
         t("list_recipes","List built-in example recipes (hcs programs with specs).", json!({}), json!([])),
         t("get_recipe", "Return a recipe's hcs source.", json!({"name": str_()}), json!(["name"])),
@@ -386,16 +387,33 @@ impl Session {
                 }
                 Ok(Out::Image { png, meta })
             }
+            "render_scene" => {
+                let node = s(a, "node")?;
+                let geo = self.graph.cook(node)?;
+                let scene = match a.get("scene") {
+                    None | Some(Value::Null) => json!({}),
+                    Some(Value::String(p)) => serde_json::from_str(std::fs::read_to_string(p).map_err(|e| format!("{p}: {e}"))?.trim_start_matches('\u{feff}')).map_err(|e| format!("{p}: {e}"))?,
+                    Some(v) if v.is_object() => v.clone(),
+                    Some(_) => return Err("scene must be an object or a path to a .json file".into()),
+                };
+                let out = std::path::PathBuf::from(a.get("path").and_then(Value::as_str).map_or_else(|| format!("out/render/mcp_{node}.png"), String::from));
+                let opts = crate::blender::Opts { quick: a.get("quick").and_then(Value::as_bool).unwrap_or(false), samples: a.get("samples").and_then(Value::as_u64).map(|n| n as u32), keep: None, lod: a.get("lod").and_then(Value::as_bool).unwrap_or(false) };
+                let report = crate::blender::render_geometry(&geo, &format!("mcp_{node}"), scene, &out, &opts)?;
+                let first = report.pointer("/frames/0/file").and_then(Value::as_str).ok_or("Blender reported no frames")?;
+                let png = std::fs::read(first).map_err(|e| format!("{first}: {e}"))?;
+                Ok(Out::Image { png, meta: report })
+            }
             "export" => {
                 let geo = self.graph.cook(s(a, "node")?)?;
                 let path = s(a, "path")?;
-                let fmt = a.get("format").and_then(Value::as_str).unwrap_or(if path.ends_with(".gltf") { "gltf" } else if path.ends_with(".ptgeo") { "ptgeo" } else if path.ends_with(".usda") || path.ends_with(".usd") { "usda" } else { "obj" });
+                let fmt = a.get("format").and_then(Value::as_str).unwrap_or(if path.ends_with(".glb") { "glb" } else if path.ends_with(".gltf") { "gltf" } else if path.ends_with(".ptgeo") { "ptgeo" } else if path.ends_with(".usda") || path.ends_with(".usd") { "usda" } else { "obj" });
                 let data: Vec<u8> = match fmt {
                     "obj" => pt_core::io::to_obj(&geo).into_bytes(),
                     "gltf" => pt_core::io::to_gltf(&geo).into_bytes(),
+                    "glb" => pt_core::gltf::to_glb(&geo),
                     "ptgeo" => pt_core::io::to_bytes(&geo),
                     "usda" => pt_core::io::to_usda(&geo).into_bytes(),
-                    f => return Err(format!("unknown format '{f}' (use obj, gltf, usda or ptgeo)")),
+                    f => return Err(format!("unknown format '{f}' (use obj, gltf, glb, usda or ptgeo)")),
                 };
                 std::fs::write(path, data).map_err(|e| e.to_string())?;
                 j(json!({"written": path, "stats": geo.stats()}))

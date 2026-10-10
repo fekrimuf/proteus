@@ -60,6 +60,17 @@ pub fn schemas() -> Vec<NodeSchema> {
             ps("expression", json!("@P.y > 0.0"), "Expression evaluated per point."),
             ps("channels", json!({}), "Named numbers for ch()."),
         ]),
+        sch("set_material", "Bind a material NAME to primitives (all, or a group). The name travels through glTF/USD/OBJ export (glTF material name, USD GeomSubset binding, OBJ usemtl) and the Blender render binds a CC0 PBR set to it by name (corpus/materials/library.json); nothing here needs UVs. A primitive has one material, the latest set_material wins. Stored as prim groups `mat:<name>`; also reaches instance prototypes, so set it on the prototype before copy_to_points.", 1, D::None, G::Whole, vec![
+            ps("name", json!("stone"), "Material name: letters, digits, underscore, starting with a letter (e.g. rock_granite, grass, wood_planks)."),
+            ps("group", json!(""), "Group to bind; empty = every primitive."),
+            ps("class", json!("prim"), "Class of `group`: prim | point (a primitive is selected when all of its points are in the point group)."),
+        ]),
+        sch("blend_materials", "Soft material layers on one surface (terrain, roads, shores). Reads per-point float attributes `w_<layer>` (0..1; write them with a wrangle from slope, height, noise or any mask), normalises them per point, and binds ONE layered material `name` whose looks come from the layers' roles (the style maps each role to a library material). Up to 8 layers. Missing weights count as 0; where all are 0 the first layer wins. Exports as `_WEIGHTS_0/_1` vertex attributes (the Blender render mixes the layers' textures by them) and adds planar UVs `uv` over the footprint if there are none (the engine export bakes the layered material into textures through them).", 1, D::None, G::Whole, vec![
+            ps("name", json!("terrain_blend"), "Name of the layered material (letters, digits, underscore)."),
+            ps("layers", json!("ground_flat ground_rock"), "Layer roles, space or comma separated, 2 to 8 (e.g. \"ground_flat ground_forest ground_rock ground_snow\")."),
+            ps("group", json!(""), "Prim or point group to bind (empty = every primitive); weights are written for all points."),
+            ps("class", json!("prim"), "Class of `group`: prim | point."),
+        ]),
         sch("blast", "Delete a group of points or prims (or everything else with keep_selected=1).", 1, D::None, G::Whole, vec![
             ps("group", json!("group1"), "Group name."),
             ps("class", json!("point"), "point | prim."),
@@ -85,6 +96,8 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Option<Res> {
         "attrib_remap" => inp(0).and_then(|g| attrib_remap(g, p)),
         "group_by_range" => inp(0).and_then(|g| group_by_range(g, p)),
         "group_by_expression" => inp(0).and_then(|g| group_by_expression(g, p)),
+        "set_material" => inp(0).and_then(|g| set_material(g, p)),
+        "blend_materials" => inp(0).and_then(|g| blend_materials(g, p)),
         "blast" => inp(0).and_then(|g| blast(g, p)),
         "measure" => inp(0).map(measure),
         "attribute_transfer" => inp(0).and_then(|a| inp(1).and_then(|b| attribute_transfer(a, b, p))),
@@ -293,6 +306,93 @@ fn group_by_expression(src: &Geometry, p: &Params) -> Res {
     let mut g = src.clone();
     g.point_groups.insert(p.s("name"), Arc::new(bits));
     Ok(g)
+}
+
+/// Which primitives a node with `group`/`class` params acts on (all of them when `group` is empty).
+fn select_prims(src: &Geometry, p: &Params, who: &str) -> Result<Vec<bool>, String> {
+    let n = src.n_prims();
+    let group = p.s("group");
+    if group.is_empty() {
+        return Ok(vec![true; n]);
+    }
+    if class_is_prim(p)? {
+        Ok(src.prim_groups.get(&group).ok_or_else(|| format!("{who}: prim group '{group}' does not exist (available: {:?})", src.prim_groups.keys().collect::<Vec<_>>()))?.to_vec())
+    } else {
+        let bits = src.point_groups.get(&group).ok_or_else(|| format!("{who}: point group '{group}' does not exist (available: {:?})", src.point_groups.keys().collect::<Vec<_>>()))?;
+        Ok((0..n).map(|i| !src.prim_points(i).is_empty() && src.prim_points(i).iter().all(|&q| bits[q as usize])).collect())
+    }
+}
+
+fn set_material(src: &Geometry, p: &Params) -> Res {
+    let name = p.s("name");
+    if !pt_core::geo::valid_material_name(&name) {
+        return Err(format!("set_material: '{name}' is not a valid material name (letters, digits and underscore, starting with a letter, at most 64 characters), e.g. \"rock_granite\""));
+    }
+    let sel = select_prims(src, p, "set_material")?;
+    let mut g = src.clone();
+    g.assign_material(&name, &sel);
+    if p.s("group").is_empty() {
+        set_material_in_protos(&mut g, &name); // "every primitive" includes the ones inside instance prototypes
+    }
+    Ok(g)
+}
+
+/// Layered material: per-point weights `w_<layer>` packed into two V4 columns (`Wt0`: layers 0-3, `Wt1`: layers 4-7).
+fn blend_materials(src: &Geometry, p: &Params) -> Res {
+    let name = p.s("name");
+    if !pt_core::geo::valid_material_name(&name) {
+        return Err(format!("blend_materials: '{name}' is not a valid material name (letters, digits and underscore, starting with a letter)"));
+    }
+    let layers: Vec<String> = p.s("layers").split([',', ' ']).filter(|s| !s.is_empty()).map(String::from).collect();
+    if layers.len() < 2 || layers.len() > 8 {
+        return Err(format!("blend_materials: give 2 to 8 layer roles in `layers`, got {}", layers.len()));
+    }
+    if let Some(bad) = layers.iter().find(|l| !pt_core::geo::valid_material_name(l)) {
+        return Err(format!("blend_materials: layer '{bad}' is not a valid role name (letters, digits and underscore)"));
+    }
+    let np = src.n_points();
+    let cols: Vec<Option<&[f32]>> = layers.iter().map(|l| src.point.get(&format!("w_{l}")).and_then(Column::as_f32)).collect();
+    if cols.iter().all(Option::is_none) {
+        return Err(format!("blend_materials: none of the weight attributes exist (looked for {}); write them with a wrangle, e.g. @w_{} = smoothstep(30.0, 40.0, @slope_deg);", layers.iter().map(|l| format!("w_{l}")).collect::<Vec<_>>().join(", "), layers[0]));
+    }
+    let mut w = vec![[[0.0f32; 4]; 2]; np];
+    for (i, wi) in w.iter_mut().enumerate() {
+        let raw: Vec<f32> = cols.iter().map(|c| c.map_or(0.0, |c| c[i].max(0.0))).collect();
+        let sum: f32 = raw.iter().sum();
+        for (k, r) in raw.iter().enumerate() {
+            wi[k / 4][k % 4] = if sum > 1e-6 { r / sum } else if k == 0 { 1.0 } else { 0.0 };
+        }
+    }
+    let mut g = src.clone();
+    g.point.set("Wt0", Column::V4(Arc::new(w.iter().map(|x| x[0]).collect())));
+    if layers.len() > 4 {
+        g.point.set("Wt1", Column::V4(Arc::new(w.iter().map(|x| x[1]).collect())));
+    } else {
+        g.point.remove("Wt1");
+    }
+    let sel = select_prims(src, p, "blend_materials")?;
+    g.assign_material(&name, &sel);
+    g.detail.insert(format!("layers:{name}"), json!(layers));
+    // planar UVs over the footprint: layered materials are baked to textures for engines, and baking needs UVs
+    if !matches!(g.point.get("uv"), Some(Column::V2(c)) if c.len() == np) {
+        if let Some((lo, hi)) = g.base_bounds() {
+            let (sx, sz) = ((hi[0] - lo[0]).max(1e-6), (hi[2] - lo[2]).max(1e-6));
+            g.point.set("uv", Column::V2(Arc::new(g.p().iter().map(|q| [(q[0] - lo[0]) / sx, (q[2] - lo[2]) / sz]).collect())));
+        }
+    }
+    Ok(g)
+}
+
+fn set_material_in_protos(g: &mut Geometry, name: &str) {
+    if let Some(inst) = g.instances.as_mut() {
+        for proto in inst.protos.iter_mut() {
+            let mut pp = (**proto).clone();
+            let all = vec![true; pp.n_prims()];
+            pp.assign_material(name, &all);
+            set_material_in_protos(&mut pp, name);
+            *proto = Arc::new(pp);
+        }
+    }
 }
 
 fn blast(src: &Geometry, p: &Params) -> Res {

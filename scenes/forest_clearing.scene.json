@@ -1,0 +1,10 @@
+{
+ "render": {"samples": 96, "resolution": [1280, 720], "exposure": 0.0},
+ "lighting": {"sky": "nishita", "sun_elevation": 32, "sun_azimuth": 140, "fog_density": 0.00018, "fog_height": 150, "fog_color": [0.75, 0.82, 0.95]},
+ "cameras": [
+   {"name": "eye", "eye": {"at": [-14, 12], "height": 1.7, "yaw": -35, "pitch": 3}, "lens": 28},
+   {"name": "over", "location": [40, 22, 40], "look_at": [0, 1, 0], "lens": 35}
+ ],
+ "ground": {"material": "grass_lush"},
+ "materials": {"grass_lush": {"tint": [0.45, 0.7, 0.4]}}
+}
