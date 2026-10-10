@@ -1,0 +1,4 @@
+# Strong crate: a cube.
+S = 0.6          # edge length
+crate = box(size=[S, S, S], center=[0, S / 2, 0])
+out(crate)

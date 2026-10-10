@@ -1,0 +1,17 @@
+# Bunk bed: four tall corner posts, two decks, and a guard rail along the top deck.
+W = 0.56988         # width (x)
+L = 1.09571        # length (z)
+H = 0.85154         # post height
+POST = 0.03736      # post section
+DECK_T = 0.16314    # deck thickness
+LOW = 0.14494        # centre height of the lower deck
+HIGH = 0.68766      # centre height of the upper deck
+
+post = box(size=[POST, H, POST], center=[POST / 2, H / 2, -POST / 2])
+posts = mirror(mirror(post, axis="x", offset=W / 2), axis="z", offset=-L / 2)
+deck = box(size=[W - 0.02921, DECK_T, L - 0.03915], center=[W / 2, LOW, -L / 2])
+decks = array(deck, count=2, offset=[0, HIGH - LOW, 0])
+rail = box(size=[0.03, 0.03, L], center=[0.025, 0.82, -L / 2])
+rails = mirror(rail, axis="x", offset=W / 2)
+bunk = merge(posts, decks, rails)
+out(bunk)

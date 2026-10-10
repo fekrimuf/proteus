@@ -1,0 +1,15 @@
+# Gatehouse arch: two pillars with stepped inner edges (the arch), and a solid top block.
+W = 0.92078         # overall width and depth
+PILLAR_H = 0.64226  # height of the pillars
+PILLAR_W = 0.12743  # pillar thickness at the bottom
+TOP_H = 0.4833     # height of the top block
+
+pillar = box(size=[PILLAR_W, PILLAR_H, 0.86366], center=[0.40222, PILLAR_H / 2, 0])
+pillars = mirror(pillar, axis="x", offset=0)
+step_a = box(size=[0.16, 0.11445, 0.76152], center=[0.39468, 0.43786, 0])
+step_b = box(size=[0.21655, 0.07265, 0.8738], center=[0.39145, 0.52715, 0])
+step_c = box(size=[0.38404, 0.117, 0.83793], center=[0.2764, 0.63492, 0])
+steps = mirror(merge(step_a, step_b, step_c), axis="x", offset=0)
+top = box(size=[W, TOP_H, W], center=[0, PILLAR_H + TOP_H / 2, 0])
+gatehouse = merge(pillars, steps, top)
+out(gatehouse)

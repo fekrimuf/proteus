@@ -1,0 +1,12 @@
+# Wooden table: a thick top on four square legs (one leg mirrored in both directions).
+W = 1.1416         # top width (x)
+D = 0.68546         # top depth (z)
+H = 0.80715          # overall height
+TOP_T = 0.12369     # top thickness (includes the apron)
+LEG = 0.06813       # leg section
+
+top = box(size=[W, TOP_T, D], center=[0, H - TOP_T / 2, 0])
+leg = box(size=[LEG, H - TOP_T, LEG], center=[0.47401, (H - TOP_T) / 2, 0.25611])
+legs = mirror(mirror(leg, axis="x", offset=0), axis="z", offset=0)
+table = merge(top, legs)
+out(table)

@@ -1,0 +1,17 @@
+# kenney/castle-kit/tower-square (llm-recipe, run llm)
+# Square tower: flared base, narrower waist, top band and four corner merlons.
+S = 0.98946          # footprint
+BASE_H = 0.44384    # flared base
+WAIST_H = 0.62014   # narrower middle
+WAIST = 0.9299     # waist width
+BAND_H = 0.18141    # top band
+MERLON_H = 0.05217  # crenellation height
+MERLON = 0.299    # merlon footprint
+
+base = box(size=[S + -0.03342, BASE_H, S + 0.00796], center=[0, BASE_H / 2, 0])
+waist = box(size=[WAIST, WAIST_H, WAIST], center=[0, BASE_H + WAIST_H / 2, 0])
+band = box(size=[S + 0.01932, BAND_H, S + 0.01373], center=[0, BASE_H + WAIST_H + BAND_H / 2, 0])
+merlon = box(size=[MERLON, MERLON_H, MERLON], center=[0.35686, BASE_H + WAIST_H + BAND_H + MERLON_H / 2, 0.3515])
+merlons = mirror(mirror(merlon, axis="x", offset=0), axis="z", offset=0)
+tower = merge(base, waist, band, merlons)
+out(tower)

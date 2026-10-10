@@ -1,0 +1,8 @@
+# Gable roof: a triangular prism (a three-sided tube lying along x, scaled to the roof's height and width).
+R = 0.37784          # radius of the three-sided tube before scaling
+SX = 1.00809        # scale of the apex direction (height)
+SZ = 1.75417        # scale across the roof (width)
+L = 0.94958          # length along the ridge
+
+roof = transform(tube(radius=R, height=L, cols=3), t=[0, 0.62841 - R * SX, 0], r=[0, 0, 90.31215], s=[SX, 1.06575, SZ])
+out(roof)

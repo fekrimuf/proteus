@@ -1,0 +1,4 @@
+# kenney/survival-kit/rock-a (llm-recipe, run llm)
+# Rock: one squashed ellipsoid sitting on the ground.
+rock = transform(sphere(radius=0.47826, rows=8, cols=12), t=[-0.04964, 0.24257, 0.02123], s=[0.7215, 0.46782, 0.434])
+out(rock)

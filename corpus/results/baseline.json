@@ -1,0 +1,3508 @@
+{
+  "assets": [
+    {
+      "category": "prop",
+      "cost": {
+        "cpu_seconds": 2.0722272,
+        "evals": 365,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 28,
+      "holdout": true,
+      "id": "kenney/castle-kit/flag",
+      "import": {
+        "diagonal": 0.9733842611312866,
+        "nodes": 1,
+        "parts": 5,
+        "triangles": 144,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "691608b23ac55bd2e36516e26f786f8285ea68e425147fdb9af0b9ad083d460d",
+      "metrics": {
+        "chamfer": 0.006559889193079454,
+        "f_score": 0.9672417284780193,
+        "normal_consistency": 0.4414466576521285,
+        "precision": 0.9763,
+        "recall": 0.95835,
+        "silhouette_iou": 0.7929504446808522,
+        "size_ratio": 0.998070240020752
+      },
+      "metrics_strict": {
+        "chamfer": 0.006470973769531363,
+        "f_score": 0.9691323049938093,
+        "normal_consistency": 0.4411508844920434,
+        "precision": 0.9773,
+        "recall": 0.9611,
+        "silhouette_iou": 0.7982185470780992,
+        "size_ratio": 0.998070240020752
+      },
+      "notes": [
+        "parameter cap 40: dropped primitive 6 (loss +0.0149)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0216)",
+        "76 triangles for a 144-triangle source"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_castle-kit_flag.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 144,
+        "reference_watertight": false,
+        "triangles": 76,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "lighting",
+      "cost": {
+        "cpu_seconds": 3.0811553,
+        "evals": 911,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 39,
+      "holdout": true,
+      "id": "kenney/furniture-kit/lampRoundFloor",
+      "import": {
+        "diagonal": 0.8908070921897888,
+        "nodes": 1,
+        "parts": 2,
+        "triangles": 76,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "4cfb9431b22d6e93d3493541a8a859901a160f67436cb3b00750d7be9e096b8d",
+      "metrics": {
+        "chamfer": 0.004247853061343981,
+        "f_score": 0.9841746030939619,
+        "normal_consistency": 0.5563170588318717,
+        "precision": 0.98355,
+        "recall": 0.9848,
+        "silhouette_iou": 0.9201453825810327,
+        "size_ratio": 1.0046366453170776
+      },
+      "metrics_strict": {
+        "chamfer": 0.004374808252261868,
+        "f_score": 0.9853499365707616,
+        "normal_consistency": 0.5496670968641064,
+        "precision": 0.9856,
+        "recall": 0.9851,
+        "silhouette_iou": 0.9013096386724904,
+        "size_ratio": 1.0046366453170776
+      },
+      "notes": [
+        "parameter cap 40: dropped primitive 3 (loss +0.0068)",
+        "132 triangles for a 76-triangle source",
+        "CMA-ES: loss 0.0930 -> 0.0545 in 911 evaluations"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_lampRoundFloor.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 76,
+        "reference_watertight": true,
+        "triangles": 132,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 5.6438084,
+        "evals": 2071,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 21,
+      "holdout": false,
+      "id": "kenney/furniture-kit/trashcan",
+      "import": {
+        "diagonal": 0.5301132202148438,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 68,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "e4123d0c7af4757086447fc8266f27dc358d371dae85a9a8cbdd3fc62268b00c",
+      "metrics": {
+        "chamfer": 0.0037345074649599687,
+        "f_score": 0.9603841202498699,
+        "normal_consistency": 0.9323169359964663,
+        "precision": 0.94995,
+        "recall": 0.97105,
+        "silhouette_iou": 0.9437383299585911,
+        "size_ratio": 0.9962224364280701
+      },
+      "metrics_strict": {
+        "chamfer": 0.011932446566612657,
+        "f_score": 0.8528741001289718,
+        "normal_consistency": 0.9021965451427785,
+        "precision": 0.8482,
+        "recall": 0.8576,
+        "silhouette_iou": 0.885032735928079,
+        "size_ratio": 0.9962224364280701
+      },
+      "notes": [
+        "52 triangles for a 68-triangle source",
+        "CMA-ES: loss 0.0786 -> 0.0771 in 601 evaluations",
+        "polish: loss 0.3877 -> 0.1374"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_trashcan.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 68,
+        "reference_watertight": true,
+        "triangles": 52,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "plant",
+      "cost": {
+        "cpu_seconds": 19.0517354,
+        "evals": 5012,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 40,
+      "holdout": true,
+      "id": "kenney/nature-kit/cactus_tall",
+      "import": {
+        "diagonal": 0.9135046005249023,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 122,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "291342821fe9203300520273511fe0251d48647f939192e2259a493d658fd531",
+      "metrics": {
+        "chamfer": 0.005455688438208086,
+        "f_score": 0.9308754245245058,
+        "normal_consistency": 0.8218288250107251,
+        "precision": 0.90065,
+        "recall": 0.9632,
+        "silhouette_iou": 0.9077018355095102,
+        "size_ratio": 0.9999191164970398
+      },
+      "metrics_strict": {
+        "chamfer": 0.006882977613129625,
+        "f_score": 0.9227246915918191,
+        "normal_consistency": 0.799479275979839,
+        "precision": 0.88845,
+        "recall": 0.95975,
+        "silhouette_iou": 0.8937367786067858,
+        "size_ratio": 0.9999191164970398
+      },
+      "notes": [
+        "dropped primitive 6 (loss -0.0024)",
+        "216 triangles for a 122-triangle source",
+        "CMA-ES: loss 0.2308 -> 0.1286 in 901 evaluations",
+        "polish: loss 0.3827 -> 0.2027"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_nature-kit_cactus_tall.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 122,
+        "reference_watertight": true,
+        "triangles": 216,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 12.4455726,
+        "evals": 2548,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 32,
+      "holdout": false,
+      "id": "kenney/survival-kit/barrel",
+      "import": {
+        "diagonal": 0.47979214787483215,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 412,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "818f4656793bfe0835ae7495a56c261b6395f104b907663ff7ec2af302ae4dc3",
+      "metrics": {
+        "chamfer": 0.008703004028471404,
+        "f_score": 0.9171389977679787,
+        "normal_consistency": 0.6727384312198506,
+        "precision": 0.88375,
+        "recall": 0.95315,
+        "silhouette_iou": 0.9318474706151422,
+        "size_ratio": 1.0004551410675049
+      },
+      "metrics_strict": {
+        "chamfer": 0.010199039274748134,
+        "f_score": 0.8870554898315587,
+        "normal_consistency": 0.7189614247864609,
+        "precision": 0.8666,
+        "recall": 0.9085,
+        "silhouette_iou": 0.909612497052982,
+        "size_ratio": 1.0004551410675049
+      },
+      "notes": [
+        "dropped primitive 5 (loss -0.0530)",
+        "dropped primitive 11 (loss -0.0218)",
+        "dropped primitive 14 (loss -0.0030)",
+        "dropped primitive 2 (loss +0.0001)",
+        "dropped primitive 13 (loss -0.0002)",
+        "dropped primitive 2 (loss +0.0002)",
+        "dropped primitive 4 (loss +0.0007)",
+        "dropped primitive 2 (loss -0.0010)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0040)",
+        "parameter cap 40: dropped primitive 8 (loss +0.0022)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0049)",
+        "336 triangles for a 412-triangle source",
+        "polish: loss 0.4262 -> 0.2390"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_barrel.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 412,
+        "reference_watertight": true,
+        "triangles": 336,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 5.3060151,
+        "evals": 2108,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 6,
+      "holdout": false,
+      "id": "kenney/survival-kit/box",
+      "import": {
+        "diagonal": 0.4330126941204071,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 124,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "7f645be2da989a2344329b44896d27eced69a8ac6cc027ca1dc4c77e595886bd",
+      "metrics": {
+        "chamfer": 0.00945414949355131,
+        "f_score": 0.9884941206220761,
+        "normal_consistency": 0.9450328709304333,
+        "precision": 0.97725,
+        "recall": 1.0,
+        "silhouette_iou": 0.9423805487828767,
+        "size_ratio": 0.999999463558197
+      },
+      "metrics_strict": {
+        "chamfer": 0.04007262103349801,
+        "f_score": 0.3950840720834651,
+        "normal_consistency": 0.7922526336271578,
+        "precision": 0.38465,
+        "recall": 0.4061,
+        "silhouette_iou": 0.7751710537631418,
+        "size_ratio": 0.999999463558197
+      },
+      "notes": [
+        "12 triangles for a 124-triangle source",
+        "CMA-ES: loss 0.2192 -> 0.0464 in 739 evaluations",
+        "polish: loss 0.3068 -> 0.1631"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_box.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 124,
+        "reference_watertight": true,
+        "triangles": 12,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 9.6472981,
+        "evals": 3206,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 20,
+      "holdout": false,
+      "id": "kenney/survival-kit/bucket",
+      "import": {
+        "diagonal": 0.28005746006965637,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 68,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "4e420efb82ed1d7dfb9dd94a2d4f2bbda57767dba058ccea8bd864ab599de1ab",
+      "metrics": {
+        "chamfer": 0.014408047037962677,
+        "f_score": 0.8837125140924463,
+        "normal_consistency": 0.09615512595493346,
+        "precision": 0.833,
+        "recall": 0.941,
+        "silhouette_iou": 0.9035597818701288,
+        "size_ratio": 0.9995564818382263
+      },
+      "metrics_strict": {
+        "chamfer": 0.01712720724547699,
+        "f_score": 0.857125308911179,
+        "normal_consistency": 0.08756112446319313,
+        "precision": 0.81125,
+        "recall": 0.9085,
+        "silhouette_iou": 0.8847156887078444,
+        "size_ratio": 0.9995564818382263
+      },
+      "notes": [
+        "dropped primitive 5 (loss -0.0118)",
+        "dropped primitive 4 (loss -0.0019)",
+        "dropped primitive 2 (loss -0.0123)",
+        "80 triangles for a 68-triangle source",
+        "CMA-ES: loss 0.2380 -> 0.2243 in 901 evaluations",
+        "polish: loss 0.5271 -> 0.3700"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_bucket.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 68,
+        "reference_watertight": false,
+        "triangles": 80,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "rock",
+      "cost": {
+        "cpu_seconds": 12.3039217,
+        "evals": 3542,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 40,
+      "holdout": true,
+      "id": "kenney/survival-kit/rock-a",
+      "import": {
+        "diagonal": 0.9213038682937622,
+        "nodes": 1,
+        "parts": 4,
+        "triangles": 104,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "8686c3ac9c4456d2cf9390910c08d8475df98b4d782b2e3c1a2d09cbb1fc10b7",
+      "metrics": {
+        "chamfer": 0.00795177169057331,
+        "f_score": 0.9260249844858754,
+        "normal_consistency": 0.6919998680715937,
+        "precision": 0.904,
+        "recall": 0.94915,
+        "silhouette_iou": 0.9047420718236934,
+        "size_ratio": 1.0004618167877197
+      },
+      "metrics_strict": {
+        "chamfer": 0.01147861099985467,
+        "f_score": 0.9241605652068192,
+        "normal_consistency": 0.670478416523582,
+        "precision": 0.8925,
+        "recall": 0.95815,
+        "silhouette_iou": 0.8886440792054591,
+        "size_ratio": 1.0004618167877197
+      },
+      "notes": [
+        "dropped primitive 3 (loss -0.0357)",
+        "dropped primitive 5 (loss -0.0159)",
+        "dropped primitive 3 (loss -0.0286)",
+        "dropped primitive 2 (loss -0.0086)",
+        "dropped primitive 6 (loss -0.0200)",
+        "dropped primitive 7 (loss +0.0000)",
+        "dropped primitive 4 (loss -0.0007)",
+        "168 triangles for a 104-triangle source",
+        "CMA-ES: loss 0.2084 -> 0.1469 in 901 evaluations",
+        "polish: loss 0.4379 -> 0.2496"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_rock-a.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 104,
+        "reference_watertight": true,
+        "triangles": 168,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 2.4172284,
+        "evals": 1256,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 11,
+      "holdout": false,
+      "id": "polyhaven/Barrel_01",
+      "import": {
+        "diagonal": 1.186767578125,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 2682,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "2091e8d7ab3a68ac71039dffaa59ba1fc7193cbfc7f5c1686289dd378ccfbaee",
+      "metrics": {
+        "chamfer": 0.003633876232172444,
+        "f_score": 1.0,
+        "normal_consistency": 0.8830048486054657,
+        "precision": 1.0,
+        "recall": 1.0,
+        "silhouette_iou": 0.9653515033152766,
+        "size_ratio": 0.9974727034568787
+      },
+      "metrics_strict": {
+        "chamfer": 0.007498060272957689,
+        "f_score": 0.9853710414816694,
+        "normal_consistency": 0.876132787322772,
+        "precision": 0.9834,
+        "recall": 0.98735,
+        "silhouette_iou": 0.9401663945930064,
+        "size_ratio": 0.9974727034568787
+      },
+      "notes": [
+        "84 triangles for a 2682-triangle source",
+        "CMA-ES: loss 0.0542 -> 0.0240 in 903 evaluations",
+        "polish: loss 0.0784 -> 0.0770"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_Barrel_01.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "gold",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 2682,
+        "reference_watertight": false,
+        "triangles": 84,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 6.0601828,
+        "evals": 1694,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 6,
+      "holdout": false,
+      "id": "polyhaven/ceramic_vase_02",
+      "import": {
+        "diagonal": 0.43700748682022095,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 11128,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "ae2f6da121d9395ac34317dbf68c4e2ae12f72e59778de2c1a7c7f8eb8719d94",
+      "metrics": {
+        "chamfer": 0.01382894053426265,
+        "f_score": 0.8091845842779242,
+        "normal_consistency": 0.023375616305554285,
+        "precision": 0.8909,
+        "recall": 0.7412,
+        "silhouette_iou": 0.8286313421900229,
+        "size_ratio": 0.9999847412109375
+      },
+      "metrics_strict": {
+        "chamfer": 0.022987757100748265,
+        "f_score": 0.5534852622673435,
+        "normal_consistency": 0.08225811045144218,
+        "precision": 0.7399,
+        "recall": 0.4421,
+        "silhouette_iou": 0.7804443261235536,
+        "size_ratio": 0.9999847412109375
+      },
+      "notes": [
+        "224 triangles for a 11128-triangle source",
+        "CMA-ES: loss 0.3388 -> 0.2899 in 541 evaluations",
+        "polish: loss 0.6468 -> 0.5080"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_ceramic_vase_02.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 11128,
+        "reference_watertight": true,
+        "triangles": 224,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "vehicle",
+      "cost": {
+        "cpu_seconds": 14.71827,
+        "evals": 2714,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 20,
+      "holdout": false,
+      "id": "polyhaven/old_tyre",
+      "import": {
+        "diagonal": 0.8644217848777771,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 2880,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "371322169dc7abb3a1d4c4618d72af5c8374143df4588cd4e8b4006bfbd89b1a",
+      "metrics": {
+        "chamfer": 0.013017885799460642,
+        "f_score": 0.8664701881659488,
+        "normal_consistency": 0.24171961024022132,
+        "precision": 0.7644,
+        "recall": 1.0,
+        "silhouette_iou": 0.8652705907210028,
+        "size_ratio": 0.999927282333374
+      },
+      "metrics_strict": {
+        "chamfer": 0.015535860493957204,
+        "f_score": 0.8485234420847738,
+        "normal_consistency": 0.2781980220571593,
+        "precision": 0.7589,
+        "recall": 0.96215,
+        "silhouette_iou": 0.843824847115276,
+        "size_ratio": 0.999927282333374
+      },
+      "notes": [
+        "dropped primitive 8 (loss -0.0128)",
+        "dropped primitive 5 (loss -0.0067)",
+        "dropped primitive 7 (loss -0.0218)",
+        "dropped primitive 6 (loss -0.0095)",
+        "dropped primitive 1 (loss -0.0091)",
+        "dropped primitive 1 (loss -0.0134)",
+        "276 triangles for a 2880-triangle source",
+        "CMA-ES: loss 0.2334 -> 0.2159 in 901 evaluations",
+        "polish: loss 0.4981 -> 0.4009"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_old_tyre.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 2880,
+        "reference_watertight": true,
+        "triangles": 276,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "vehicle",
+      "cost": {
+        "cpu_seconds": 16.3539489,
+        "evals": 3147,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 40,
+      "holdout": false,
+      "id": "kenney/castle-kit/siege-catapult",
+      "import": {
+        "diagonal": 2.498239755630493,
+        "nodes": 6,
+        "parts": 15,
+        "triangles": 928,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "1722afc4393c8744a9a69ec94a58646f8c1f17b12b6915032e0ab3da7487cf2c",
+      "metrics": {
+        "chamfer": 0.02097592124392684,
+        "f_score": 0.6325692045187102,
+        "normal_consistency": 0.25409913777165316,
+        "precision": 0.69255,
+        "recall": 0.58215,
+        "silhouette_iou": 0.576627692863432,
+        "size_ratio": 0.9999220371246338
+      },
+      "metrics_strict": {
+        "chamfer": 0.021161059950471524,
+        "f_score": 0.6284799145130011,
+        "normal_consistency": 0.24023359887785845,
+        "precision": 0.6766,
+        "recall": 0.58675,
+        "silhouette_iou": 0.5790716990525092,
+        "size_ratio": 0.9999220371246338
+      },
+      "notes": [
+        "dropped primitive 18 (loss -0.0058)",
+        "dropped primitive 5 (loss -0.0007)",
+        "dropped primitive 15 (loss -0.0018)",
+        "dropped primitive 3 (loss -0.0005)",
+        "dropped primitive 6 (loss +0.0025)",
+        "dropped primitive 17 (loss -0.0001)",
+        "dropped primitive 10 (loss +0.0005)",
+        "dropped primitive 7 (loss -0.0027)",
+        "dropped primitive 14 (loss +0.0027)",
+        "dropped primitive 15 (loss +0.0026)",
+        "dropped primitive 7 (loss +0.0005)",
+        "dropped primitive 4 (loss +0.0022)",
+        "dropped primitive 4 (loss +0.0045)",
+        "dropped primitive 24 (loss +0.0049)",
+        "dropped primitive 11 (loss -0.0015)",
+        "dropped primitive 10 (loss +0.0059)",
+        "dropped primitive 22 (loss +0.0090)",
+        "dropped primitive 7 (loss +0.0061)",
+        "dropped primitive 2 (loss +0.0057)",
+        "dropped primitive 16 (loss +0.0132)",
+        "dropped primitive 7 (loss +0.0138)",
+        "dropped primitive 4 (loss +0.0170)",
+        "dropped primitive 2 (loss +0.0183)",
+        "dropped primitive 12 (loss +0.0194)",
+        "dropped primitive 14 (loss +0.0187)",
+        "dropped primitive 13 (loss +0.0280)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0210)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0319)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0410)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0429)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0515)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0536)",
+        "176 triangles for a 928-triangle source",
+        "CMA-ES: loss 0.5011 -> 0.4438 in 911 evaluations",
+        "polish: loss 2.0916 -> 0.9883"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_castle-kit_siege-catapult.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 928,
+        "reference_watertight": false,
+        "triangles": 176,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "vehicle",
+      "cost": {
+        "cpu_seconds": 23.2999038,
+        "evals": 4572,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 40,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/cart",
+      "import": {
+        "diagonal": 1.6970131397247314,
+        "nodes": 3,
+        "parts": 7,
+        "triangles": 608,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "98ce37d82b71a9c78559b73a978f62b0cf20f0ddeef15fb6acbb5bd8eccd5869",
+      "metrics": {
+        "chamfer": 0.0108515901638453,
+        "f_score": 0.8687550504905204,
+        "normal_consistency": 0.4615762012817554,
+        "precision": 0.8828,
+        "recall": 0.85515,
+        "silhouette_iou": 0.7699894388253533,
+        "size_ratio": 0.9994770288467407
+      },
+      "metrics_strict": {
+        "chamfer": 0.011032833656602587,
+        "f_score": 0.8509985147788311,
+        "normal_consistency": 0.46145877278863456,
+        "precision": 0.8766,
+        "recall": 0.82685,
+        "silhouette_iou": 0.7679352962640491,
+        "size_ratio": 0.9994770288467407
+      },
+      "notes": [
+        "dropped primitive 8 (loss -0.0032)",
+        "dropped primitive 6 (loss -0.0035)",
+        "dropped primitive 22 (loss +0.0011)",
+        "dropped primitive 5 (loss +0.0012)",
+        "dropped primitive 22 (loss +0.0012)",
+        "dropped primitive 24 (loss +0.0034)",
+        "dropped primitive 6 (loss -0.0022)",
+        "dropped primitive 22 (loss -0.0018)",
+        "dropped primitive 11 (loss +0.0020)",
+        "dropped primitive 19 (loss +0.0028)",
+        "dropped primitive 14 (loss +0.0027)",
+        "dropped primitive 4 (loss -0.0002)",
+        "dropped primitive 15 (loss +0.0015)",
+        "dropped primitive 16 (loss -0.0016)",
+        "dropped primitive 8 (loss +0.0065)",
+        "dropped primitive 13 (loss +0.0098)",
+        "dropped primitive 1 (loss +0.0100)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0020)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0105)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0134)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0128)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0206)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0344)",
+        "328 triangles for a 608-triangle source",
+        "CMA-ES: loss 0.2258 -> 0.1790 in 911 evaluations",
+        "polish: loss 0.9418 -> 0.4700"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_fantasy-town-kit_cart.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 608,
+        "reference_watertight": false,
+        "triangles": 328,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "lighting",
+      "cost": {
+        "cpu_seconds": 8.0890025,
+        "evals": 2683,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 12,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/lantern",
+      "import": {
+        "diagonal": 1.5869169235229492,
+        "nodes": 1,
+        "parts": 3,
+        "triangles": 158,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "ee37a40775f748d4a8a13644cea6349d00065efb5538848655927c544013b903",
+      "metrics": {
+        "chamfer": 0.0048926244832904345,
+        "f_score": 0.9926902314336801,
+        "normal_consistency": 0.7822780630432535,
+        "precision": 0.9986,
+        "recall": 0.98685,
+        "silhouette_iou": 0.8616152350355669,
+        "size_ratio": 1.0000115633010864
+      },
+      "metrics_strict": {
+        "chamfer": 0.005299669492634944,
+        "f_score": 0.9936277688320837,
+        "normal_consistency": 0.7702379861056805,
+        "precision": 0.99835,
+        "recall": 0.98895,
+        "silhouette_iou": 0.8615903430039893,
+        "size_ratio": 1.0000115633010864
+      },
+      "notes": [
+        "60 triangles for a 158-triangle source",
+        "polish: loss 0.2477 -> 0.1686"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_fantasy-town-kit_lantern.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 158,
+        "reference_watertight": false,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 19.6852228,
+        "evals": 3622,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail"
+      ],
+      "free_parameters": 40,
+      "holdout": true,
+      "id": "kenney/furniture-kit/bedBunk",
+      "import": {
+        "diagonal": 1.4991884231567383,
+        "nodes": 5,
+        "parts": 5,
+        "triangles": 580,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "0d8eb50137309112b09145207777deb104ea7691f7691541a7fef1497894ba13",
+      "metrics": {
+        "chamfer": 0.01035021016945318,
+        "f_score": 0.895095657031141,
+        "normal_consistency": 0.4119328030726356,
+        "precision": 0.90025,
+        "recall": 0.89,
+        "silhouette_iou": 0.8072811392742907,
+        "size_ratio": 0.9998049736022949
+      },
+      "metrics_strict": {
+        "chamfer": 0.011459280170895108,
+        "f_score": 0.806933279643167,
+        "normal_consistency": 0.3167483081861072,
+        "precision": 0.7955,
+        "recall": 0.8187,
+        "silhouette_iou": 0.8003545022261346,
+        "size_ratio": 0.9998049736022949
+      },
+      "notes": [
+        "dropped primitive 8 (loss -0.0503)",
+        "dropped primitive 6 (loss -0.0343)",
+        "dropped primitive 2 (loss -0.0409)",
+        "dropped primitive 11 (loss -0.0013)",
+        "dropped primitive 12 (loss -0.0043)",
+        "dropped primitive 18 (loss +0.0015)",
+        "dropped primitive 1 (loss -0.0003)",
+        "dropped primitive 11 (loss -0.0002)",
+        "dropped primitive 11 (loss +0.0020)",
+        "dropped primitive 7 (loss +0.0028)",
+        "dropped primitive 11 (loss +0.0002)",
+        "dropped primitive 5 (loss +0.0012)",
+        "dropped primitive 9 (loss +0.0039)",
+        "dropped primitive 5 (loss +0.0042)",
+        "parameter cap 40: dropped primitive 8 (loss +0.0030)",
+        "parameter cap 40: dropped primitive 10 (loss +0.0098)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0071)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0046)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0120)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0145)",
+        "808 triangles for a 580-triangle source",
+        "CMA-ES: loss 0.2944 -> 0.2327 in 771 evaluations",
+        "polish: loss 0.6614 -> 0.3947"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_bedBunk.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 580,
+        "reference_watertight": false,
+        "triangles": 808,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 3.8831521,
+        "evals": 365,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 30,
+      "holdout": false,
+      "id": "kenney/furniture-kit/bench",
+      "import": {
+        "diagonal": 0.6487680673599243,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 170,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "727765a181b5a65aa4eac174a520e04bf6b3403b0e2a7d7b143cf5bd8cd2d08c",
+      "metrics": {
+        "chamfer": 0.013613486362966418,
+        "f_score": 0.788099442280729,
+        "normal_consistency": 0.530125,
+        "precision": 0.69535,
+        "recall": 0.9094,
+        "silhouette_iou": 0.7772365778933243,
+        "size_ratio": 0.9999998807907104
+      },
+      "metrics_strict": {
+        "chamfer": 0.013613487665754024,
+        "f_score": 0.788099442280729,
+        "normal_consistency": 0.530275,
+        "precision": 0.69535,
+        "recall": 0.9094,
+        "silhouette_iou": 0.7772365778933243,
+        "size_ratio": 0.9999998807907104
+      },
+      "notes": [
+        "dropped primitive 5 (loss -0.0113)",
+        "dropped primitive 2 (loss -0.0385)",
+        "dropped primitive 3 (loss -0.0180)",
+        "dropped primitive 9 (loss +0.0011)",
+        "dropped primitive 8 (loss +0.0012)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0053)",
+        "parameter cap 40: dropped primitive 2 (loss -0.0070)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0092)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0147)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0090)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0355)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0347)",
+        "60 triangles for a 170-triangle source"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_bench.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 170,
+        "reference_watertight": true,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 18.6996672,
+        "evals": 4216,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 34,
+      "holdout": false,
+      "id": "kenney/furniture-kit/bookcaseClosed",
+      "import": {
+        "diagonal": 0.9721111059188843,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 372,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "3eff0caa3c209910bbe60623565b5086bb652e648cc0607e14d6954922dacaa3",
+      "metrics": {
+        "chamfer": 0.017943793933774377,
+        "f_score": 0.803920958417066,
+        "normal_consistency": 0.490221382525505,
+        "precision": 0.8703,
+        "recall": 0.74695,
+        "silhouette_iou": 0.7620450083963172,
+        "size_ratio": 1.0004796981811523
+      },
+      "metrics_strict": {
+        "chamfer": 0.020461138388163512,
+        "f_score": 0.6875608103236969,
+        "normal_consistency": 0.3982192387210089,
+        "precision": 0.758,
+        "recall": 0.6291,
+        "silhouette_iou": 0.7239972822012749,
+        "size_ratio": 1.0004796981811523
+      },
+      "notes": [
+        "dropped primitive 3 (loss -0.0140)",
+        "dropped primitive 6 (loss -0.0073)",
+        "dropped primitive 16 (loss -0.0005)",
+        "dropped primitive 2 (loss -0.0004)",
+        "dropped primitive 6 (loss -0.0002)",
+        "dropped primitive 7 (loss +0.0005)",
+        "dropped primitive 6 (loss +0.0008)",
+        "dropped primitive 7 (loss +0.0005)",
+        "dropped primitive 6 (loss +0.0005)",
+        "dropped primitive 3 (loss +0.0002)",
+        "dropped primitive 5 (loss +0.0016)",
+        "dropped primitive 3 (loss +0.0021)",
+        "dropped primitive 2 (loss +0.0023)",
+        "dropped primitive 2 (loss +0.0019)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0031)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0049)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0434)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0502)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0549)",
+        "parameter cap 40: dropped primitive 2 (loss +0.1071)",
+        "576 triangles for a 372-triangle source",
+        "CMA-ES: loss 0.3507 -> 0.2948 in 911 evaluations",
+        "polish: loss 1.4297 -> 0.5996"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_bookcaseClosed.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 372,
+        "reference_watertight": false,
+        "triangles": 576,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 3.6527922999999998,
+        "evals": 814,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 30,
+      "holdout": false,
+      "id": "kenney/furniture-kit/chair",
+      "import": {
+        "diagonal": 0.5485435128211975,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 170,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "3b17d61c52da5a45557c8844650e896848cf0a7511f23a9c6e917218860d6a8a",
+      "metrics": {
+        "chamfer": 0.008873182143190626,
+        "f_score": 0.9133902549420586,
+        "normal_consistency": 0.8029891492794952,
+        "precision": 0.9734,
+        "recall": 0.86035,
+        "silhouette_iou": 0.8394637121786589,
+        "size_ratio": 1.0068508386611938
+      },
+      "metrics_strict": {
+        "chamfer": 0.00679513873412134,
+        "f_score": 0.9130838310289345,
+        "normal_consistency": 0.8424396964367872,
+        "precision": 0.9745,
+        "recall": 0.85895,
+        "silhouette_iou": 0.8666474211970334,
+        "size_ratio": 1.0068508386611938
+      },
+      "notes": [
+        "dropped primitive 4 (loss -0.0087)",
+        "dropped primitive 8 (loss +0.0012)",
+        "dropped primitive 6 (loss +0.0010)",
+        "dropped primitive 9 (loss +0.0010)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0081)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0225)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0247)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0329)",
+        "68 triangles for a 170-triangle source",
+        "polish: loss 0.3520 -> 0.3503"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_chair.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 170,
+        "reference_watertight": true,
+        "triangles": 68,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 4.608081,
+        "evals": 1360,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 34,
+      "holdout": false,
+      "id": "kenney/furniture-kit/desk",
+      "import": {
+        "diagonal": 0.9171273708343506,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 198,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "18ce60853cbe7725e8855504a46579a1257d1b7e2a24dc9c3db1f2332ca51b86",
+      "metrics": {
+        "chamfer": 0.007686979914275977,
+        "f_score": 0.9300906214840612,
+        "normal_consistency": 0.7395557387360081,
+        "precision": 0.98755,
+        "recall": 0.87895,
+        "silhouette_iou": 0.9252966613079456,
+        "size_ratio": 1.0178929567337036
+      },
+      "metrics_strict": {
+        "chamfer": 0.007353328415487431,
+        "f_score": 0.9358131040916967,
+        "normal_consistency": 0.7421575013052265,
+        "precision": 0.98185,
+        "recall": 0.8939,
+        "silhouette_iou": 0.9351196737913623,
+        "size_ratio": 1.0178929567337036
+      },
+      "notes": [
+        "dropped primitive 6 (loss -0.0044)",
+        "dropped primitive 4 (loss -0.0009)",
+        "dropped primitive 6 (loss +0.0002)",
+        "dropped primitive 2 (loss -0.0007)",
+        "dropped primitive 2 (loss -0.0009)",
+        "dropped primitive 1 (loss +0.0011)",
+        "dropped primitive 15 (loss +0.0001)",
+        "dropped primitive 14 (loss +0.0001)",
+        "dropped primitive 2 (loss +0.0017)",
+        "dropped primitive 11 (loss +0.0020)",
+        "dropped primitive 8 (loss +0.0020)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0059)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0075)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0073)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0166)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0274)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0510)",
+        "272 triangles for a 198-triangle source",
+        "CMA-ES: loss 0.1620 -> 0.1397 in 911 evaluations",
+        "polish: loss 0.2960 -> 0.2831"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_desk.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 198,
+        "reference_watertight": false,
+        "triangles": 272,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "appliance",
+      "cost": {
+        "cpu_seconds": 4.8874121,
+        "evals": 814,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 30,
+      "holdout": false,
+      "id": "kenney/furniture-kit/kitchenStove",
+      "import": {
+        "diagonal": 0.7680494785308838,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 830,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "f175ee6b426ade412d383b5e952ed5048c2a37cce81e87d0669edc0fe09177e0",
+      "metrics": {
+        "chamfer": 0.0035290339074358643,
+        "f_score": 0.9299303198924731,
+        "normal_consistency": 0.1486416881988058,
+        "precision": 0.92195,
+        "recall": 0.93805,
+        "silhouette_iou": 0.9578750867045273,
+        "size_ratio": 1.0
+      },
+      "metrics_strict": {
+        "chamfer": 0.0035290339074358643,
+        "f_score": 0.9299303198924731,
+        "normal_consistency": 0.1486416881988058,
+        "precision": 0.92195,
+        "recall": 0.93805,
+        "silhouette_iou": 0.9578750867045273,
+        "size_ratio": 1.0
+      },
+      "notes": [
+        "dropped primitive 8 (loss -0.0236)",
+        "dropped primitive 10 (loss -0.0266)",
+        "dropped primitive 8 (loss -0.0066)",
+        "dropped primitive 7 (loss -0.0002)",
+        "dropped primitive 6 (loss +0.0001)",
+        "dropped primitive 2 (loss +0.0004)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0054)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0134)",
+        "576 triangles for a 830-triangle source",
+        "polish: loss 0.1476 -> 0.1476"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_kitchenStove.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 830,
+        "reference_watertight": false,
+        "triangles": 576,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 2.9322718,
+        "evals": 814,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 30,
+      "holdout": false,
+      "id": "kenney/furniture-kit/loungeSofa",
+      "import": {
+        "diagonal": 1.1576268672943115,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 128,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "6eb1960bc3aac65cb1d87f70db2f27bf66a5e436f864bc289581897ecc48d37c",
+      "metrics": {
+        "chamfer": 0.013118481949802883,
+        "f_score": 0.8467677013763865,
+        "normal_consistency": 0.4977253395180514,
+        "precision": 0.75045,
+        "recall": 0.97145,
+        "silhouette_iou": 0.9285674008145017,
+        "size_ratio": 1.0171988010406494
+      },
+      "metrics_strict": {
+        "chamfer": 0.011070715857171372,
+        "f_score": 0.8478043926074216,
+        "normal_consistency": 0.5289560288825823,
+        "precision": 0.75235,
+        "recall": 0.971,
+        "silhouette_iou": 0.9398146161587844,
+        "size_ratio": 1.0171988010406494
+      },
+      "notes": [
+        "dropped primitive 7 (loss -0.0772)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0023)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0056)",
+        "76 triangles for a 128-triangle source",
+        "polish: loss 0.4052 -> 0.3987"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_loungeSofa.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 128,
+        "reference_watertight": true,
+        "triangles": 76,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 3.0341167,
+        "evals": 814,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 30,
+      "holdout": false,
+      "id": "kenney/furniture-kit/table",
+      "import": {
+        "diagonal": 1.007472038269043,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 120,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "99e5ca7b6ca5bf8fa23824fe97bada7c768fbd218f47eee91d8095c0ca7fc9b8",
+      "metrics": {
+        "chamfer": 0.00521779251075684,
+        "f_score": 0.9271613802399244,
+        "normal_consistency": 0.8575402784941863,
+        "precision": 0.9133,
+        "recall": 0.94145,
+        "silhouette_iou": 0.8495378507133523,
+        "size_ratio": 1.0000107288360596
+      },
+      "metrics_strict": {
+        "chamfer": 0.005219009852412009,
+        "f_score": 0.9270613572025559,
+        "normal_consistency": 0.857498393098514,
+        "precision": 0.9132,
+        "recall": 0.94135,
+        "silhouette_iou": 0.8493337793822539,
+        "size_ratio": 1.0000107288360596
+      },
+      "notes": [
+        "dropped primitive 8 (loss -0.0190)",
+        "dropped primitive 2 (loss -0.0266)",
+        "dropped primitive 3 (loss -0.0108)",
+        "dropped primitive 3 (loss -0.0038)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0038)",
+        "104 triangles for a 120-triangle source",
+        "polish: loss 0.2832 -> 0.2780"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_furniture-kit_table.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 120,
+        "reference_watertight": true,
+        "triangles": 104,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "vehicle",
+      "cost": {
+        "cpu_seconds": 9.9529511,
+        "evals": 2144,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 37,
+      "holdout": false,
+      "id": "kenney/nature-kit/canoe",
+      "import": {
+        "diagonal": 1.2024168968200684,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 200,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "4ab1a5b69e564abe198b9e4b665678b55d8942e559db5c7d323b74935f5bb343",
+      "metrics": {
+        "chamfer": 0.008639158754453839,
+        "f_score": 0.902077176522531,
+        "normal_consistency": 0.33083784636823466,
+        "precision": 0.84655,
+        "recall": 0.9654,
+        "silhouette_iou": 0.8921226714023234,
+        "size_ratio": 0.9985687136650085
+      },
+      "metrics_strict": {
+        "chamfer": 0.010047003194717241,
+        "f_score": 0.8667232433208848,
+        "normal_consistency": 0.2566927210180875,
+        "precision": 0.81485,
+        "recall": 0.92565,
+        "silhouette_iou": 0.8572262598926617,
+        "size_ratio": 0.9985687136650085
+      },
+      "notes": [
+        "dropped primitive 2 (loss -0.0204)",
+        "dropped primitive 6 (loss -0.0069)",
+        "dropped primitive 13 (loss -0.0076)",
+        "dropped primitive 12 (loss -0.0003)",
+        "dropped primitive 10 (loss -0.0042)",
+        "dropped primitive 5 (loss +0.0039)",
+        "dropped primitive 8 (loss +0.0010)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0043)",
+        "parameter cap 40: dropped primitive 2 (loss -0.0043)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0010)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0038)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0030)",
+        "332 triangles for a 200-triangle source",
+        "CMA-ES: loss 0.1881 -> 0.1444 in 911 evaluations",
+        "polish: loss 0.3709 -> 0.2927"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_nature-kit_canoe.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 200,
+        "reference_watertight": true,
+        "triangles": 332,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 2.9753861,
+        "evals": 814,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 29,
+      "holdout": true,
+      "id": "kenney/nature-kit/fence_gate",
+      "import": {
+        "diagonal": 1.0601621866226196,
+        "nodes": 2,
+        "parts": 3,
+        "triangles": 524,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "07297f5ad4fb3f3c99b20c0a74dcbbcbcf20caadf1cc6f98937f332dee405e47",
+      "metrics": {
+        "chamfer": 0.006633037655095139,
+        "f_score": 0.9178558507325263,
+        "normal_consistency": 0.7274263671546521,
+        "precision": 0.99325,
+        "recall": 0.8531,
+        "silhouette_iou": 0.8254945881567718,
+        "size_ratio": 1.0094118118286133
+      },
+      "metrics_strict": {
+        "chamfer": 0.0057295091692770835,
+        "f_score": 0.9161165667471449,
+        "normal_consistency": 0.7371744176601518,
+        "precision": 0.9925,
+        "recall": 0.85065,
+        "silhouette_iou": 0.8389296454871535,
+        "size_ratio": 1.0094118118286133
+      },
+      "notes": [
+        "dropped primitive 6 (loss +0.0010)",
+        "dropped primitive 8 (loss +0.0008)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0219)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0226)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0316)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0330)",
+        "76 triangles for a 524-triangle source",
+        "polish: loss 0.3746 -> 0.3746"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_nature-kit_fence_gate.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 524,
+        "reference_watertight": true,
+        "triangles": 76,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 16.3194443,
+        "evals": 3278,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 34,
+      "holdout": false,
+      "id": "kenney/platformer-kit/crate-strong",
+      "import": {
+        "diagonal": 1.039230465888977,
+        "nodes": 1,
+        "parts": 27,
+        "triangles": 428,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "f2539252a50e9f8e8f18cc5edc1ea527ee3e813f81ba21bff8bf1fb644730512",
+      "metrics": {
+        "chamfer": 0.022530408543042505,
+        "f_score": 0.677770517329816,
+        "normal_consistency": 0.4924197256034696,
+        "precision": 0.73825,
+        "recall": 0.62645,
+        "silhouette_iou": 0.8530449202530415,
+        "size_ratio": 1.0007412433624268
+      },
+      "metrics_strict": {
+        "chamfer": 0.024784111952212147,
+        "f_score": 0.5999578355586788,
+        "normal_consistency": 0.46660281640977463,
+        "precision": 0.65875,
+        "recall": 0.5508,
+        "silhouette_iou": 0.8367370280754323,
+        "size_ratio": 1.0007412433624268
+      },
+      "notes": [
+        "dropped primitive 14 (loss -0.0124)",
+        "dropped primitive 8 (loss +0.0011)",
+        "dropped primitive 10 (loss -0.0014)",
+        "dropped primitive 4 (loss -0.0004)",
+        "dropped primitive 12 (loss -0.0053)",
+        "dropped primitive 1 (loss -0.0048)",
+        "dropped primitive 9 (loss -0.0069)",
+        "dropped primitive 6 (loss -0.0021)",
+        "dropped primitive 6 (loss +0.0079)",
+        "dropped primitive 3 (loss -0.0001)",
+        "dropped primitive 2 (loss -0.0017)",
+        "dropped primitive 1 (loss +0.0033)",
+        "dropped primitive 28 (loss +0.0038)",
+        "dropped primitive 20 (loss +0.0064)",
+        "dropped primitive 1 (loss +0.0027)",
+        "dropped primitive 25 (loss +0.0034)",
+        "dropped primitive 16 (loss +0.0101)",
+        "dropped primitive 17 (loss +0.0107)",
+        "dropped primitive 18 (loss +0.0090)",
+        "dropped primitive 19 (loss +0.0101)",
+        "dropped primitive 16 (loss +0.0133)",
+        "dropped primitive 17 (loss +0.0061)",
+        "dropped primitive 16 (loss +0.0087)",
+        "dropped primitive 12 (loss +0.0121)",
+        "dropped primitive 14 (loss +0.0127)",
+        "dropped primitive 5 (loss +0.0229)",
+        "dropped primitive 4 (loss +0.0222)",
+        "dropped primitive 5 (loss +0.0213)",
+        "dropped primitive 5 (loss +0.0184)",
+        "dropped primitive 9 (loss +0.0162)",
+        "parameter cap 40: dropped primitive 8 (loss +0.0142)",
+        "parameter cap 40: dropped primitive 8 (loss +0.0228)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0275)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0223)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0274)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0300)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0315)",
+        "584 triangles for a 428-triangle source",
+        "CMA-ES: loss 0.5209 -> 0.4788 in 911 evaluations",
+        "polish: loss 1.1257 -> 0.6948"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_platformer-kit_crate-strong.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 428,
+        "reference_watertight": false,
+        "triangles": 584,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 1.6206532,
+        "evals": 724,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 20,
+      "holdout": false,
+      "id": "kenney/platformer-kit/fence-straight",
+      "import": {
+        "diagonal": 1.0860939025878906,
+        "nodes": 1,
+        "parts": 4,
+        "triangles": 48,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "f2b336c8e25948bfc805da20946196d115f38ebecc5a318cf3f012b41b987b83",
+      "metrics": {
+        "chamfer": 0.00459233491443839,
+        "f_score": 1.0,
+        "normal_consistency": 0.7861665505543352,
+        "precision": 1.0,
+        "recall": 1.0,
+        "silhouette_iou": 0.8976490039598835,
+        "size_ratio": 1.001403570175171
+      },
+      "metrics_strict": {
+        "chamfer": 0.0025210522045161633,
+        "f_score": 1.0,
+        "normal_consistency": 0.8790693077027798,
+        "precision": 1.0,
+        "recall": 1.0,
+        "silhouette_iou": 0.9416829735805742,
+        "size_ratio": 1.001403570175171
+      },
+      "notes": [
+        "64 triangles for a 48-triangle source",
+        "polish: loss 0.1363 -> 0.1355"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_platformer-kit_fence-straight.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 48,
+        "reference_watertight": true,
+        "triangles": 64,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 1.8319032,
+        "evals": 365,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 20,
+      "holdout": false,
+      "id": "kenney/platformer-kit/ladder-long",
+      "import": {
+        "diagonal": 2.063976764678955,
+        "nodes": 1,
+        "parts": 10,
+        "triangles": 88,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "9fc1a78ac020a329edfbff6488fc1a08ca44476c7e7ebcab86710f61aa0a2a72",
+      "metrics": {
+        "chamfer": 0.00560479044340756,
+        "f_score": 0.951012273156404,
+        "normal_consistency": 0.7255148431637908,
+        "precision": 1.0,
+        "recall": 0.9066,
+        "silhouette_iou": 0.8049693784671665,
+        "size_ratio": 1.0056307315826416
+      },
+      "metrics_strict": {
+        "chamfer": 0.005650117815759782,
+        "f_score": 0.9505168704413076,
+        "normal_consistency": 0.7308071078591702,
+        "precision": 1.0,
+        "recall": 0.9057,
+        "silhouette_iou": 0.8078634484770305,
+        "size_ratio": 1.0056307315826416
+      },
+      "notes": [
+        "parameter cap 40: dropped primitive 9 (loss +0.0139)",
+        "parameter cap 40: dropped primitive 9 (loss +0.0145)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0140)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0147)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0160)",
+        "100 triangles for a 88-triangle source"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_platformer-kit_ladder-long.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 88,
+        "reference_watertight": false,
+        "triangles": 100,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "prop",
+      "cost": {
+        "cpu_seconds": 24.3046903,
+        "evals": 5392,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 39,
+      "holdout": false,
+      "id": "kenney/survival-kit/campfire-pit",
+      "import": {
+        "diagonal": 0.401915967464447,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 305,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "c66a48d7e0a3eb9daf955a94bcaa4c602f736e0a9a9da9787263a8ba9ef0f82f",
+      "metrics": {
+        "chamfer": 0.014101485384185108,
+        "f_score": 0.7513536132780082,
+        "normal_consistency": 0.2905639207730084,
+        "precision": 0.7166,
+        "recall": 0.78965,
+        "silhouette_iou": 0.8124721647318772,
+        "size_ratio": 0.999733030796051
+      },
+      "metrics_strict": {
+        "chamfer": 0.015244561173263789,
+        "f_score": 0.7137531700489853,
+        "normal_consistency": 0.2872508815400947,
+        "precision": 0.6914,
+        "recall": 0.7376,
+        "silhouette_iou": 0.7932045925007761,
+        "size_ratio": 0.999733030796051
+      },
+      "notes": [
+        "dropped primitive 17 (loss -0.0014)",
+        "dropped primitive 8 (loss -0.0002)",
+        "dropped primitive 7 (loss +0.0038)",
+        "dropped primitive 22 (loss +0.0026)",
+        "dropped primitive 17 (loss -0.0065)",
+        "dropped primitive 9 (loss +0.0012)",
+        "dropped primitive 2 (loss +0.0055)",
+        "dropped primitive 16 (loss -0.0019)",
+        "dropped primitive 10 (loss +0.0108)",
+        "dropped primitive 3 (loss -0.0003)",
+        "dropped primitive 9 (loss +0.0009)",
+        "dropped primitive 13 (loss +0.0142)",
+        "dropped primitive 4 (loss -0.0027)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0105)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0119)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0059)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0101)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0326)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0311)",
+        "200 triangles for a 305-triangle source",
+        "CMA-ES: loss 0.4378 -> 0.3384 in 911 evaluations",
+        "polish: loss 0.8207 -> 0.5552"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_campfire-pit.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 305,
+        "reference_watertight": false,
+        "triangles": 200,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 4.5036692,
+        "evals": 391,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 31,
+      "holdout": false,
+      "id": "kenney/survival-kit/chest",
+      "import": {
+        "diagonal": 0.45601886510849,
+        "nodes": 2,
+        "parts": 5,
+        "triangles": 322,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "ac48632df264db7ec10f7bcfbdf3b5763f3c7c8bc6a4826d781af20644caef5f",
+      "metrics": {
+        "chamfer": 0.016476140004962225,
+        "f_score": 0.7567259655608523,
+        "normal_consistency": 0.2805347391911317,
+        "precision": 0.87555,
+        "recall": 0.6663,
+        "silhouette_iou": 0.8161444978623997,
+        "size_ratio": 0.9850293397903442
+      },
+      "metrics_strict": {
+        "chamfer": 0.013415477153974835,
+        "f_score": 0.7641161033797217,
+        "normal_consistency": 0.288697462414857,
+        "precision": 0.8897,
+        "recall": 0.6696,
+        "silhouette_iou": 0.8243008507668506,
+        "size_ratio": 0.9850293397903442
+      },
+      "notes": [
+        "dropped primitive 6 (loss -0.0103)",
+        "dropped primitive 6 (loss -0.0055)",
+        "dropped primitive 15 (loss -0.0043)",
+        "dropped primitive 6 (loss +0.0031)",
+        "dropped primitive 1 (loss +0.0043)",
+        "dropped primitive 9 (loss +0.0059)",
+        "dropped primitive 15 (loss +0.0045)",
+        "dropped primitive 5 (loss +0.0073)",
+        "dropped primitive 6 (loss +0.0112)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0181)",
+        "parameter cap 40: dropped primitive 10 (loss +0.0233)",
+        "parameter cap 40: dropped primitive 10 (loss +0.0184)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0183)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0273)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0366)",
+        "216 triangles for a 322-triangle source"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_chest.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 322,
+        "reference_watertight": false,
+        "triangles": 216,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "prop",
+      "cost": {
+        "cpu_seconds": 2.0431415,
+        "evals": 901,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 19,
+      "holdout": false,
+      "id": "kenney/survival-kit/signpost",
+      "import": {
+        "diagonal": 0.5092827081680298,
+        "nodes": 1,
+        "parts": 3,
+        "triangles": 44,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "fbca5032b9b2d5aae6e601846cdf472af5ff432dc88da3c3a2692bd938b3a469",
+      "metrics": {
+        "chamfer": 0.006909700227254557,
+        "f_score": 0.9668247149173843,
+        "normal_consistency": 0.7324779245112596,
+        "precision": 0.96735,
+        "recall": 0.9663,
+        "silhouette_iou": 0.813946543100533,
+        "size_ratio": 1.0115989446640015
+      },
+      "metrics_strict": {
+        "chamfer": 0.005437599520373735,
+        "f_score": 0.9721024353237668,
+        "normal_consistency": 0.7656676833168957,
+        "precision": 0.96535,
+        "recall": 0.97895,
+        "silhouette_iou": 0.8170080037699474,
+        "size_ratio": 1.0115989446640015
+      },
+      "notes": [
+        "68 triangles for a 44-triangle source",
+        "CMA-ES: loss 0.2019 -> 0.0814 in 901 evaluations"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_signpost.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 44,
+        "reference_watertight": true,
+        "triangles": 68,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 12.0134473,
+        "evals": 3614,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail"
+      ],
+      "free_parameters": 35,
+      "holdout": true,
+      "id": "kenney/survival-kit/tent",
+      "import": {
+        "diagonal": 0.9330691695213318,
+        "nodes": 1,
+        "parts": 9,
+        "triangles": 124,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "ed4aeba72f03d1a4aaed92eeced784ac4100d06c9107ff8abf2066cfa68870f1",
+      "metrics": {
+        "chamfer": 0.01733114614378891,
+        "f_score": 0.7807401486410847,
+        "normal_consistency": 0.5692128132040086,
+        "precision": 0.94055,
+        "recall": 0.66735,
+        "silhouette_iou": 0.5209160583441788,
+        "size_ratio": 1.000558853149414
+      },
+      "metrics_strict": {
+        "chamfer": 0.02447719118371939,
+        "f_score": 0.5447122031722746,
+        "normal_consistency": 0.2551311444208891,
+        "precision": 0.5267,
+        "recall": 0.564,
+        "silhouette_iou": 0.3885949966786121,
+        "size_ratio": 1.000558853149414
+      },
+      "notes": [
+        "dropped primitive 3 (loss -0.0036)",
+        "dropped primitive 4 (loss -0.0796)",
+        "dropped primitive 2 (loss -0.0388)",
+        "dropped primitive 5 (loss -0.0628)",
+        "dropped primitive 2 (loss +0.0003)",
+        "dropped primitive 1 (loss +0.0007)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0311)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0313)",
+        "100 triangles for a 124-triangle source",
+        "CMA-ES: loss 0.4295 -> 0.3463 in 911 evaluations",
+        "polish: loss 1.5368 -> 0.8637"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_tent.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 124,
+        "reference_watertight": false,
+        "triangles": 100,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 10.7556542,
+        "evals": 2901,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 26,
+      "holdout": false,
+      "id": "kenney/survival-kit/workbench",
+      "import": {
+        "diagonal": 0.5249705910682678,
+        "nodes": 3,
+        "parts": 9,
+        "triangles": 236,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "c4ff608c09e987dbd84e58c75dace881d429352540e3727d8cd52c59fe3b58ae",
+      "metrics": {
+        "chamfer": 0.010325267242714726,
+        "f_score": 0.8461034007977545,
+        "normal_consistency": 0.6814377155696378,
+        "precision": 0.84185,
+        "recall": 0.8504,
+        "silhouette_iou": 0.8719128788427517,
+        "size_ratio": 1.0001072883605957
+      },
+      "metrics_strict": {
+        "chamfer": 0.02770961583268973,
+        "f_score": 0.5007234989028526,
+        "normal_consistency": 0.2959848671069072,
+        "precision": 0.4843,
+        "recall": 0.5183,
+        "silhouette_iou": 0.7632036560032515,
+        "size_ratio": 1.0001072883605957
+      },
+      "notes": [
+        "dropped primitive 4 (loss -0.0027)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0101)",
+        "parameter cap 40: dropped primitive 9 (loss +0.0080)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0156)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0205)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0232)",
+        "60 triangles for a 236-triangle source",
+        "polish: loss 1.1514 -> 0.3746"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_survival-kit_workbench.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 236,
+        "reference_watertight": false,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 3.0862853,
+        "evals": 911,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 35,
+      "holdout": false,
+      "id": "polyhaven/Shelf_01",
+      "import": {
+        "diagonal": 2.323925256729126,
+        "nodes": 1,
+        "parts": 7,
+        "triangles": 182,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "e779ba512c5fc25c4ec3c8d35d1ba0c67e2834b7f4498dae1adaa2e9363d2f59",
+      "metrics": {
+        "chamfer": 0.008517900984322537,
+        "f_score": 0.9353901179352022,
+        "normal_consistency": 0.27144380444343563,
+        "precision": 0.9979,
+        "recall": 0.88025,
+        "silhouette_iou": 0.9307892098378534,
+        "size_ratio": 1.0148624181747437
+      },
+      "metrics_strict": {
+        "chamfer": 0.008290280943428438,
+        "f_score": 0.9382598078250252,
+        "normal_consistency": 0.287320222834052,
+        "precision": 1.0,
+        "recall": 0.8837,
+        "silhouette_iou": 0.9403162777901685,
+        "size_ratio": 1.0148624181747437
+      },
+      "notes": [
+        "parameter cap 40: dropped primitive 2 (loss +0.0073)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0255)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0257)",
+        "parameter cap 40: dropped primitive 8 (loss +0.0272)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0293)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0309)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0332)",
+        "60 triangles for a 182-triangle source",
+        "CMA-ES: loss 0.1998 -> 0.1469 in 911 evaluations"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_Shelf_01.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 182,
+        "reference_watertight": false,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "appliance",
+      "cost": {
+        "cpu_seconds": 16.3813074,
+        "evals": 3152,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 34,
+      "holdout": true,
+      "id": "polyhaven/Television_01",
+      "import": {
+        "diagonal": 0.8890296220779419,
+        "nodes": 1,
+        "parts": 10,
+        "triangles": 1918,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "82dcc6eecf1d594806bc064f9c3875d9950c5a7bd2e55edd17da8f0960185cf1",
+      "metrics": {
+        "chamfer": 0.009448456159042391,
+        "f_score": 0.8797528957309626,
+        "normal_consistency": 0.5647531358292088,
+        "precision": 0.8609,
+        "recall": 0.89945,
+        "silhouette_iou": 0.913654625745313,
+        "size_ratio": 0.9993792772293091
+      },
+      "metrics_strict": {
+        "chamfer": 0.016789811329296862,
+        "f_score": 0.6803416987991627,
+        "normal_consistency": 0.6143748795101875,
+        "precision": 0.6636,
+        "recall": 0.69795,
+        "silhouette_iou": 0.8683155252314639,
+        "size_ratio": 0.9993792772293091
+      },
+      "notes": [
+        "dropped primitive 7 (loss -0.0110)",
+        "dropped primitive 4 (loss -0.0096)",
+        "dropped primitive 1 (loss -0.0028)",
+        "dropped primitive 10 (loss -0.0010)",
+        "dropped primitive 4 (loss +0.0023)",
+        "dropped primitive 19 (loss +0.0028)",
+        "dropped primitive 19 (loss -0.0001)",
+        "dropped primitive 8 (loss +0.0005)",
+        "dropped primitive 18 (loss +0.0015)",
+        "dropped primitive 1 (loss -0.0009)",
+        "dropped primitive 5 (loss +0.0013)",
+        "dropped primitive 8 (loss +0.0010)",
+        "dropped primitive 8 (loss +0.0004)",
+        "dropped primitive 8 (loss -0.0007)",
+        "dropped primitive 13 (loss +0.0021)",
+        "dropped primitive 14 (loss +0.0019)",
+        "dropped primitive 6 (loss +0.0006)",
+        "dropped primitive 12 (loss +0.0003)",
+        "parameter cap 40: dropped primitive 11 (loss +0.0037)",
+        "parameter cap 40: dropped primitive 9 (loss +0.0029)",
+        "parameter cap 40: dropped primitive 9 (loss +0.0056)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0110)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0124)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0215)",
+        "576 triangles for a 1918-triangle source",
+        "CMA-ES: loss 0.2350 -> 0.2092 in 743 evaluations",
+        "polish: loss 0.4985 -> 0.3097"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_Television_01.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 1918,
+        "reference_watertight": false,
+        "triangles": 576,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 16.1173698,
+        "evals": 4258,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 38,
+      "holdout": false,
+      "id": "polyhaven/painted_wooden_bench",
+      "import": {
+        "diagonal": 1.5474133491516113,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 630,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "2e550d9a9d8eb3c9cdee174d1532f3e7a488becad6012554701da6cdfa9fbb95",
+      "metrics": {
+        "chamfer": 0.017277858415794087,
+        "f_score": 0.754698091957069,
+        "normal_consistency": 0.3001402423395778,
+        "precision": 0.7535,
+        "recall": 0.7559,
+        "silhouette_iou": 0.7609361623915761,
+        "size_ratio": 1.0000923871994019
+      },
+      "metrics_strict": {
+        "chamfer": 0.04134655489522618,
+        "f_score": 0.3071464105485919,
+        "normal_consistency": 0.10395649742040905,
+        "precision": 0.3082,
+        "recall": 0.3061,
+        "silhouette_iou": 0.6372476789518693,
+        "size_ratio": 1.0000923871994019
+      },
+      "notes": [
+        "dropped primitive 11 (loss -0.1142)",
+        "dropped primitive 9 (loss -0.0010)",
+        "dropped primitive 15 (loss +0.0010)",
+        "dropped primitive 15 (loss +0.0015)",
+        "dropped primitive 12 (loss +0.0023)",
+        "dropped primitive 7 (loss +0.0007)",
+        "parameter cap 40: dropped primitive 11 (loss +0.0028)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0055)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0038)",
+        "parameter cap 40: dropped primitive 9 (loss +0.0036)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0071)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0029)",
+        "160 triangles for a 630-triangle source",
+        "CMA-ES: loss 0.5803 -> 0.4080 in 911 evaluations",
+        "polish: loss 0.9187 -> 0.6607"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_painted_wooden_bench.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 630,
+        "reference_watertight": true,
+        "triangles": 160,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 5.4719882,
+        "evals": 911,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail"
+      ],
+      "free_parameters": 35,
+      "holdout": false,
+      "id": "polyhaven/painted_wooden_cabinet",
+      "import": {
+        "diagonal": 1.790056586265564,
+        "nodes": 5,
+        "parts": 6,
+        "triangles": 2227,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "aff2139a3b7c20a7bbe4cb69add5ef6ee3a51e6a7b42b09752948cd0ce2b4a8a",
+      "metrics": {
+        "chamfer": 0.013673930582445903,
+        "f_score": 0.8590150208464218,
+        "normal_consistency": 0.20118316689060595,
+        "precision": 0.9954,
+        "recall": 0.7555,
+        "silhouette_iou": 0.8208559464685712,
+        "size_ratio": 0.9971265196800232
+      },
+      "metrics_strict": {
+        "chamfer": 0.01367116968732272,
+        "f_score": 0.8720595251538592,
+        "normal_consistency": 0.20388919706143607,
+        "precision": 0.99485,
+        "recall": 0.77625,
+        "silhouette_iou": 0.8220815312730645,
+        "size_ratio": 0.9971265196800232
+      },
+      "notes": [
+        "dropped primitive 4 (loss -0.0018)",
+        "dropped primitive 13 (loss +0.0000)",
+        "dropped primitive 12 (loss +0.0016)",
+        "dropped primitive 11 (loss +0.0006)",
+        "dropped primitive 2 (loss +0.0033)",
+        "dropped primitive 4 (loss +0.0018)",
+        "dropped primitive 4 (loss +0.0025)",
+        "parameter cap 40: dropped primitive 7 (loss +0.0124)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0156)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0365)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0376)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0413)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0585)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0733)",
+        "60 triangles for a 2227-triangle source",
+        "CMA-ES: loss 0.3390 -> 0.2580 in 911 evaluations"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_painted_wooden_cabinet.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 2227,
+        "reference_watertight": false,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 16.3601009,
+        "evals": 4482,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 34,
+      "holdout": false,
+      "id": "polyhaven/painted_wooden_chair_01",
+      "import": {
+        "diagonal": 1.1801176071166992,
+        "nodes": 1,
+        "parts": 24,
+        "triangles": 724,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "536b9657bf9f7c073e1334d9fe93ede18fe8fd15c2bf60dee9dda30904581267",
+      "metrics": {
+        "chamfer": 0.019892349456471534,
+        "f_score": 0.6424077198443578,
+        "normal_consistency": 0.2730360142092046,
+        "precision": 0.6502,
+        "recall": 0.6348,
+        "silhouette_iou": 0.5142961637533148,
+        "size_ratio": 0.999401867389679
+      },
+      "metrics_strict": {
+        "chamfer": 0.04119930139789933,
+        "f_score": 0.3148722556153116,
+        "normal_consistency": 0.09844568977422005,
+        "precision": 0.3358,
+        "recall": 0.2964,
+        "silhouette_iou": 0.40917745964413443,
+        "size_ratio": 0.999401867389679
+      },
+      "notes": [
+        "dropped primitive 22 (loss -0.0010)",
+        "dropped primitive 12 (loss +0.0020)",
+        "dropped primitive 27 (loss +0.0022)",
+        "dropped primitive 17 (loss +0.0049)",
+        "dropped primitive 14 (loss +0.0054)",
+        "dropped primitive 14 (loss +0.0047)",
+        "dropped primitive 23 (loss +0.0051)",
+        "dropped primitive 22 (loss +0.0071)",
+        "dropped primitive 2 (loss +0.0074)",
+        "dropped primitive 4 (loss +0.0079)",
+        "dropped primitive 18 (loss +0.0086)",
+        "dropped primitive 17 (loss +0.0081)",
+        "dropped primitive 17 (loss +0.0113)",
+        "dropped primitive 4 (loss +0.0132)",
+        "dropped primitive 2 (loss +0.0147)",
+        "dropped primitive 14 (loss +0.0211)",
+        "dropped primitive 8 (loss +0.0233)",
+        "parameter cap 40: dropped primitive 8 (loss +0.0261)",
+        "parameter cap 40: dropped primitive 11 (loss +0.0333)",
+        "parameter cap 40: dropped primitive 9 (loss +0.0366)",
+        "parameter cap 40: dropped primitive 8 (loss +0.0451)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0949)",
+        "parameter cap 40: dropped primitive 5 (loss +0.1112)",
+        "parameter cap 40: dropped primitive 6 (loss +0.1491)",
+        "192 triangles for a 724-triangle source",
+        "CMA-ES: loss 0.6768 -> 0.5371 in 911 evaluations",
+        "polish: loss 2.0220 -> 1.0279"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_painted_wooden_chair_01.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 724,
+        "reference_watertight": true,
+        "triangles": 192,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 18.5984431,
+        "evals": 3488,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 39,
+      "holdout": false,
+      "id": "polyhaven/sofa_02",
+      "import": {
+        "diagonal": 2.1066431999206543,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 2728,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "c8d111af205bcd245b99b9dbc7ed55b6f13aa5b1feeb6f50e455879d07491276",
+      "metrics": {
+        "chamfer": 0.012129176174752315,
+        "f_score": 0.8646997658147334,
+        "normal_consistency": 0.5124014951347351,
+        "precision": 0.86425,
+        "recall": 0.86515,
+        "silhouette_iou": 0.830662004009378,
+        "size_ratio": 1.0008645057678223
+      },
+      "metrics_strict": {
+        "chamfer": 0.012668632787777022,
+        "f_score": 0.8018051298033471,
+        "normal_consistency": 0.49951073083398545,
+        "precision": 0.78495,
+        "recall": 0.8194,
+        "silhouette_iou": 0.8226585924040253,
+        "size_ratio": 1.0008645057678223
+      },
+      "notes": [
+        "dropped primitive 19 (loss -0.0131)",
+        "dropped primitive 17 (loss +0.0010)",
+        "dropped primitive 9 (loss -0.0039)",
+        "dropped primitive 5 (loss -0.0009)",
+        "dropped primitive 5 (loss -0.0020)",
+        "dropped primitive 13 (loss +0.0003)",
+        "dropped primitive 13 (loss +0.0021)",
+        "dropped primitive 2 (loss +0.0014)",
+        "dropped primitive 1 (loss +0.0066)",
+        "dropped primitive 5 (loss +0.0064)",
+        "dropped primitive 4 (loss +0.0057)",
+        "dropped primitive 5 (loss +0.0048)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0030)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0072)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0136)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0135)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0170)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0150)",
+        "268 triangles for a 2728-triangle source",
+        "CMA-ES: loss 0.4373 -> 0.2368 in 911 evaluations",
+        "polish: loss 0.8152 -> 0.4110"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_sofa_02.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 2728,
+        "reference_watertight": false,
+        "triangles": 268,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 9.4538615,
+        "evals": 3068,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 35,
+      "holdout": false,
+      "id": "polyhaven/wooden_table_02",
+      "import": {
+        "diagonal": 1.5571258068084717,
+        "nodes": 1,
+        "parts": 5,
+        "triangles": 196,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "3f04a9fc6227ee87054c309d200360879b3d32ce0af0af008c8f9a0409d1cba4",
+      "metrics": {
+        "chamfer": 0.0073329200662338116,
+        "f_score": 0.9965497967989563,
+        "normal_consistency": 0.8304490470305549,
+        "precision": 0.9961,
+        "recall": 0.997,
+        "silhouette_iou": 0.8802330760322891,
+        "size_ratio": 0.9998289942741394
+      },
+      "metrics_strict": {
+        "chamfer": 0.0068210892719292445,
+        "f_score": 0.9745687145678885,
+        "normal_consistency": 0.7967468161994761,
+        "precision": 0.97705,
+        "recall": 0.9721,
+        "silhouette_iou": 0.8556453596912912,
+        "size_ratio": 0.9998289942741394
+      },
+      "notes": [
+        "dropped primitive 5 (loss -0.0340)",
+        "dropped primitive 2 (loss -0.0157)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0110)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0188)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0333)",
+        "92 triangles for a 196-triangle source",
+        "CMA-ES: loss 0.1267 -> 0.0987 in 911 evaluations",
+        "polish: loss 1.1279 -> 0.1847"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\polyhaven_wooden_table_02.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 196,
+        "reference_watertight": false,
+        "triangles": 92,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 22.3678555,
+        "evals": 5588,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 34,
+      "holdout": false,
+      "id": "kenney/castle-kit/bridge-straight",
+      "import": {
+        "diagonal": 1.7643061876296997,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 192,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "d1981f94d6fd82ccf4dc631e0cda31ece94b6e757a184d6aa2c11e97f4ca2a7c",
+      "metrics": {
+        "chamfer": 0.012666120467648452,
+        "f_score": 0.8585356925131361,
+        "normal_consistency": 0.6725535319824247,
+        "precision": 0.8135,
+        "recall": 0.90885,
+        "silhouette_iou": 0.8883630096350696,
+        "size_ratio": 0.9999861717224121
+      },
+      "metrics_strict": {
+        "chamfer": 0.01950785703635166,
+        "f_score": 0.5663780065755322,
+        "normal_consistency": 0.6873842586384793,
+        "precision": 0.4963,
+        "recall": 0.6595,
+        "silhouette_iou": 0.8378735620357629,
+        "size_ratio": 0.9999861717224121
+      },
+      "notes": [
+        "dropped primitive 8 (loss -0.0088)",
+        "dropped primitive 5 (loss -0.0124)",
+        "dropped primitive 10 (loss -0.0004)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0058)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0020)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0064)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0025)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0121)",
+        "104 triangles for a 192-triangle source",
+        "CMA-ES: loss 0.4084 -> 0.2926 in 911 evaluations",
+        "polish: loss 1.2154 -> 0.3728"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_castle-kit_bridge-straight.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 192,
+        "reference_watertight": true,
+        "triangles": 104,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 18.1597653,
+        "evals": 4356,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 34,
+      "holdout": false,
+      "id": "kenney/castle-kit/gate",
+      "import": {
+        "diagonal": 1.1358444690704346,
+        "nodes": 1,
+        "parts": 5,
+        "triangles": 146,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "e304afd6fed65ea980fb4dc348aaf9bf1ad0cc2e500e9195937020ab857166da",
+      "metrics": {
+        "chamfer": 0.010711652304860025,
+        "f_score": 0.8488992251211656,
+        "normal_consistency": 0.6046674089856678,
+        "precision": 0.75755,
+        "recall": 0.9653,
+        "silhouette_iou": 0.9417665049498238,
+        "size_ratio": 0.9999344944953918
+      },
+      "metrics_strict": {
+        "chamfer": 0.012335819190432647,
+        "f_score": 0.8192460826168,
+        "normal_consistency": 0.4347572210511149,
+        "precision": 0.7304,
+        "recall": 0.9327,
+        "silhouette_iou": 0.897944094684723,
+        "size_ratio": 0.9999344944953918
+      },
+      "notes": [
+        "dropped primitive 12 (loss -0.0343)",
+        "dropped primitive 9 (loss -0.0338)",
+        "dropped primitive 4 (loss -0.0004)",
+        "dropped primitive 3 (loss -0.0048)",
+        "dropped primitive 9 (loss -0.0030)",
+        "dropped primitive 3 (loss -0.0073)",
+        "dropped primitive 2 (loss +0.0007)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0035)",
+        "parameter cap 40: dropped primitive 5 (loss +0.0034)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0000)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0182)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0213)",
+        "60 triangles for a 146-triangle source",
+        "CMA-ES: loss 0.2580 -> 0.1996 in 911 evaluations",
+        "polish: loss 0.5277 -> 0.3196"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_castle-kit_gate.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 146,
+        "reference_watertight": false,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 3.6108151,
+        "evals": 701,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 35,
+      "holdout": false,
+      "id": "kenney/castle-kit/stairs-stone",
+      "import": {
+        "diagonal": 1.0864815711975098,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 104,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "d95c497f236b114231ad0981f723462b047aa95e73cc8580da9e23d593044ca5",
+      "metrics": {
+        "chamfer": 0.018908679645334537,
+        "f_score": 0.7131864142538976,
+        "normal_consistency": 0.5657878707441103,
+        "precision": 0.7796,
+        "recall": 0.6572,
+        "silhouette_iou": 0.7083213418385135,
+        "size_ratio": 1.0033905506134033
+      },
+      "metrics_strict": {
+        "chamfer": 0.017484463626074198,
+        "f_score": 0.7107351954916169,
+        "normal_consistency": 0.5807163250439662,
+        "precision": 0.76415,
+        "recall": 0.6643,
+        "silhouette_iou": 0.7307844700209515,
+        "size_ratio": 1.0033905506134033
+      },
+      "notes": [
+        "dropped primitive 4 (loss -0.0265)",
+        "dropped primitive 4 (loss -0.0159)",
+        "dropped primitive 8 (loss -0.0050)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0143)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0019)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0503)",
+        "84 triangles for a 104-triangle source",
+        "CMA-ES: loss 0.6027 -> 0.4644 in 701 evaluations"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_castle-kit_stairs-stone.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 104,
+        "reference_watertight": true,
+        "triangles": 84,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 8.9692947,
+        "evals": 2901,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [],
+      "free_parameters": 28,
+      "holdout": false,
+      "id": "kenney/castle-kit/tower-square",
+      "import": {
+        "diagonal": 1.9277187585830688,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 176,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "5f61e9c7908bb30edc6ea1ffd1669c99194b5470acc8f12db4ed3cbd08c4b06a",
+      "metrics": {
+        "chamfer": 0.010186175218444457,
+        "f_score": 0.9112208444212778,
+        "normal_consistency": 0.7642808835002725,
+        "precision": 0.9183,
+        "recall": 0.90425,
+        "silhouette_iou": 0.9402626431882813,
+        "size_ratio": 1.0003217458724976
+      },
+      "metrics_strict": {
+        "chamfer": 0.020705156882807597,
+        "f_score": 0.5872460443239121,
+        "normal_consistency": 0.6107634095990129,
+        "precision": 0.54985,
+        "recall": 0.6301,
+        "silhouette_iou": 0.8916344691128655,
+        "size_ratio": 1.0003217458724976
+      },
+      "notes": [
+        "48 triangles for a 176-triangle source",
+        "CMA-ES: loss 0.1572 -> 0.1115 in 911 evaluations",
+        "polish: loss 0.5694 -> 0.2355"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_castle-kit_tower-square.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 176,
+        "reference_watertight": false,
+        "triangles": 48,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 3.7433629,
+        "evals": 1613,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 6,
+      "holdout": false,
+      "id": "kenney/castle-kit/wall",
+      "import": {
+        "diagonal": 1.9277187585830688,
+        "nodes": 1,
+        "parts": 4,
+        "triangles": 178,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "cb061f40e0c59921c9de2f6c2b2b16c71e9f3af5ae9aed75d14598e1911d3073",
+      "metrics": {
+        "chamfer": 0.010009152947644647,
+        "f_score": 0.8798999744289123,
+        "normal_consistency": 0.9140581169478696,
+        "precision": 0.87975,
+        "recall": 0.88005,
+        "silhouette_iou": 0.9517210755592499,
+        "size_ratio": 0.9999860525131226
+      },
+      "metrics_strict": {
+        "chamfer": 0.028742247398515573,
+        "f_score": 0.6619664790966426,
+        "normal_consistency": 0.7611888968289888,
+        "precision": 0.6596,
+        "recall": 0.66435,
+        "silhouette_iou": 0.8139266556537124,
+        "size_ratio": 0.9999860525131226
+      },
+      "notes": [
+        "dropped primitive 2 (loss +0.0006)",
+        "dropped primitive 2 (loss -0.0005)",
+        "dropped primitive 2 (loss -0.0004)",
+        "12 triangles for a 178-triangle source",
+        "CMA-ES: loss 0.2213 -> 0.1810 in 676 evaluations",
+        "polish: loss 0.3453 -> 0.2694"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_castle-kit_wall.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 178,
+        "reference_watertight": false,
+        "triangles": 12,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 4.1786233,
+        "evals": 1730,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 7,
+      "holdout": true,
+      "id": "kenney/castle-kit/wall-corner",
+      "import": {
+        "diagonal": 1.9277187585830688,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 168,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "6a2bbb585a4c1a284ae3c26732e2d493662ab6fb09bc84216e2b8bf4b1316194",
+      "metrics": {
+        "chamfer": 0.010178228290294435,
+        "f_score": 0.8776249423159095,
+        "normal_consistency": 0.9214939262252643,
+        "precision": 0.8774,
+        "recall": 0.87785,
+        "silhouette_iou": 0.950168446527114,
+        "size_ratio": 1.0000081062316895
+      },
+      "metrics_strict": {
+        "chamfer": 0.03650589330833688,
+        "f_score": 0.42834439126882223,
+        "normal_consistency": 0.7726763616251693,
+        "precision": 0.4268,
+        "recall": 0.4299,
+        "silhouette_iou": 0.7652290248878575,
+        "size_ratio": 1.0000081062316895
+      },
+      "notes": [
+        "12 triangles for a 168-triangle source",
+        "CMA-ES: loss 0.2198 -> 0.1788 in 667 evaluations",
+        "polish: loss 0.4518 -> 0.2771"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_castle-kit_wall-corner.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 168,
+        "reference_watertight": true,
+        "triangles": 12,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 1.220814,
+        "evals": 608,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [],
+      "free_parameters": 10,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/chimney",
+      "import": {
+        "diagonal": 1.0772674083709717,
+        "nodes": 1,
+        "parts": 2,
+        "triangles": 32,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "29008f683cec424aaf0bf034ca076ea5331dcb85a2ebdcae80be6f3767166bfa",
+      "metrics": {
+        "chamfer": 0.0004905663770885691,
+        "f_score": 0.9914886415208513,
+        "normal_consistency": 0.9887728232711553,
+        "precision": 0.98375,
+        "recall": 0.99935,
+        "silhouette_iou": 0.9838492886117365,
+        "size_ratio": 0.9999984502792358
+      },
+      "metrics_strict": {
+        "chamfer": 0.0005104063445833539,
+        "f_score": 0.9915132491238686,
+        "normal_consistency": 0.9880801455959678,
+        "precision": 0.98375,
+        "recall": 0.9994,
+        "silhouette_iou": 0.983752018572327,
+        "size_ratio": 0.9999984502792358
+      },
+      "notes": [
+        "24 triangles for a 32-triangle source",
+        "polish: loss 0.0280 -> 0.0280"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_fantasy-town-kit_chimney.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "gold",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 32,
+        "reference_watertight": true,
+        "triangles": 24,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 9.1311263,
+        "evals": 2270,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [],
+      "free_parameters": 20,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/fountain-round",
+      "import": {
+        "diagonal": 2.842252492904663,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 1002,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "655f56a81a87597580a7048e59eeecd11fff7f0cce443734a91cb0e5dff22262",
+      "metrics": {
+        "chamfer": 0.005095144852788133,
+        "f_score": 0.9278340932892934,
+        "normal_consistency": 0.24234800234081413,
+        "precision": 0.8769,
+        "recall": 0.98505,
+        "silhouette_iou": 0.9743869933386993,
+        "size_ratio": 1.0006052255630493
+      },
+      "metrics_strict": {
+        "chamfer": 0.010386109939161298,
+        "f_score": 0.8471764629580496,
+        "normal_consistency": 0.20409071149072988,
+        "precision": 0.8212,
+        "recall": 0.87485,
+        "silhouette_iou": 0.8608201948638505,
+        "size_ratio": 1.0006052255630493
+      },
+      "notes": [
+        "dropped primitive 4 (loss -0.0367)",
+        "dropped primitive 3 (loss -0.0275)",
+        "240 triangles for a 1002-triangle source",
+        "CMA-ES: loss 0.1068 -> 0.0847 in 901 evaluations",
+        "polish: loss 0.2344 -> 0.1464"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_fantasy-town-kit_fountain-round.hcs",
+      "solved": true,
+      "source": "primitive-baseline",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 1002,
+        "reference_watertight": false,
+        "triangles": 240,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 21.6086003,
+        "evals": 5644,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 39,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/roof-gable",
+      "import": {
+        "diagonal": 1.6377215385437012,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 72,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "6e1e9cde4992f5eeaf5ff7edac6d1a51444ad758e6f1ca7ad351eae77869e7ee",
+      "metrics": {
+        "chamfer": 0.01569919418672921,
+        "f_score": 0.7282160307175425,
+        "normal_consistency": 0.3541883531898271,
+        "precision": 0.75635,
+        "recall": 0.7021,
+        "silhouette_iou": 0.8557066095133937,
+        "size_ratio": 0.9995874166488647
+      },
+      "metrics_strict": {
+        "chamfer": 0.018001897966021498,
+        "f_score": 0.6337475133595976,
+        "normal_consistency": 0.40035540869962205,
+        "precision": 0.5731,
+        "recall": 0.70875,
+        "silhouette_iou": 0.8511846390066292,
+        "size_ratio": 0.9995874166488647
+      },
+      "notes": [
+        "parameter cap 40: dropped primitive 11 (loss +0.0029)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0029)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0019)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0068)",
+        "parameter cap 40: dropped primitive 2 (loss +0.0075)",
+        "124 triangles for a 72-triangle source",
+        "CMA-ES: loss 0.4698 -> 0.3925 in 911 evaluations",
+        "polish: loss 1.5215 -> 0.5514"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_fantasy-town-kit_roof-gable.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 72,
+        "reference_watertight": true,
+        "triangles": 124,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 13.833836,
+        "evals": 3798,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 24,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/stall",
+      "import": {
+        "diagonal": 1.2474339008331299,
+        "nodes": 1,
+        "parts": 9,
+        "triangles": 106,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "ae625d3d38968b012f424a5dbd5982cf1a865fc85d2dbdd95bb4a2e792342a8f",
+      "metrics": {
+        "chamfer": 0.004739889406926323,
+        "f_score": 0.9326959796437658,
+        "normal_consistency": 0.8722490593741349,
+        "precision": 0.95855,
+        "recall": 0.9082,
+        "silhouette_iou": 0.8343472846881337,
+        "size_ratio": 1.0017101764678955
+      },
+      "metrics_strict": {
+        "chamfer": 0.021206179959318693,
+        "f_score": 0.5097188189710137,
+        "normal_consistency": 0.09865793146650721,
+        "precision": 0.5115,
+        "recall": 0.50795,
+        "silhouette_iou": 0.6281377981020466,
+        "size_ratio": 1.0017101764678955
+      },
+      "notes": [
+        "parameter cap 40: dropped primitive 7 (loss +0.0150)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0168)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0178)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0208)",
+        "92 triangles for a 106-triangle source",
+        "polish: loss 1.3390 -> 0.2784"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_fantasy-town-kit_stall.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 106,
+        "reference_watertight": false,
+        "triangles": 92,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 4.238329,
+        "evals": 1360,
+        "llm_turns": 0,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 34,
+      "holdout": true,
+      "id": "kenney/fantasy-town-kit/wall-wood-door",
+      "import": {
+        "diagonal": 1.4177446365356445,
+        "nodes": 2,
+        "parts": 5,
+        "triangles": 376,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "1ea49253cf3083c5ff26386ce56430a665a2b42553291c1e1d5d2a3a11c7b02a",
+      "metrics": {
+        "chamfer": 0.007055766192555312,
+        "f_score": 0.9696737329208559,
+        "normal_consistency": 0.680763930470451,
+        "precision": 0.97835,
+        "recall": 0.96115,
+        "silhouette_iou": 0.826032818989512,
+        "size_ratio": 1.0271203517913818
+      },
+      "metrics_strict": {
+        "chamfer": 0.0061910057634972215,
+        "f_score": 0.9827494276265581,
+        "normal_consistency": 0.7113943760150708,
+        "precision": 0.9835,
+        "recall": 0.982,
+        "silhouette_iou": 0.8548581413996583,
+        "size_ratio": 1.0271203517913818
+      },
+      "notes": [
+        "dropped primitive 3 (loss +0.0043)",
+        "dropped primitive 5 (loss -0.0005)",
+        "dropped primitive 6 (loss -0.0022)",
+        "dropped primitive 3 (loss -0.0004)",
+        "dropped primitive 4 (loss +0.0034)",
+        "dropped primitive 5 (loss +0.0029)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0026)",
+        "parameter cap 40: dropped primitive 6 (loss +0.0032)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0045)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0026)",
+        "parameter cap 40: dropped primitive 3 (loss +0.0123)",
+        "parameter cap 40: dropped primitive 4 (loss +0.0257)",
+        "parameter cap 40: dropped primitive 1 (loss +0.0760)",
+        "88 triangles for a 376-triangle source",
+        "CMA-ES: loss 0.1805 -> 0.0786 in 911 evaluations",
+        "polish: loss 0.3589 -> 0.3514"
+      ],
+      "recipe": "corpus/recipes/tuned\\baseline\\kenney_fantasy-town-kit_wall-wood-door.hcs",
+      "solved": false,
+      "source": "primitive-baseline",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 376,
+        "reference_watertight": false,
+        "triangles": 88,
+        "watertight": true,
+        "within_budget": true
+      }
+    }
+  ],
+  "holdout": [
+    "polyhaven/Television_01",
+    "kenney/nature-kit/fence_gate",
+    "kenney/furniture-kit/bedBunk",
+    "kenney/castle-kit/wall-corner",
+    "kenney/nature-kit/cactus_tall",
+    "kenney/survival-kit/tent",
+    "kenney/furniture-kit/lampRoundFloor",
+    "kenney/survival-kit/rock-a",
+    "kenney/castle-kit/flag",
+    "kenney/fantasy-town-kit/wall-wood-door"
+  ],
+  "options": {
+    "evals": 900,
+    "max_prims": 12,
+    "time_budget_s": 600.0
+  },
+  "run": "baseline",
+  "set": "trial",
+  "solver": "primitive-v0a.5",
+  "summary": {
+    "failures": {
+      "extra_material": 22,
+      "missing_detail": 19,
+      "proportion_error": 12
+    },
+    "mean_cpu_seconds": 9.694514104000001,
+    "mean_f_score": 0.8776884945775207,
+    "mean_free_parameters": 28.48,
+    "mean_llm_turns": 0.0,
+    "mean_silhouette_iou": 0.8515376203250831,
+    "solved": 13,
+    "solved_holdout": 3,
+    "solved_mining": 10,
+    "tiers": {
+      "bronze": 24,
+      "gold": 2,
+      "none": 13,
+      "silver": 11
+    },
+    "total": 50,
+    "total_holdout": 10,
+    "total_mining": 40
+  }
+}

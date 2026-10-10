@@ -1,0 +1,12 @@
+# kenney/survival-kit/campfire-pit (llm-recipe, run llm)
+# Campfire pit: a ring of stones around a few crossed logs.
+R = 0.09203        # ring radius
+STONES = 8
+
+stone = box(size=[0.0896, 0.03484, 0.07522], center=[0, 0.04218, 0])
+ring = radial_array(stone, count=STONES, radius=R)
+log_a = box(size=[0.20791, 0.04251, 0.03741], center=[0, 0.06825, 0])
+log_b = transform(log_a, t=[0, 0.01515, 0], r=[0, 42, 0])
+log_c = transform(log_a, t=[0, 0.04377, 0], r=[0, 142.44054, 0])
+pit = merge(ring, log_a, log_b, log_c)
+out(pit)

@@ -1,0 +1,10 @@
+# Television: a block with a narrower, lower rear section.
+W = 0.6329         # width (x)
+H = 0.46968        # height
+FRONT_D = 0.21    # depth of the front housing (z)
+REAR_D = 0.26     # depth of the rear housing
+
+front = box(size=[W, H, FRONT_D], center=[0, H / 2, 0.03333])
+rear = box(size=[W - 0.0377, H - 0.08912, REAR_D], center=[0, (H - 0.12869) / 2 + 0.03667, -0.14])
+tv = merge(front, rear)
+out(tv)

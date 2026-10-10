@@ -1,0 +1,6 @@
+# Ceramic vase: a lathe profile (radius, height) spun around the vertical axis. The profile is open at the rim, so the
+# surface is open too (the original is a closed hollow shell): known to fail the "watertight" validity check.
+profile = curve(points=[[0.001, 0.0, 0.0], [0.085, 0.0, 0.0], [0.097, 0.03, 0.0], [0.106, 0.09, 0.0], [0.11, 0.15, 0.0], [0.11, 0.21, 0.0], [0.1, 0.245, 0.0], [0.07, 0.275, 0.0], [0.075, 0.29, 0.0], [0.083, 0.309, 0.0]])
+even = resample(profile, count=40)
+vase = revolve(even, divisions=32)
+out(vase)

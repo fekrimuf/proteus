@@ -1,0 +1,16 @@
+# Painted chair: four legs (back ones continue up as posts), seat board, apron, top rail and a splat.
+W = 0.36281         # distance between leg centres (x)
+LEG = 0.03733       # leg section
+SEAT_Y = 0.4248    # height of the seat board
+BACK_H = 0.80649   # overall height
+
+front_leg = box(size=[LEG, SEAT_Y, LEG + 0.02055], center=[0.17332, SEAT_Y / 2, 0.18895])
+front_legs = mirror(front_leg, axis="x", offset=0)
+back_post = box(size=[LEG, BACK_H, LEG + 0.0067], center=[0.14983, BACK_H / 2, -0.22567])
+back_posts = mirror(back_post, axis="x", offset=0)
+seat = box(size=[W + 0.04629, 0.05865, 0.43767], center=[0, SEAT_Y, 0.0022])
+apron = box(size=[W - 0.04306, 0.11096, 0.44261], center=[0, 0.37531, -0.01854])
+top_rail = box(size=[W + 0.01267, 0.05895, 0.03697], center=[0, 0.89888, -0.29096])
+splat = box(size=[0.13856, 0.38179, 0.02315], center=[0.0093, 0.78073, -0.26534])
+chair = merge(merge(front_legs, back_posts, seat, apron), top_rail, splat)
+out(chair)

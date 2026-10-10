@@ -2,6 +2,7 @@
 
 pub mod column;
 pub mod geo;
+pub mod gltf;
 pub mod io;
 pub mod math;
 pub mod noise;

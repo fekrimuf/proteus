@@ -1,0 +1,21 @@
+# kenney/furniture-kit/bench (llm-recipe, run llm)
+# Bench: seat on four legs, a lower stretcher, and a back made of two posts and two rails.
+# Everything hangs off a few named numbers, so the same recipe makes a chair (see the chair recipe).
+W = 0.4          # width (x)
+D = 0.2          # depth (z)
+SEAT_TOP = 0.25  # height of the seat's upper face
+SEAT_T = 0.07    # seat thickness
+LEG = 0.045      # square leg and post section
+BACK_TOP = 0.47  # top of the back
+RAIL = 0.05      # height of the back rails
+
+seat = box(size=[W, SEAT_T, D], center=[W / 2, SEAT_TOP - SEAT_T / 2, -D / 2])
+leg = box(size=[LEG, SEAT_TOP - SEAT_T, LEG], center=[LEG / 2, (SEAT_TOP - SEAT_T) / 2, -LEG / 2])
+legs = mirror(mirror(leg, axis="x", offset=W / 2), axis="z", offset=-D / 2)
+stretcher = box(size=[W, 0.03, 0.02173], center=[W / 2, 0.065, -D / 2])
+post = box(size=[LEG, BACK_TOP - SEAT_TOP, LEG], center=[LEG / 2, (BACK_TOP + SEAT_TOP) / 2, LEG / 2 - D])
+posts = mirror(post, axis="x", offset=W / 2)
+top_rail = box(size=[W, RAIL, LEG], center=[W / 2, BACK_TOP - RAIL / 2, LEG / 2 - D])
+mid_rail = box(size=[W, RAIL, 0.02173], center=[W / 2, 0.315, 0.01573 - D])
+bench = merge(merge(seat, legs, stretcher), posts, top_rail, mid_rail)
+out(bench)

@@ -1,0 +1,7 @@
+# polyhaven/ceramic_vase_02 (llm-recipe, run llm)
+# Ceramic vase: a lathe profile (radius, height) spun around the vertical axis. The profile is open at the rim, so the
+# surface is open too (the original is a closed hollow shell): known to fail the "watertight" validity check.
+profile = curve(points=[[0.0002, 0.0, 0.0], [0.08925, 0.0, 0.0], [0.08361, 0.0296, 0.0], [0.10356, 0.117, 0.0], [0.10725, 0.16542, 0.0], [0.09552, 0.23521, 0.0], [0.11274, 0.19065, 0.0], [0.0643, 0.27155, 0.0], [0.07345, 0.29906, 0.0], [0.08425, 0.30674, 0.0]])
+even = resample(profile, count=40)
+vase = revolve(even, divisions=32)
+out(vase)

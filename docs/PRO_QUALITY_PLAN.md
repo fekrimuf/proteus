@@ -131,6 +131,8 @@ director, the judges and the playtest bots.
 
 ## What happens tomorrow
 
+> **Status: done on 2026-10-10.** Phase 0, the Realism Probe and the first 50 assets ran; Checkpoint 1 is green. Results: section B14 and `corpus/results/checkpoint1/report.html`.
+
 **What you do:** open a session and paste this one line:
 
 > Read docs/PRO_QUALITY_PLAN.md and execute Phase 0 and the Realism Probe (B12), then run the first 50 assets and report at Checkpoint 1.
@@ -192,8 +194,7 @@ recommendation, never a commitment.
   silhouette/image/chamfer objectives, variation engine (`vary`), content-addressed cook cache, gym (41 tasks),
   `pt critique-bench`, `render_compare`, `sparse_remesh`/`sparse_boolean`, OBJ import (`pt_core::io::load_obj`),
   export to OBJ/glTF/USD, software rasterizer and CPU path tracer, MCP server.
-- **Missing (Phase 0 builds these):** glTF/GLB importer, reference-matching metrics (`pt match`), corpus download +
-  license ledger, part splitting, the batch runner with budgets and resume, motif mining, FD_DINOv2.
+- **Built in Phase 0 (2026-10-10):** glTF/GLB importer and writer, reference-matching metrics (`pt match`), corpus download + licence ledger, part splitting, the batch runner with budgets and resume, recipe refinement (`pt refine`), `pt describe`, the checkpoint report. **Still missing:** motif mining, FD_DINOv2, Blender bridge for our exports, materials/UVs in exporters.
 - **Missing for realism (Track B, section B12):** the exporters (`io.rs`) write geometry only: no materials, no UVs, no
   texture coordinates. There is no material system, no lighting description, no Blender bridge, no real-elevation import,
   and nothing that fits terrain parameters to real data. Existing terrain nodes: `hf_erode_thermal`, `hf_erode_hydraulic`,
@@ -229,6 +230,28 @@ parameters; **gold** F>=0.95 and IoU>=0.95. "Solved" means silver or better. Bud
 most 8 LLM turns and 10 CPU minutes. Hold out 20% of every batch; the hold-out is never used for pattern mining and
 is reported separately so we do not fool ourselves.
 
+### B3a. Definitions as built (Phase 0, 2026-10-10; frozen for the trial)
+
+The code in `crates/pt-opt/src/matching.rs` is the definition; these notes fix the places where B3 left room.
+
+* **Normalisation:** each shape is centred on its own bounding box and scaled to a unit diagonal (`Align::Bbox`, the default of
+  `pt match`). This hides pure scale errors, so the bench also reports `size_ratio` and **caps any rebuild whose overall size is
+  off by more than 10% at bronze**. `Align::Reference` (reference's centre and scale) is also reported as `metrics_strict`.
+* **Distances are exact:** F-score, Chamfer and normal consistency sample 20 000 surface points on one shape and measure the
+  exact point-to-triangle distance to the other (BVH), so only the choice of sample points is random, not the distances.
+  Identical inputs score exactly 1.0 (tests).
+* **Silhouette IoU:** 10 views (6 axis, 4 diagonal), 256 px, one shared camera framed on the reference.
+* **"Valid":** no validation errors, watertight if the reference is (welded at 1e-4 of the diagonal), and **at most 2x the
+  reference's triangle count** (read as an upper bound; a coarser rebuild is fine).
+* **Free parameters ("knobs"), counted on the recipe source:** every non-zero number except structural integers (`rows`, `cols`,
+  `caps`, `seed`, `octaves`, `divisions`, `levels`, `iterations`), `range(...)` arguments, integer factors or divisors up to 10
+  next to `*` or `/` (`W / 2`), and anything in strings or comments. A variable used ten times counts once. This was refined once,
+  after the first recipes were written, to stop `W / 2` counting as a knob; it is frozen now.
+* **Tiers and budgets** are as in B3. "Solved" = silver or gold. Hold-out = the 10 assets whose id hashes lowest (BLAKE3).
+* **Hold-out caveat:** nothing is mined or learned yet, so the hold-out guards nothing in Phase 0 by construction; and its
+  results were visible while the solver was being fixed (tessellation, parameter cap, polish, size gate), so it is **not** a clean
+  test of those fixes. It becomes a real test at Phase 1 (mining) and Phase 3 (proposer).
+
 ## B4. Phase 0 (day 1): tools, with acceptance tests
 
 1. **License ledger and downloader.** `corpus/LEDGER.csv` columns: id, source, url, license, license_url, sha256,
@@ -239,8 +262,9 @@ is reported separately so we do not fool ourselves.
      Formats are listed per pack (GLB/OBJ/FBX); confirm per pack.
    - Poly Haven (10 props): assets CC0 per their public API repo; using the live API for a product requires a
      "Powered by Poly Haven" credit. API at `https://api.polyhaven.com` (docs linked from the Public-API repo).
-   - Quaternius (10): described as CC0 in secondary sources only. **Confirm on quaternius.com and record the page in the
-     ledger before use; otherwise drop these 10 for more Kenney.**
+   - Quaternius (10): **dropped 2026-10-10.** quaternius.com/license.html (updated 2026-08-28) now publishes the Quaternius Asset
+     License v1.0, which is not CC0 (no resale or redistribution as standalone assets or packs), while the home and pack pages
+     still say CC0, and downloads sit behind Google Drive. The 10 slots went to Kenney. See `corpus/SOURCES.md`.
    - Not in the trial: Objaverse/Objaverse-XL (per-object licenses; v1 is roughly 88% CC-BY, about 10% non-commercial,
      under 0.5% CC0 by my arithmetic from the published counts; Polycam data is academic only); ABC (dataset MIT, but each
      CAD model is owned by its creator under Onshape terms, so research-only); Infinigen outputs (code is BSD-3, output
@@ -313,6 +337,7 @@ is reported separately so we do not fool ourselves.
 | Gate | Pass | Else |
 |---|---|---|
 | G1 (50 assets) | silver on >= 30% of non-hold-out and >= 20% of hold-out | shift weight to DINOv2 judge and part-wise fitting, rerun on 50 new assets |
+| *G1 measured 2026-10-10* | *stack 19/40 (48%) and 5/10 (50%); after a visual check 14/40 and 4/10* | *passed; see B14* |
 | G2 (200 assets) | >= 20 promotions; cost per asset in the last 50 <= 60% of the first 50; hold-out silver within 10 points of mining set | change mining criteria (smaller motifs, parameter-aware matching) before scaling |
 | G3 (human) | owner identifies the original in <= 70% of silver+ pairs | add finishing passes (bevel, wear, variation) and rejudge |
 | G4 (Phase 3) | see B7 | keep LLM path |
@@ -494,3 +519,34 @@ deterministic, locally stable rules, so that moving a mountain or changing a bio
 - [Khronos glTF-Validator](https://github.khronos.org/glTF-Validator)
 - [Infinigen (CVPR 2023)](https://arxiv.org/abs/2306.09310) (all assets procedural; read sections 3+ before copying techniques), [MATch (SIGGRAPH Asia 2020)](https://match.csail.mit.edu/)
 - [USGS 3DEP data](https://www.usgs.gov/3d-elevation-program) and [Copernicus DEM licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf)
+
+## B14. Results log (measured; update after every run)
+
+### 2026-10-10: Phase 0, Realism Probe, Checkpoint 1
+
+Report page: `corpus/results/checkpoint1/report.html` (self-contained). Raw numbers: `corpus/results/baseline.json`,
+`corpus/results/llm.json`, `corpus/results/audit.json`; tuned recipes: `corpus/recipes/tuned/{baseline,llm}/`; the
+language-model-written sources: `corpus/recipes/llm_src/`. Solver version `primitive-v0a.5`, recipes tuned by `pt refine`'s search.
+
+| Measure | Result |
+|---|---|
+| Trial set | 50 CC0 assets: 40 Kenney (6 packs), 10 Poly Haven; 11 single shapes, 28 multi-part props, 11 building pieces; hold-out 10 (BLAKE3 of the id) |
+| Path A, no language model (primitive search + polish) | 13/50 silver or better (26%); development 10/40, hold-out 3/10; about 10 s per asset |
+| Path B, language-model recipe + tuned numbers | tried on 41; 12 solved; 46 turns (1.1 per asset); about 4 s of compute each; 7 to 23 knobs (median 14) vs 6 to 40 (median 30) for path A winners |
+| Stack (best of A and B per asset) | **24/50 solved (48%, 95% range 35 to 61)**: gold 4, silver 20; development 19/40, hold-out 5/10 |
+| Same, after a visual check of the 24 silver pictures | 18/50 (36%); development 14/40, hold-out 4/10. Six pass the numbers but miss a feature (`eye_audit.json`) |
+| Gate G1 | pass on both readings (needs 30% of development and 20% of hold-out) |
+| Failure reasons among the 26 misses | extra surface 14, uncovered surface 11, outline or size 9, open mesh 1 |
+| Probe (B12.1) | appearance (material + light) is the biggest cheap lift; shape and multi-scale detail are the second bottleneck; see `corpus/results/probe/README.md` |
+
+What the misses are (each with its route; also in the report): thin sticks (outline IoU 0.80 to 0.90; the refiner now scores all ten
+views), slanted and bevelled stone (needs wedge, arch, lathe pieces), scans with interior faces (add an outside-only reading),
+busy or organic objects (part-by-part, then the Phase 3 proposer), one open mesh (vase).
+
+Honest limits of this checkpoint: each asset was fitted to its own answer key (in-sample); n = 50; the hold-out was visible while the
+solver was fixed, so it is not a clean test of those fixes; the language model was Claude working from `pt describe` text and pair
+images; the plan's score can pass a rebuild that is missing thin parts (ladder rungs, shelf shelves), which the second reading
+(`uncovered_patches`) only partly catches; no human blind test yet (Checkpoint 3); glTF-Validator and DINOv2 not yet run.
+
+Queued repairs found by the audit: ladder (eight rungs, 0.25 apart), Shelf_01 (array of shelves), bucket (tessellation), vase
+(closed profile). Next: Level 2 steps 1 and 2 (B12.2), then Phase 1 on 150 more assets, then a fresh 50 for a clean test.

@@ -1,0 +1,16 @@
+# Market stall counter: top board, four legs, two long side rails and one cross rail.
+W = 0.64992         # top width (x)
+L = 1.00004         # top length (z)
+LEG_H = 0.30145    # leg height
+LEG_X = 0.22188    # leg position (x)
+LEG_Z = 0.42354    # leg position (z)
+LEG = 0.0567      # leg section
+
+top = box(size=[W, 0.04992, L], center=[0, LEG_H + 0.03898, 0])
+leg = box(size=[LEG, LEG_H, 0.05258], center=[LEG_X, LEG_H / 2, LEG_Z])
+legs = mirror(mirror(leg, axis="x", offset=0), axis="z", offset=0)
+side_rail = box(size=[0.01886, 0.05798, 2 * LEG_Z], center=[LEG_X, 0.15465, 0])
+side_rails = mirror(side_rail, axis="x", offset=0)
+cross_rail = box(size=[2 * LEG_X, 0.04293, 0.04342], center=[0, 0.15883, LEG_Z])
+stall = merge(merge(top, legs), side_rails, cross_rail)
+out(stall)

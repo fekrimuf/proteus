@@ -110,3 +110,37 @@ and return a clean mesh with normals. They store only a narrow band around the s
 the dense `sdf_*` nodes allow (those refuse above 48M voxels). Keep `k` (smooth ops) and `|offset|` below `band * voxel`;
 raise `band` for larger blends. Use them for carving, rounded joins and fixing non-manifold meshes; booleans between meshes
 that overlap themselves are not supported (sign comes from ray parity).
+
+## Matching a reference model (rebuild a professional asset as a recipe)
+
+Goal: given a reference (`.glb`, `.gltf`, `.obj`), write a short parametric recipe whose cooked result matches it. Everything
+below is measured, never judged by eye alone. Details and the scoring definitions: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) B3.
+
+```
+pt describe <ref> [--brief]     text view: size, then cross-section islands along Y (and X, Z) with bounding boxes
+pt parts <ref>                  size, triangle count, watertightness, and the parts (glTF nodes, then connected pieces)
+pt match <ref> <recipe.hcs> [--report DIR] [--align bbox|reference]
+                                F-score, Chamfer, silhouette IoU (10 views), normal consistency, validity, knob count, tier;
+                                --report writes match.json and match.png (original left, ours right, two angles)
+pt refine <ref> <recipe.hcs> [--evals N] [--out FILE] [--tune-integers]
+                                CMA-ES over the NUMBERS in the recipe source; structure (loops, mirror, array) is untouched
+pt export <recipe> <out.obj|glb|gltf|usda>     cook a recipe and export it (no materials yet)
+pt match-bench <manifest> --run NAME [--recipes DIR --only-recipes] [--resume] ...    batch with budgets and resume
+pt corpus fetch|verify          licence ledger (corpus/LEDGER.csv): every file hashed, only CC0 accepted
+pt report --baseline A.json --llm B.json --out DIR    the plain-English checkpoint page
+```
+
+Workflow that worked: `pt describe --brief` plus the pair image from `pt match --report`, then write the recipe with named
+variables, then `pt refine`, then `pt match`. Conventions that matter:
+
+* **Write continuous numbers with a decimal point** (`0.35`, `90.0`). `pt refine` only tunes those; whole numbers are treated as
+  structure (`SHELVES = 3`, `count=4`, quarter turns). Use `--tune-integers` only for machine-written recipes.
+* **A knob is a non-zero number in the source** (not inside a string, comment or `range(...)`, not `rows/cols/caps/seed`, not an
+  integer factor next to `*` or `/`). Variables used many times count once, so name your dimensions (`W`, `D`, `LEG`) and
+  derive the rest (`W / 2`). Silver needs 3 to 40 knobs; a good table or chair is 12 to 20.
+* Use `mirror` (it keeps the original and adds the mirrored copy), `array` and `radial_array` for repeats; `merge` takes at most 4
+  inputs, so nest it. A lying cylinder is `transform(tube(...), r=[0, 0, 90])`; a triangular prism (gable roof) is
+  `tube(cols=3)` scaled with `s=[height, 1, width]` and rotated `r=[0, 0, 90]`.
+* Size matters: the score normalises each shape by its bounding box, so a rebuild of the wrong overall size is capped at bronze
+  (`size_ratio` must be within 10%).
+* Thin sticks (frames, fences, ladders) are the hard case for silhouette IoU; thick boxy furniture is the easy case.

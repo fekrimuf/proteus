@@ -1,0 +1,4 @@
+# kenney/nature-kit/canoe (llm-recipe, run llm)
+# Canoe: a long narrow ellipsoid hull.
+hull = transform(sphere(radius=0.53433, rows=8, cols=16), t=[0.0, 0.03388, 0.0], s=[0.22333, 0.20838, 1.08286])
+out(hull)

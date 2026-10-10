@@ -1,0 +1,12 @@
+{
+  "reviewer": "Claude (the model that wrote the recipes), looking at the top-row pair images of all 24 silver or gold results on 2026-10-10",
+  "note": "A visual read by the author, not a blind test. The owner's own look (and Checkpoint 3) overrides it.",
+  "flagged": [
+    {"id": "kenney/nature-kit/cactus_tall", "why": "the original's two L-shaped arms are not reproduced; ours has blocky crystal-like arms"},
+    {"id": "kenney/survival-kit/barrel", "why": "the three raised rings are missing; ours is a plain drum"},
+    {"id": "kenney/platformer-kit/ladder-long", "why": "only four rungs, bunched at the bottom; the original has eight evenly spaced"},
+    {"id": "polyhaven/Shelf_01", "why": "the seven shelves are missing; only the side and back panels were rebuilt"},
+    {"id": "kenney/castle-kit/tower-square", "why": "the battlements and the recessed top are missing; ours is a plain block"},
+    {"id": "kenney/fantasy-town-kit/fountain-round", "why": "the raised rim and hollow basin are missing; ours is a flat disc"}
+  ]
+}

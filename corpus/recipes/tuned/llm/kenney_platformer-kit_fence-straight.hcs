@@ -1,0 +1,11 @@
+# kenney/platformer-kit/fence-straight (llm-recipe, run llm)
+# Fence section: two posts and two rails (one rail made by an array of two).
+POST_X = 0.39981   # post position (x)
+POST_W = 0.10507    # post width (x)
+LEN = 1.00018       # rail length
+RAIL_H = 0.09786    # rail height
+
+posts = mirror(box(size=[POST_W, 0.39851, 0.09805], center=[POST_X, 0.18954, 0.39161]), axis="x", offset=0)
+rails = array(box(size=[LEN, RAIL_H, 0.10942], center=[0, 0.13993, 0.43167]), count=2, offset=[0, 0.14992, 0])
+fence = merge(posts, rails)
+out(fence)

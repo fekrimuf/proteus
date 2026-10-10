@@ -1,0 +1,18 @@
+# Bookcase: four short legs, two side panels, a back panel, a top, and three shelves made with one array.
+W = 0.40019          # width (x)
+D = 0.24869         # depth (z)
+H = 0.8483         # overall height
+LEG_H = 0.08697     # leg height
+T = 0.0242        # board thickness
+SHELVES = 3
+
+leg = box(size=[0.05173, LEG_H, 0.03636], center=[0.02388, LEG_H / 2, -0.0228])
+legs = mirror(mirror(leg, axis="x", offset=W / 2), axis="z", offset=-D / 2)
+side = box(size=[T, H - LEG_H, D], center=[T / 2, (H + LEG_H) / 2, -D / 2])
+sides = mirror(side, axis="x", offset=W / 2)
+back = box(size=[W, H - LEG_H, T], center=[W / 2, (H + LEG_H) / 2, T / 2 - D])
+top = box(size=[W, T, D], center=[W / 2, H - T / 2, -D / 2])
+shelf = box(size=[W - 2 * T, T, D - T], center=[W / 2, 0.14, -D / 2 + T / 2])
+shelves = array(shelf, count=SHELVES, offset=[0, 0.21284, 0])
+bookcase = merge(merge(legs, sides, back, top), shelves)
+out(bookcase)

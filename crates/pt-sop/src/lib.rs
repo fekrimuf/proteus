@@ -624,3 +624,8 @@ mod tests {
 pub fn sample_surface(src: &Geometry, n: usize, seed: i64) -> Result<Vec<[f32; 3]>, String> {
     Ok(surface_samples(src, n, seed)?.into_iter().map(|s| s.0).collect())
 }
+
+/// Area-weighted surface samples as (position, unit face normal), deterministic for a given seed.
+pub fn sample_surface_normals(src: &Geometry, n: usize, seed: i64) -> Result<Vec<([f32; 3], [f32; 3])>, String> {
+    Ok(surface_samples(src, n, seed)?.into_iter().map(|s| (s.0, s.1)).collect())
+}

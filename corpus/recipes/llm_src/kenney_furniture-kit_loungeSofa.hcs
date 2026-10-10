@@ -1,0 +1,17 @@
+# Sofa: four feet, a low seat block, two taller arms and a back rest.
+W = 0.98393         # width (x)
+D = 0.41308          # depth (z)
+SEAT_TOP = 0.22644  # height of the seat
+ARM_TOP = 0.36796   # height of the arms
+BACK_TOP = 0.45406  # height of the back
+ARM = 0.09832       # arm thickness
+FOOT = 0.04412      # foot height
+
+foot = box(size=[0.0445, FOOT, 0.04296], center=[0.02841, FOOT / 2, -0.04805])
+feet = mirror(mirror(foot, axis="x", offset=W / 2), axis="z", offset=-D / 2 - 0.01254)
+seat = box(size=[W, SEAT_TOP - FOOT, D], center=[W / 2, (SEAT_TOP + FOOT) / 2, -D / 2])
+arm = box(size=[ARM, ARM_TOP - FOOT, D], center=[ARM / 2, (ARM_TOP + FOOT) / 2, -D / 2])
+arms = mirror(arm, axis="x", offset=W / 2)
+back = box(size=[W - 2 * ARM, BACK_TOP - SEAT_TOP, 0.0865], center=[W / 2, (BACK_TOP + SEAT_TOP) / 2, -D + 0.04401])
+sofa = merge(feet, seat, arms, back)
+out(sofa)

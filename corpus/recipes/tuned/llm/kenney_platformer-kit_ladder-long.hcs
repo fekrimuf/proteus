@@ -1,0 +1,13 @@
+# kenney/platformer-kit/ladder-long (llm-recipe, run llm)
+# Long ladder: two side rails and five rungs (one array).
+H = 1.99997          # height
+RAIL_W = 0.10152    # rail width (x)
+GAP = 0.29691        # clear width between the rails
+RUNGS = 4.01605
+SPACING = 0.24341
+
+rail = box(size=[RAIL_W, H, 0.09998], center=[GAP / 2 + RAIL_W / 2, H / 2, 0])
+rails = mirror(rail, axis="x", offset=0)
+rungs = array(box(size=[GAP + -0.05854, 0.06336, 0.06171], center=[0, 0.13726, 0]), count=RUNGS, offset=[0, SPACING, 0])
+ladder = merge(rails, rungs)
+out(ladder)

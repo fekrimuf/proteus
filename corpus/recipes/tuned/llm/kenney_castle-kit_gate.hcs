@@ -1,0 +1,11 @@
+# kenney/castle-kit/gate (llm-recipe, run llm)
+# Gate leaf: a flat door panel with a round (elliptical) top.
+THICK = 0.1105     # thickness (x)
+W = 0.66337         # width (z)
+SHOULDER = 0.7489  # height where the arch starts
+ARCH_H = 0.16053    # extra height of the arch
+
+panel = box(size=[THICK, SHOULDER, W], center=[0, SHOULDER / 2, 0])
+arch = transform(tube(radius=W / 2, height=THICK, cols=12), t=[0, SHOULDER, 0], r=[0, 0, 89.23858], s=[ARCH_H / (W / 2), 1.28228, 0.96815])
+gate = merge(panel, arch)
+out(gate)

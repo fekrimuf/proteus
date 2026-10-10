@@ -1,0 +1,100 @@
+{
+  "baseline": {
+    "holdout": [
+      3,
+      10
+    ],
+    "mining": [
+      10,
+      40
+    ],
+    "solved": 13,
+    "tiers": [
+      2,
+      11,
+      24,
+      13
+    ]
+  },
+  "by_difficulty": [
+    {
+      "baseline": 7,
+      "kind": "primitive",
+      "models": 11,
+      "stack": 7
+    },
+    {
+      "baseline": 3,
+      "kind": "compound",
+      "models": 28,
+      "stack": 11
+    },
+    {
+      "baseline": 3,
+      "kind": "building",
+      "models": 11,
+      "stack": 6
+    }
+  ],
+  "cost": {
+    "baseline_cpu_s": 484.7257052000001,
+    "llm_cpu_s": 144.7571697,
+    "llm_turns": 46.0
+  },
+  "failures": {
+    "extra_material": 14,
+    "missing_detail": 11,
+    "proportion_error": 9,
+    "wrong_topology": 1
+  },
+  "gallery": [
+    "polyhaven/ceramic_vase_02",
+    "kenney/survival-kit/bucket",
+    "kenney/fantasy-town-kit/stall",
+    "kenney/survival-kit/signpost",
+    "kenney/furniture-kit/desk",
+    "kenney/castle-kit/siege-catapult",
+    "polyhaven/painted_wooden_chair_01",
+    "polyhaven/wooden_table_02",
+    "kenney/furniture-kit/bedBunk",
+    "kenney/fantasy-town-kit/chimney",
+    "polyhaven/Shelf_01",
+    "kenney/platformer-kit/crate-strong"
+  ],
+  "llm": {
+    "attempted": 41,
+    "better_than_baseline": 23,
+    "solved": 12,
+    "tiers": [
+      2,
+      10,
+      17,
+      12
+    ],
+    "turns": 46.0
+  },
+  "models": 50,
+  "stack": {
+    "holdout": [
+      5,
+      10
+    ],
+    "mining": [
+      19,
+      40
+    ],
+    "solved": 24,
+    "tiers": [
+      4,
+      20,
+      20,
+      6
+    ],
+    "wilson95": [
+      0.3479691239550571,
+      0.6148848774119157
+    ]
+  },
+  "title": "Checkpoint 1: does it work at all?",
+  "verdict": "green"
+}

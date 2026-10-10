@@ -1,4 +1,4 @@
-use pt_cli::{demos, gym, mcp, recipes, top};
+use pt_cli::{corpus, demos, gym, matchcmd, mcp, recipes, report, top};
 
 use pt_graph::{hex, Graph};
 use serde_json::json;
@@ -153,6 +153,15 @@ fn main() {
         Some("sparse-bench") => sparse_bench_cmd(),
         Some("critique-bench") => critique_bench_cmd(&args[2..]),
         Some("render") => render_cmd(&args[2..]),
+        Some("corpus") => corpus_cmd(&args[2..]),
+        Some("match") => matchcmd::match_cmd(&args[2..]),
+        Some("match-bench") => matchcmd::bench_cmd(&args[2..]),
+        Some("export") => matchcmd::export_cmd(&args[2..]),
+        Some("parts") => matchcmd::parts_cmd(&args[2..]),
+        Some("audit") => matchcmd::audit_cmd(&args[2..]),
+        Some("report") => report::report_cmd(&args[2..]),
+        Some("describe") => matchcmd::describe_cmd(&args[2..]),
+        Some("refine") => matchcmd::refine_cmd(&args[2..]),
         Some("recipes") => recipes_cmd(&args[2..]),
         Some("recipes-accept") => recipes_accept_cmd(&args[2..]),
         Some("shot") => shot_cmd(&args[2..]),
@@ -324,4 +333,25 @@ fn sparse_bench_cmd() -> Result<(), String> {
         );
     }
     Ok(())
+}
+
+/// `pt corpus fetch [manifest] [--set trial|probe]` | `pt corpus verify [manifest]`: the licence ledger (see corpus.rs).
+fn corpus_cmd(args: &[String]) -> Result<(), String> {
+    let manifest = std::path::PathBuf::from(args.get(1).filter(|a| !a.starts_with("--")).map_or("corpus/manifest.json", String::as_str));
+    let ledger = std::path::Path::new("corpus/LEDGER.csv");
+    match args.first().map(String::as_str) {
+        Some("fetch") => {
+            let set = args.iter().position(|a| a == "--set").and_then(|i| args.get(i + 1)).map(String::as_str);
+            corpus::fetch(&manifest, ledger, set)
+        }
+        Some("verify") => {
+            let r = corpus::verify(&manifest, ledger)?;
+            for p in &r.problems {
+                println!("PROBLEM {p}");
+            }
+            println!("ledger: {} rows, {} problem(s)", r.rows, r.problems.len());
+            if r.problems.is_empty() { Ok(()) } else { Err("corpus verification failed".into()) }
+        }
+        _ => Err("usage: pt corpus fetch [manifest.json] [--set trial|probe] | pt corpus verify [manifest.json]".into()),
+    }
 }

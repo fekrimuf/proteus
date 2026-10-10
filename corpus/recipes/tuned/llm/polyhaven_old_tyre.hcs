@@ -1,0 +1,7 @@
+# polyhaven/old_tyre (llm-recipe, run llm)
+# Old tyre: a torus standing on its side (axis along z).
+MAJOR = 0.22575     # distance from the axle to the middle of the tread
+MINOR = 0.07521     # radius of the tread's cross-section
+
+tyre = transform(torus(radius=MAJOR, minor_radius=MINOR, rows=12, cols=32), r=[90, 0, 0])
+out(tyre)

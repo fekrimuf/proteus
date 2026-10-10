@@ -1,0 +1,13 @@
+# kenney/nature-kit/cactus_tall (llm-recipe, run llm)
+# Tall cactus: an eight-sided trunk with a right arm, a left arm and a short front arm (each arm = a stub plus a rise).
+TRUNK_R = 0.10052
+TRUNK_H = 0.74513
+
+trunk = tube(radius=TRUNK_R, height=TRUNK_H, cols=8, center=[0.001, 0.29946, 0.0])
+right_stub = box(size=[0.10654, 0.0759, 0.06259], center=[0.14769, 0.16575, -0.07346])
+right_rise = box(size=[0.05847, 0.3652, 0.06259], center=[0.15419, 0.29176, -0.09048])
+left_stub = box(size=[0.13517, 0.05259, 0.0868], center=[-0.13613, 0.45204, -0.08849])
+left_rise = box(size=[0.05826, 0.26737, 0.06978], center=[-0.15734, 0.46629, -0.08661])
+front_rise = box(size=[0.05628, 0.36531, 0.06789], center=[0.0, 0.36557, 0.17362])
+cactus = merge(merge(trunk, right_stub, right_rise), left_stub, left_rise, front_rise)
+out(cactus)

@@ -7,7 +7,10 @@
 //! * objectives: Chamfer to a scan/mesh, size, silhouette IoU, image match, spec violations.
 
 pub mod cma;
+pub mod matching;
 pub mod objective;
+pub mod recipe;
+pub mod solve;
 
 pub use objective::{Nn, Objective};
 

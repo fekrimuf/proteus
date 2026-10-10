@@ -6,7 +6,7 @@ Agent-facing usage guide: [AGENT_GUIDE.md](AGENT_GUIDE.md).
 
 ## Verified state (last full run)
 
-* `cargo test --workspace --release`: **113 tests pass**, 0 failures. `cargo clippy --workspace --all-targets`: 0 errors.
+* `cargo test --workspace --release`: **146 tests pass**, 0 failures (33 added by the pro-quality Phase 0 tools). `cargo clippy --workspace --all-targets`: 0 errors.
 * `pt recipes`: **25/25 recipes** pass their specs, static check and golden hashes (`recipes/golden.json`).
 * `pt gym-baseline`: oracle 1.000, perturbation agent 0.730, null agent 0.438 over 41 tasks (24 build, 6 repair, 5 edit, + 6 T1; `pt gym` kinds: build | repair | edit) (`gym/baseline.json`).
 * Cross-OS determinism: Windows (MSVC and GNU) matches Linux and macOS on all recipes once the physics math stack is patched (`vendor/`, see vendor/README.md). Repo: https://github.com/fekrimuf/proteus (private), CI in `.github/workflows/ci.yml`.
@@ -89,6 +89,25 @@ check_graph explain get_graph`. See: `render_preview render_final critique`. Sea
 
 **Read [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) first.** North star (owner's goal): an AUTONOMOUS system that makes a FINISHED AAA world; staged by autonomy rungs A0-A4 and an AAA Readiness Scorecard. Plan covers five levels (assets, appearance, systems, composition, delivery; assets alone do NOT give realistic worlds). Track A: rebuild public-domain professional
 assets as recipes, score by measurement, mine reusable building blocks, then train a proposer. Track B: realism probe, then a "photoreal valley" from real elevation data + CC0 scans/materials rendered in Blender. Tomorrow starts at Phase 0 + the Realism Probe.
+
+**State after 2026-10-10:** Phase 0 tools, the Realism Probe and Checkpoint 1 are done and green: the stack solved 24/50 (48%) by the plan's score and 18/50 after a visual check; hold-out 5/10 and 4/10 (PRO_QUALITY_PLAN B14, `corpus/results/checkpoint1/report.html`). **Next, in order:** (1) Level 2 steps 1 and 2 (material names and a lighting description rendered by Blender; the exporters carry no materials today), (2) Phase 1: 150 more assets with motif mining, (3) a fresh 50 for a clean test, (4) queued repairs: ladder, Shelf_01, bucket, vase.
+
+## Pro-quality tools (built 2026-10-10)
+
+| Command | What it does |
+|---|---|
+| `pt corpus fetch/verify [manifest]` | licence ledger `corpus/LEDGER.csv` (sha256 per file, CC0 only); downloads with the system `curl`, zip members read in memory |
+| `pt parts <ref>`, `pt describe <ref> [--brief]` | size, parts, and text cross-sections of a `.glb/.gltf/.obj` |
+| `pt match <ref> <recipe or geometry> [--report DIR]` | F-score, Chamfer, silhouette IoU (10 views), normal consistency, validity, knob count, tier, pair picture |
+| `pt refine <ref> <recipe.hcs>` | CMA-ES over the numbers in a recipe's source (decimals only; `--tune-integers` for machine-written ones) |
+| `pt match-bench <manifest> --run NAME [--recipes DIR --only-recipes --resume ...]` | batch runner: results `corpus/results/NAME.json`, tuned recipes `corpus/recipes/tuned/NAME/`, pictures `D:\Fekri\corpus\out\NAME\pairs\` |
+| `pt audit <manifest> <results.json>...` | second reading: largest uncovered patch per recipe |
+| `pt report --baseline A.json --llm B.json --notes N.md --eye E.json --probe DIR --out DIR [--fragment]` | the checkpoint page |
+| `pt export <recipe> <out.obj/glb/gltf/usda>` | cook and export (geometry only) |
+
+Code: `pt-core/src/gltf.rs` (GLB reader and writer), `pt-opt/src/{matching,solve,recipe}.rs` (metrics with an exact closest-point BVH, the primitive solver, source-level knob counting and refinement), `pt-cli/src/{corpus,matchcmd,report}.rs`. Blender 4.5.14 (portable, official zip, checksum verified) is at `D:\Fekri\tools\blender\blender-4.5.14-windows-x64\`; the probe script is `corpus/tools/probe_render.py`. Raw corpus: `D:\Fekri\corpus\` (`PT_CORPUS` overrides). Agent workflow and conventions: AGENT_GUIDE, "Matching a reference model".
+
+Gotchas: `cargo test` and `cargo build` cannot replace `pt.exe` while a bench is running (wait, or use another target dir). `merge` takes at most 4 inputs. In hcs write tunable numbers with a decimal point and structure (counts, quarter turns) as whole numbers. Never name a bench run like the folder that holds hand-written sources (the first version overwrote them; output now goes to `corpus/recipes/tuned/`). A full 50-asset baseline run takes about 8 minutes. Quaternius is excluded (licence changed, see `corpus/SOURCES.md`).
 
 ## Suggested next steps
 

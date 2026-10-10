@@ -1,0 +1,16 @@
+# Castle wall corner: like the wall block but with merlons on two adjacent sides.
+S = 0.99679          # footprint (x and z)
+BASE_H = 0.48453    # flared base
+WAIST_H = 0.48421   # narrower middle
+WAIST = 0.95978     # waist width
+BAND_H = 0.23841    # top band
+MERLON_H = 0.09488  # crenellation height
+
+base = box(size=[S + 0.00533, BASE_H, S + 0.00422], center=[0, BASE_H / 2, 0])
+waist = box(size=[WAIST, WAIST_H, WAIST], center=[-0.01723, BASE_H + WAIST_H / 2, 0.01766])
+band = box(size=[S + 0.01009, BAND_H, S + -0.00999], center=[0, BASE_H + WAIST_H + BAND_H / 2, 0])
+top_y = BASE_H + WAIST_H + BAND_H + MERLON_H / 2
+merlon_a = box(size=[S + -0.03783, MERLON_H, 0.21108], center=[0, top_y, 0.38182])
+merlon_b = box(size=[0.25055, MERLON_H, S + -0.03783], center=[-0.36121, top_y, 0])
+corner = merge(merge(base, waist, band), merlon_a, merlon_b)
+out(corner)

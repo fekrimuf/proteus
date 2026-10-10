@@ -1,0 +1,14 @@
+# kenney/fantasy-town-kit/cart (llm-recipe, run llm)
+# Cart: a deck, two octagonal wheels on the sides, and two shafts at the back.
+W = 0.74385         # deck width (x)
+L = 0.99462          # deck length (z)
+WHEEL_R = 0.26078
+WHEEL_X = 0.38389
+
+deck = box(size=[W - 0.13941, 0.1605, L], center=[0.0, 0.24661, 0.16767])
+wheel = transform(tube(radius=WHEEL_R, height=0.08909, cols=8), t=[WHEEL_X, WHEEL_R, 0.14], r=[0, 0, 90])
+wheels = mirror(wheel, axis="x", offset=0)
+shaft = box(size=[0.05946, 0.09726, 0.78], center=[0.22919, 0.21587, -0.315])
+shafts = mirror(shaft, axis="x", offset=0)
+cart = merge(deck, wheels, shafts)
+out(cart)

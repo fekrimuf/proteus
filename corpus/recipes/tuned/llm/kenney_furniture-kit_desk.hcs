@@ -1,0 +1,15 @@
+# kenney/furniture-kit/desk (llm-recipe, run llm)
+# Desk: overhanging top, a panel at each end, a back panel, and a small drawer block under the top.
+W = 0.69818         # width (x)
+D = 0.37749         # depth (z)
+H = 0.32632         # underside of the top
+TOP_T = 0.05751     # top thickness
+PANEL = 0.02671     # thickness of the end and back panels
+
+top = box(size=[W + 0.03832, TOP_T, D + 0.00098], center=[W / 2, H + TOP_T / 2, -D / 2 + -0.01102])
+end_panel = box(size=[PANEL, H, D], center=[PANEL / 2, H / 2, -D / 2])
+end_panels = mirror(end_panel, axis="x", offset=W / 2)
+back = box(size=[W, H, PANEL], center=[W / 2, H / 2, PANEL / 2 - D])
+drawer = box(size=[0.21862, 0.07, 0.21], center=[0.13337, H - 0.04533, -0.12492])
+desk = merge(top, end_panels, back, drawer)
+out(desk)

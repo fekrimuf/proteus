@@ -1,0 +1,12 @@
+# Flag on a pole: a tapered square base, a thin upper pole with two collars and a finial, and a flat banner.
+BASE_H = 0.43
+POLE_H = 0.44
+
+base = tube(radius=0.055, radius_top=0.025, height=BASE_H, cols=4, center=[0.0, BASE_H / 2, 0.0])
+pole = box(size=[0.03, POLE_H, 0.03], center=[0.0, BASE_H + POLE_H / 2, 0.0])
+collar = box(size=[0.1, 0.06, 0.1], center=[0.0, 0.7, 0.0])
+collar_low = box(size=[0.1, 0.06, 0.1], center=[0.0, 0.5, 0.0])
+finial = tube(radius=0.04, radius_top=0.005, height=0.1, cols=4, center=[0.0, 0.82, 0.0])
+banner = box(size=[0.03, 0.36, 0.35], center=[0.0, 0.61, -0.21])
+flag = merge(merge(base, pole, collar, collar_low), finial, banner)
+out(flag)

@@ -1,0 +1,10 @@
+# kenney/survival-kit/signpost (llm-recipe, run llm)
+# Signpost: a six-sided post with two boards.
+POST_R = 0.01812
+H = 0.46627
+
+post = tube(radius=POST_R, height=H, cols=6, center=[0, H / 2, 0])
+upper = box(size=[0.19985, 0.08629, 0.02527], center=[-0.00493, 0.38609, 0.01655])
+lower = box(size=[0.18981, 0.08736, 0.02447], center=[0.00018, 0.27316, 0.0174])
+signpost = merge(post, upper, lower)
+out(signpost)

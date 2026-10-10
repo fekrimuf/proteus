@@ -1,0 +1,11 @@
+# kenney/castle-kit/stairs-stone (llm-recipe, run llm)
+# Stone stairs: twelve identical solid steps, each shifted up and forward from the last (one array).
+STEPS = 12
+RISE = 0.05283
+RUN = 0.05829
+W = 0.23371        # width (x)
+DEPTH = 0.21      # depth of each step block (z)
+
+step = box(size=[W, RISE, DEPTH], center=[0, RISE / 2, 0 - 0.27667])
+stairs = array(step, count=STEPS, offset=[0, RISE, RUN])
+out(stairs)

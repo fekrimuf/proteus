@@ -1,0 +1,11 @@
+# kenney/survival-kit/chest (llm-recipe, run llm)
+# Chest: a box body under a barrel-vault lid (a cylinder lying on its side, flattened a little).
+W = 0.26613         # width (x)
+D = 0.22456         # depth (z)
+BODY_H = 0.12574   # height of the box part
+LID_R = 0.11934    # lid radius (half the depth)
+
+body = box(size=[W, BODY_H, D], center=[0, BODY_H / 2, -0.01618])
+lid = transform(tube(radius=LID_R, height=W, cols=16), t=[0, BODY_H, -0.01868], r=[0, 0, 91.02603], s=[1.10391, 0.85689, 1.07277])
+chest = merge(body, lid)
+out(chest)

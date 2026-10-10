@@ -1,0 +1,9 @@
+# Bucket: a ten-sided tapered body (wider at the top) and a half-ring handle.
+H = 0.128        # body height
+R_BOTTOM = 0.06
+R_TOP = 0.07
+
+body = tube(radius=R_BOTTOM, radius_top=R_TOP, height=H, cols=10, center=[0.0, H / 2, 0.0])
+handle = transform(torus(radius=0.065, minor_radius=0.008, rows=6, cols=20), t=[0.0, H, 0.0], r=[0, 0, 90])
+bucket = merge(body, handle)
+out(bucket)

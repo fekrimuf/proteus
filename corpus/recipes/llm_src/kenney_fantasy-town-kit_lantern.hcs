@@ -1,0 +1,11 @@
+# Street lantern: a tapered base, a thin pole, a short bracket and a flared lamp head.
+H = 1.56435        # overall height
+BASE_H = 0.56785    # tapered base
+POLE_R = 0.03831    # pole radius
+
+base = tube(radius=0.12142, radius_top=0.04478, height=BASE_H, cols=6, center=[0, BASE_H / 2, 0])
+pole = tube(radius=POLE_R, height=0.85279, cols=6, center=[0, 0.91849, 0])
+bracket = box(size=[0.0187, 0.03755, 0.23242], center=[0, 1.25795, 0])
+head = tube(radius=0.03714, radius_top=0.12312, height=0.316, cols=6, center=[0, H - 0.17045, 0])
+lantern = merge(base, pole, bracket, head)
+out(lantern)

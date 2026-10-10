@@ -1,0 +1,10 @@
+# kenney/fantasy-town-kit/wall-wood-door (llm-recipe, run llm)
+# Wooden door wall: a thin panel, with a slightly thicker frame border at the top and bottom.
+W = 0.99982         # width (z)
+H = 0.99707          # height
+T = 0.08479          # thickness (x)
+
+panel = box(size=[T, H, W], center=[0.4095, H / 2, 0])
+door = box(size=[0.04844, 0.49411, 0.37918], center=[0.4095, 0.31195, 0.0])
+wall = merge(panel, door)
+out(wall)

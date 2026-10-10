@@ -1,0 +1,18 @@
+# "Tent" is a wooden A-frame: four slanted legs under a ridge beam, with a low and a mid cross bar on each side.
+FOOT = 0.25972      # leg foot position (x)
+SLANT = 31.88738     # lean of the legs in degrees
+LEG_LEN = 0.546   # length of a leg
+Z = 0.23229        # front/back leg position (z)
+LEN = 0.57487       # length of the ridge beam and the cross bars
+WOOD = 0.03921      # square section of every stick
+
+mid_x = FOOT - sin(radians(SLANT)) * LEG_LEN / 2
+mid_y = cos(radians(SLANT)) * LEG_LEN / 2
+leg = transform(box(size=[WOOD, LEG_LEN, WOOD]), t=[mid_x, mid_y, Z], r=[0, 0, SLANT])
+legs = mirror(mirror(leg, axis="x", offset=0), axis="z", offset=0)
+ridge = box(size=[0.084, 0.05201, LEN], center=[0, 0.39673, 0])
+low_bar = box(size=[0.04201, 0.06174, LEN - 0.06799], center=[0.21739, 0.08799, 0])
+mid_bar = box(size=[0.05593, 0.01201, LEN - 0.05889], center=[0.07877, 0.28762, 0])
+bars = mirror(merge(low_bar, mid_bar), axis="x", offset=0)
+tent = merge(legs, ridge, bars)
+out(tent)

@@ -1,0 +1,10 @@
+# Painted cabinet: one big body with an overhanging top.
+W = 1.12743         # body width (x)
+D = 0.50539         # body depth (z)
+H = 1.17895         # body height
+TOP_T = 0.04271     # top board thickness
+
+body = box(size=[W, H - TOP_T, D], center=[0, (H - TOP_T) / 2, -0.02108])
+top = box(size=[W + 0.08145, TOP_T, D + -0.0037], center=[0, H - TOP_T / 2, 0.06212])
+cabinet = merge(body, top)
+out(cabinet)

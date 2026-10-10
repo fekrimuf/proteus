@@ -1,0 +1,370 @@
+{
+  "baseline": {
+    "kenney/castle-kit/bridge-straight": {
+      "largest_patch": 0.0264,
+      "patches_over_2pct": 2
+    },
+    "kenney/castle-kit/flag": {
+      "largest_patch": 0.0186,
+      "patches_over_2pct": 0
+    },
+    "kenney/castle-kit/gate": {
+      "largest_patch": 0.01035,
+      "patches_over_2pct": 0
+    },
+    "kenney/castle-kit/siege-catapult": {
+      "largest_patch": 0.4178,
+      "patches_over_2pct": 1
+    },
+    "kenney/castle-kit/stairs-stone": {
+      "largest_patch": 0.21945,
+      "patches_over_2pct": 3
+    },
+    "kenney/castle-kit/tower-square": {
+      "largest_patch": 0.0782,
+      "patches_over_2pct": 1
+    },
+    "kenney/castle-kit/wall": {
+      "largest_patch": 0.11995,
+      "patches_over_2pct": 1
+    },
+    "kenney/castle-kit/wall-corner": {
+      "largest_patch": 0.12215,
+      "patches_over_2pct": 1
+    },
+    "kenney/fantasy-town-kit/cart": {
+      "largest_patch": 0.0912,
+      "patches_over_2pct": 1
+    },
+    "kenney/fantasy-town-kit/chimney": {
+      "largest_patch": 0.00025,
+      "patches_over_2pct": 0
+    },
+    "kenney/fantasy-town-kit/fountain-round": {
+      "largest_patch": 0.01495,
+      "patches_over_2pct": 0
+    },
+    "kenney/fantasy-town-kit/lantern": {
+      "largest_patch": 0.0093,
+      "patches_over_2pct": 0
+    },
+    "kenney/fantasy-town-kit/roof-gable": {
+      "largest_patch": 0.2975,
+      "patches_over_2pct": 1
+    },
+    "kenney/fantasy-town-kit/stall": {
+      "largest_patch": 0.06315,
+      "patches_over_2pct": 2
+    },
+    "kenney/fantasy-town-kit/wall-wood-door": {
+      "largest_patch": 0.01765,
+      "patches_over_2pct": 0
+    },
+    "kenney/furniture-kit/bedBunk": {
+      "largest_patch": 0.05475,
+      "patches_over_2pct": 2
+    },
+    "kenney/furniture-kit/bench": {
+      "largest_patch": 0.052,
+      "patches_over_2pct": 1
+    },
+    "kenney/furniture-kit/bookcaseClosed": {
+      "largest_patch": 0.1811,
+      "patches_over_2pct": 2
+    },
+    "kenney/furniture-kit/chair": {
+      "largest_patch": 0.0676,
+      "patches_over_2pct": 3
+    },
+    "kenney/furniture-kit/desk": {
+      "largest_patch": 0.11215,
+      "patches_over_2pct": 1
+    },
+    "kenney/furniture-kit/kitchenStove": {
+      "largest_patch": 0.04255,
+      "patches_over_2pct": 1
+    },
+    "kenney/furniture-kit/lampRoundFloor": {
+      "largest_patch": 0.00855,
+      "patches_over_2pct": 0
+    },
+    "kenney/furniture-kit/loungeSofa": {
+      "largest_patch": 0.01215,
+      "patches_over_2pct": 0
+    },
+    "kenney/furniture-kit/table": {
+      "largest_patch": 0.05325,
+      "patches_over_2pct": 1
+    },
+    "kenney/furniture-kit/trashcan": {
+      "largest_patch": 0.01435,
+      "patches_over_2pct": 0
+    },
+    "kenney/nature-kit/cactus_tall": {
+      "largest_patch": 0.0267,
+      "patches_over_2pct": 1
+    },
+    "kenney/nature-kit/canoe": {
+      "largest_patch": 0.01655,
+      "patches_over_2pct": 0
+    },
+    "kenney/nature-kit/fence_gate": {
+      "largest_patch": 0.03895,
+      "patches_over_2pct": 4
+    },
+    "kenney/platformer-kit/crate-strong": {
+      "largest_patch": 0.29315,
+      "patches_over_2pct": 1
+    },
+    "kenney/platformer-kit/fence-straight": {
+      "largest_patch": 0.0,
+      "patches_over_2pct": 0
+    },
+    "kenney/platformer-kit/ladder-long": {
+      "largest_patch": 0.0197,
+      "patches_over_2pct": 0
+    },
+    "kenney/survival-kit/barrel": {
+      "largest_patch": 0.0047,
+      "patches_over_2pct": 0
+    },
+    "kenney/survival-kit/box": {
+      "largest_patch": 0.0,
+      "patches_over_2pct": 0
+    },
+    "kenney/survival-kit/bucket": {
+      "largest_patch": 0.05405,
+      "patches_over_2pct": 1
+    },
+    "kenney/survival-kit/campfire-pit": {
+      "largest_patch": 0.19235,
+      "patches_over_2pct": 1
+    },
+    "kenney/survival-kit/chest": {
+      "largest_patch": 0.3337,
+      "patches_over_2pct": 1
+    },
+    "kenney/survival-kit/rock-a": {
+      "largest_patch": 0.03575,
+      "patches_over_2pct": 1
+    },
+    "kenney/survival-kit/signpost": {
+      "largest_patch": 0.0134,
+      "patches_over_2pct": 0
+    },
+    "kenney/survival-kit/tent": {
+      "largest_patch": 0.1113,
+      "patches_over_2pct": 4
+    },
+    "kenney/survival-kit/workbench": {
+      "largest_patch": 0.0643,
+      "patches_over_2pct": 3
+    },
+    "polyhaven/Barrel_01": {
+      "largest_patch": 0.0,
+      "patches_over_2pct": 0
+    },
+    "polyhaven/Shelf_01": {
+      "largest_patch": 0.0191,
+      "patches_over_2pct": 0
+    },
+    "polyhaven/Television_01": {
+      "largest_patch": 0.06505,
+      "patches_over_2pct": 1
+    },
+    "polyhaven/ceramic_vase_02": {
+      "largest_patch": 0.17225,
+      "patches_over_2pct": 2
+    },
+    "polyhaven/old_tyre": {
+      "largest_patch": 0.0,
+      "patches_over_2pct": 0
+    },
+    "polyhaven/painted_wooden_bench": {
+      "largest_patch": 0.1231,
+      "patches_over_2pct": 2
+    },
+    "polyhaven/painted_wooden_cabinet": {
+      "largest_patch": 0.24385,
+      "patches_over_2pct": 1
+    },
+    "polyhaven/painted_wooden_chair_01": {
+      "largest_patch": 0.3608,
+      "patches_over_2pct": 1
+    },
+    "polyhaven/sofa_02": {
+      "largest_patch": 0.05855,
+      "patches_over_2pct": 2
+    },
+    "polyhaven/wooden_table_02": {
+      "largest_patch": 0.00125,
+      "patches_over_2pct": 0
+    }
+  },
+  "llm": {
+    "kenney/castle-kit/bridge-straight": {
+      "largest_patch": 0.12155,
+      "patches_over_2pct": 1
+    },
+    "kenney/castle-kit/flag": {
+      "largest_patch": 0.00195,
+      "patches_over_2pct": 0
+    },
+    "kenney/castle-kit/gate": {
+      "largest_patch": 0.4099,
+      "patches_over_2pct": 2
+    },
+    "kenney/castle-kit/stairs-stone": {
+      "largest_patch": 0.0673,
+      "patches_over_2pct": 1
+    },
+    "kenney/castle-kit/tower-square": {
+      "largest_patch": 0.08985,
+      "patches_over_2pct": 2
+    },
+    "kenney/castle-kit/wall": {
+      "largest_patch": 0.0008,
+      "patches_over_2pct": 0
+    },
+    "kenney/castle-kit/wall-corner": {
+      "largest_patch": 0.0429,
+      "patches_over_2pct": 1
+    },
+    "kenney/fantasy-town-kit/cart": {
+      "largest_patch": 0.14265,
+      "patches_over_2pct": 2
+    },
+    "kenney/fantasy-town-kit/lantern": {
+      "largest_patch": 0.0145,
+      "patches_over_2pct": 0
+    },
+    "kenney/fantasy-town-kit/roof-gable": {
+      "largest_patch": 0.03,
+      "patches_over_2pct": 2
+    },
+    "kenney/fantasy-town-kit/stall": {
+      "largest_patch": 0.0224,
+      "patches_over_2pct": 1
+    },
+    "kenney/fantasy-town-kit/wall-wood-door": {
+      "largest_patch": 0.0332,
+      "patches_over_2pct": 1
+    },
+    "kenney/furniture-kit/bedBunk": {
+      "largest_patch": 0.0194,
+      "patches_over_2pct": 0
+    },
+    "kenney/furniture-kit/bench": {
+      "largest_patch": 0.00295,
+      "patches_over_2pct": 0
+    },
+    "kenney/furniture-kit/bookcaseClosed": {
+      "largest_patch": 0.0,
+      "patches_over_2pct": 0
+    },
+    "kenney/furniture-kit/chair": {
+      "largest_patch": 0.00665,
+      "patches_over_2pct": 0
+    },
+    "kenney/furniture-kit/desk": {
+      "largest_patch": 0.04495,
+      "patches_over_2pct": 1
+    },
+    "kenney/furniture-kit/lampRoundFloor": {
+      "largest_patch": 0.1251,
+      "patches_over_2pct": 1
+    },
+    "kenney/furniture-kit/loungeSofa": {
+      "largest_patch": 0.00365,
+      "patches_over_2pct": 0
+    },
+    "kenney/furniture-kit/table": {
+      "largest_patch": 0.01225,
+      "patches_over_2pct": 0
+    },
+    "kenney/nature-kit/cactus_tall": {
+      "largest_patch": 0.0065,
+      "patches_over_2pct": 0
+    },
+    "kenney/nature-kit/canoe": {
+      "largest_patch": 0.3963,
+      "patches_over_2pct": 1
+    },
+    "kenney/nature-kit/fence_gate": {
+      "largest_patch": 0.00075,
+      "patches_over_2pct": 0
+    },
+    "kenney/platformer-kit/crate-strong": {
+      "largest_patch": 0.89255,
+      "patches_over_2pct": 1
+    },
+    "kenney/platformer-kit/fence-straight": {
+      "largest_patch": 0.03845,
+      "patches_over_2pct": 2
+    },
+    "kenney/platformer-kit/ladder-long": {
+      "largest_patch": 0.023,
+      "patches_over_2pct": 4
+    },
+    "kenney/survival-kit/bucket": {
+      "largest_patch": 0.04305,
+      "patches_over_2pct": 1
+    },
+    "kenney/survival-kit/campfire-pit": {
+      "largest_patch": 0.1172,
+      "patches_over_2pct": 2
+    },
+    "kenney/survival-kit/chest": {
+      "largest_patch": 0.2117,
+      "patches_over_2pct": 1
+    },
+    "kenney/survival-kit/rock-a": {
+      "largest_patch": 0.7158,
+      "patches_over_2pct": 1
+    },
+    "kenney/survival-kit/signpost": {
+      "largest_patch": 0.004,
+      "patches_over_2pct": 0
+    },
+    "kenney/survival-kit/tent": {
+      "largest_patch": 0.0,
+      "patches_over_2pct": 0
+    },
+    "kenney/survival-kit/workbench": {
+      "largest_patch": 0.03855,
+      "patches_over_2pct": 5
+    },
+    "polyhaven/Television_01": {
+      "largest_patch": 0.0418,
+      "patches_over_2pct": 4
+    },
+    "polyhaven/ceramic_vase_02": {
+      "largest_patch": 0.0549,
+      "patches_over_2pct": 1
+    },
+    "polyhaven/old_tyre": {
+      "largest_patch": 0.1002,
+      "patches_over_2pct": 1
+    },
+    "polyhaven/painted_wooden_bench": {
+      "largest_patch": 0.02985,
+      "patches_over_2pct": 1
+    },
+    "polyhaven/painted_wooden_cabinet": {
+      "largest_patch": 0.339,
+      "patches_over_2pct": 1
+    },
+    "polyhaven/painted_wooden_chair_01": {
+      "largest_patch": 0.0089,
+      "patches_over_2pct": 0
+    },
+    "polyhaven/sofa_02": {
+      "largest_patch": 0.05705,
+      "patches_over_2pct": 2
+    },
+    "polyhaven/wooden_table_02": {
+      "largest_patch": 0.00005,
+      "patches_over_2pct": 0
+    }
+  }
+}

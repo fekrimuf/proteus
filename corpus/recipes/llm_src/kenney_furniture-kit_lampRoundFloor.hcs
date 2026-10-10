@@ -1,0 +1,11 @@
+# Floor lamp: a square foot turned 45 degrees, a thin pole and a six-sided shade.
+CX = 0.07178        # lamp axis position (x)
+CZ = -0.07628       # lamp axis position (z)
+POLE_H = 0.6694    # pole height
+SHADE_H = 0.17723    # shade height
+
+foot = transform(box(size=[0.084, 0.02328, 0.09583]), t=[CX, 0.00093, CZ], r=[0, 45.557, 0])
+pole = tube(radius=0.0094, height=POLE_H, cols=6, center=[CX, POLE_H / 2, CZ])
+shade = tube(radius=0.09031, radius_top=0.05199, height=SHADE_H, cols=6, center=[CX, POLE_H + SHADE_H / 2, CZ])
+lamp = merge(foot, pole, shade)
+out(lamp)

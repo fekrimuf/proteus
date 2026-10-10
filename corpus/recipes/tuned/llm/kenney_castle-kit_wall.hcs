@@ -1,0 +1,16 @@
+# kenney/castle-kit/wall (llm-recipe, run llm)
+# Castle wall block: a flared base, a slightly narrower waist, a top band and two merlons.
+S = 0.9727          # footprint (x and z)
+BASE_H = 0.46101    # flared base
+WAIST_H = 0.58308   # narrower middle
+WAIST = 0.9303     # waist width (x)
+BAND_H = 0.15549    # top band
+MERLON_H = 0.09737  # crenellation height
+
+base = box(size=[S + 0.02871, BASE_H, S + 0.04294], center=[0, BASE_H / 2, 0])
+waist = box(size=[WAIST, WAIST_H, S + 0.02745], center=[0, BASE_H + WAIST_H / 2, 0])
+band = box(size=[S + 0.01752, BAND_H, S + 0.01328], center=[0, BASE_H + WAIST_H + BAND_H / 2, 0])
+merlon = box(size=[0.19207, MERLON_H, S + 0.01363], center=[0.39917, BASE_H + WAIST_H + BAND_H + MERLON_H / 2, 0])
+merlons = mirror(merlon, axis="x", offset=0)
+wall = merge(base, waist, band, merlons)
+out(wall)

@@ -1,0 +1,19 @@
+# kenney/furniture-kit/bookcaseClosed (llm-recipe, run llm)
+# Bookcase: four short legs, two side panels, a back panel, a top, and three shelves made with one array.
+W = 0.39818          # width (x)
+D = 0.25256         # depth (z)
+H = 0.84485         # overall height
+LEG_H = 0.10079     # leg height
+T = 0.0243        # board thickness
+SHELVES = 3
+
+leg = box(size=[0.04444, LEG_H, 0.03012], center=[0.01696, LEG_H / 2, -0.0182])
+legs = mirror(mirror(leg, axis="x", offset=W / 2), axis="z", offset=-D / 2)
+side = box(size=[T, H - LEG_H, D], center=[T / 2, (H + LEG_H) / 2, -D / 2])
+sides = mirror(side, axis="x", offset=W / 2)
+back = box(size=[W, H - LEG_H, T], center=[W / 2, (H + LEG_H) / 2, T / 2 - D])
+top = box(size=[W, T, D], center=[W / 2, H - T / 2, -D / 2])
+shelf = box(size=[W - 2 * T, T, D - T], center=[W / 2, 0.11057, -D / 2 + T / 2])
+shelves = array(shelf, count=SHELVES, offset=[0, 0.23871, 0])
+bookcase = merge(merge(legs, sides, back, top), shelves)
+out(bookcase)

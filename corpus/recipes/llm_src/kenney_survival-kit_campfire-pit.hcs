@@ -1,0 +1,11 @@
+# Campfire pit: a ring of stones around a few crossed logs.
+R = 0.09023        # ring radius
+STONES = 8
+
+stone = box(size=[0.08765, 0.04977, 0.078], center=[0, 0.0453, 0])
+ring = radial_array(stone, count=STONES, radius=R)
+log_a = box(size=[0.20122, 0.03064, 0.04434], center=[0, 0.0525, 0])
+log_b = transform(log_a, t=[0, 0.02696, 0], r=[0, 42, 0])
+log_c = transform(log_a, t=[0, 0.06048, 0], r=[0, 137.69182, 0])
+pit = merge(ring, log_a, log_b, log_c)
+out(pit)

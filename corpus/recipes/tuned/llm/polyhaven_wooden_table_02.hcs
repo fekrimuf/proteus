@@ -1,0 +1,13 @@
+# polyhaven/wooden_table_02 (llm-recipe, run llm)
+# Wooden table: a thick top on four square legs (one leg mirrored in both directions).
+W = 1.10788         # top width (x)
+D = 0.70162         # top depth (z)
+H = 0.83918          # overall height
+TOP_T = 0.07698     # top thickness (includes the apron)
+LEG = 0.05937       # leg section
+
+top = box(size=[W, TOP_T, D], center=[0, H - TOP_T / 2, 0])
+leg = box(size=[LEG, H - TOP_T, LEG], center=[0.47238, (H - TOP_T) / 2, 0.25994])
+legs = mirror(mirror(leg, axis="x", offset=0), axis="z", offset=0)
+table = merge(top, legs)
+out(table)

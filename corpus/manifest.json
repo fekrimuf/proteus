@@ -1,0 +1,1169 @@
+{
+ "version": 1,
+ "note": "Trial set (50 assets) + realism probe inputs. Quaternius is deliberately absent: see corpus/SOURCES.md.",
+ "assets": [
+  {
+   "id": "kenney/survival-kit/barrel",
+   "source": "kenney",
+   "set": "trial",
+   "category": "container",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/barrel.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/barrel.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/barrel.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/bucket",
+   "source": "kenney",
+   "set": "trial",
+   "category": "container",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/bucket.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/bucket.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/bucket.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/box",
+   "source": "kenney",
+   "set": "trial",
+   "category": "container",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/box.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/box.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/box.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/rock-a",
+   "source": "kenney",
+   "set": "trial",
+   "category": "rock",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/rock-a.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/rock-a.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/rock-a.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/trashcan",
+   "source": "kenney",
+   "set": "trial",
+   "category": "container",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/trashcan.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/trashcan.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/trashcan.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/lampRoundFloor",
+   "source": "kenney",
+   "set": "trial",
+   "category": "lighting",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/lampRoundFloor.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/lampRoundFloor.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/lampRoundFloor.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/nature-kit/cactus_tall",
+   "source": "kenney",
+   "set": "trial",
+   "category": "plant",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/nature-kit/cactus_tall.glb",
+   "files": [
+    {
+     "path": "kenney/models/nature-kit/cactus_tall.glb",
+     "archive": "nature-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+     "member": "Models/GLTF format/cactus_tall.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/flag",
+   "source": "kenney",
+   "set": "trial",
+   "category": "prop",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/castle-kit/flag.glb",
+   "files": [
+    {
+     "path": "kenney/models/castle-kit/flag.glb",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "Models/GLB format/flag.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/table",
+   "source": "kenney",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/table.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/table.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/table.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/chair",
+   "source": "kenney",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/chair.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/chair.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/chair.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/bench",
+   "source": "kenney",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/bench.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/bench.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/bench.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/bookcaseClosed",
+   "source": "kenney",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/bookcaseClosed.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/bookcaseClosed.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/bookcaseClosed.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/desk",
+   "source": "kenney",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/desk.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/desk.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/desk.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/bedBunk",
+   "source": "kenney",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/bedBunk.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/bedBunk.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/bedBunk.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/loungeSofa",
+   "source": "kenney",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/loungeSofa.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/loungeSofa.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/loungeSofa.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/kitchenStove",
+   "source": "kenney",
+   "set": "trial",
+   "category": "appliance",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/furniture-kit/kitchenStove.glb",
+   "files": [
+    {
+     "path": "kenney/models/furniture-kit/kitchenStove.glb",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "Models/GLTF format/kitchenStove.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/tent",
+   "source": "kenney",
+   "set": "trial",
+   "category": "structure",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/tent.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/tent.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/tent.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/campfire-pit",
+   "source": "kenney",
+   "set": "trial",
+   "category": "prop",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/campfire-pit.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/campfire-pit.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/campfire-pit.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/signpost",
+   "source": "kenney",
+   "set": "trial",
+   "category": "prop",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/signpost.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/signpost.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/signpost.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/workbench",
+   "source": "kenney",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/workbench.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/workbench.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/workbench.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/chest",
+   "source": "kenney",
+   "set": "trial",
+   "category": "container",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/survival-kit/chest.glb",
+   "files": [
+    {
+     "path": "kenney/models/survival-kit/chest.glb",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "Models/GLB format/chest.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/platformer-kit/crate-strong",
+   "source": "kenney",
+   "set": "trial",
+   "category": "container",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/platformer-kit/crate-strong.glb",
+   "files": [
+    {
+     "path": "kenney/models/platformer-kit/crate-strong.glb",
+     "archive": "platformer-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/platformer-kit/1585cf62b4-1775122253/kenney_platformer-kit.zip",
+     "member": "Models/GLB format/crate-strong.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/platformer-kit/fence-straight",
+   "source": "kenney",
+   "set": "trial",
+   "category": "structure",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/platformer-kit/fence-straight.glb",
+   "files": [
+    {
+     "path": "kenney/models/platformer-kit/fence-straight.glb",
+     "archive": "platformer-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/platformer-kit/1585cf62b4-1775122253/kenney_platformer-kit.zip",
+     "member": "Models/GLB format/fence-straight.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/platformer-kit/ladder-long",
+   "source": "kenney",
+   "set": "trial",
+   "category": "structure",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/platformer-kit/ladder-long.glb",
+   "files": [
+    {
+     "path": "kenney/models/platformer-kit/ladder-long.glb",
+     "archive": "platformer-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/platformer-kit/1585cf62b4-1775122253/kenney_platformer-kit.zip",
+     "member": "Models/GLB format/ladder-long.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/nature-kit/canoe",
+   "source": "kenney",
+   "set": "trial",
+   "category": "vehicle",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/nature-kit/canoe.glb",
+   "files": [
+    {
+     "path": "kenney/models/nature-kit/canoe.glb",
+     "archive": "nature-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+     "member": "Models/GLTF format/canoe.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/nature-kit/fence_gate",
+   "source": "kenney",
+   "set": "trial",
+   "category": "structure",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/nature-kit/fence_gate.glb",
+   "files": [
+    {
+     "path": "kenney/models/nature-kit/fence_gate.glb",
+     "archive": "nature-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+     "member": "Models/GLTF format/fence_gate.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/fantasy-town-kit/cart",
+   "source": "kenney",
+   "set": "trial",
+   "category": "vehicle",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/fantasy-town-kit/cart.glb",
+   "files": [
+    {
+     "path": "kenney/models/fantasy-town-kit/cart.glb",
+     "archive": "fantasy-town-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+     "member": "Models/GLB format/cart.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/fantasy-town-kit/lantern",
+   "source": "kenney",
+   "set": "trial",
+   "category": "lighting",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/fantasy-town-kit/lantern.glb",
+   "files": [
+    {
+     "path": "kenney/models/fantasy-town-kit/lantern.glb",
+     "archive": "fantasy-town-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+     "member": "Models/GLB format/lantern.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/siege-catapult",
+   "source": "kenney",
+   "set": "trial",
+   "category": "vehicle",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/castle-kit/siege-catapult.glb",
+   "files": [
+    {
+     "path": "kenney/models/castle-kit/siege-catapult.glb",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "Models/GLB format/siege-catapult.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/wall",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/castle-kit/wall.glb",
+   "files": [
+    {
+     "path": "kenney/models/castle-kit/wall.glb",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "Models/GLB format/wall.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/wall-corner",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/castle-kit/wall-corner.glb",
+   "files": [
+    {
+     "path": "kenney/models/castle-kit/wall-corner.glb",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "Models/GLB format/wall-corner.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/gate",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/castle-kit/gate.glb",
+   "files": [
+    {
+     "path": "kenney/models/castle-kit/gate.glb",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "Models/GLB format/gate.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/stairs-stone",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/castle-kit/stairs-stone.glb",
+   "files": [
+    {
+     "path": "kenney/models/castle-kit/stairs-stone.glb",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "Models/GLB format/stairs-stone.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/bridge-straight",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/castle-kit/bridge-straight.glb",
+   "files": [
+    {
+     "path": "kenney/models/castle-kit/bridge-straight.glb",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "Models/GLB format/bridge-straight.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/tower-square",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/castle-kit/tower-square.glb",
+   "files": [
+    {
+     "path": "kenney/models/castle-kit/tower-square.glb",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "Models/GLB format/tower-square.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/fantasy-town-kit/fountain-round",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/fantasy-town-kit/fountain-round.glb",
+   "files": [
+    {
+     "path": "kenney/models/fantasy-town-kit/fountain-round.glb",
+     "archive": "fantasy-town-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+     "member": "Models/GLB format/fountain-round.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/fantasy-town-kit/stall",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/fantasy-town-kit/stall.glb",
+   "files": [
+    {
+     "path": "kenney/models/fantasy-town-kit/stall.glb",
+     "archive": "fantasy-town-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+     "member": "Models/GLB format/stall.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/fantasy-town-kit/roof-gable",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/fantasy-town-kit/roof-gable.glb",
+   "files": [
+    {
+     "path": "kenney/models/fantasy-town-kit/roof-gable.glb",
+     "archive": "fantasy-town-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+     "member": "Models/GLB format/roof-gable.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/fantasy-town-kit/wall-wood-door",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/fantasy-town-kit/wall-wood-door.glb",
+   "files": [
+    {
+     "path": "kenney/models/fantasy-town-kit/wall-wood-door.glb",
+     "archive": "fantasy-town-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+     "member": "Models/GLB format/wall-wood-door.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/fantasy-town-kit/chimney",
+   "source": "kenney",
+   "set": "trial",
+   "category": "building",
+   "difficulty": "building",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/models/fantasy-town-kit/chimney.glb",
+   "files": [
+    {
+     "path": "kenney/models/fantasy-town-kit/chimney.glb",
+     "archive": "fantasy-town-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+     "member": "Models/GLB format/chimney.glb"
+    }
+   ]
+  },
+  {
+   "id": "kenney/furniture-kit/LICENSE",
+   "source": "kenney",
+   "set": "evidence",
+   "category": "license",
+   "difficulty": "evidence",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/licenses/furniture-kit_License.txt",
+   "files": [
+    {
+     "path": "kenney/licenses/furniture-kit_License.txt",
+     "archive": "furniture-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/furniture-kit/440e0608a4-1677580847/kenney_furniture-kit.zip",
+     "member": "License.txt"
+    }
+   ]
+  },
+  {
+   "id": "kenney/survival-kit/LICENSE",
+   "source": "kenney",
+   "set": "evidence",
+   "category": "license",
+   "difficulty": "evidence",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/licenses/survival-kit_License.txt",
+   "files": [
+    {
+     "path": "kenney/licenses/survival-kit_License.txt",
+     "archive": "survival-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/survival-kit/4065a8185b-1712149243/kenney_survival-kit.zip",
+     "member": "License.txt"
+    }
+   ]
+  },
+  {
+   "id": "kenney/castle-kit/LICENSE",
+   "source": "kenney",
+   "set": "evidence",
+   "category": "license",
+   "difficulty": "evidence",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/licenses/castle-kit_License.txt",
+   "files": [
+    {
+     "path": "kenney/licenses/castle-kit_License.txt",
+     "archive": "castle-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip",
+     "member": "License.txt"
+    }
+   ]
+  },
+  {
+   "id": "kenney/fantasy-town-kit/LICENSE",
+   "source": "kenney",
+   "set": "evidence",
+   "category": "license",
+   "difficulty": "evidence",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/licenses/fantasy-town-kit_License.txt",
+   "files": [
+    {
+     "path": "kenney/licenses/fantasy-town-kit_License.txt",
+     "archive": "fantasy-town-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/fantasy-town-kit/efe948d309-1754222374/kenney_fantasy-town-kit_2.0.zip",
+     "member": "License.txt"
+    }
+   ]
+  },
+  {
+   "id": "kenney/platformer-kit/LICENSE",
+   "source": "kenney",
+   "set": "evidence",
+   "category": "license",
+   "difficulty": "evidence",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/licenses/platformer-kit_License.txt",
+   "files": [
+    {
+     "path": "kenney/licenses/platformer-kit_License.txt",
+     "archive": "platformer-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/platformer-kit/1585cf62b4-1775122253/kenney_platformer-kit.zip",
+     "member": "License.txt"
+    }
+   ]
+  },
+  {
+   "id": "kenney/nature-kit/LICENSE",
+   "source": "kenney",
+   "set": "evidence",
+   "category": "license",
+   "difficulty": "evidence",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Kenney (kenney.nl); CC0 per the pack License.txt and https://kenney.nl/support; credit not required",
+   "main": "kenney/licenses/nature-kit_License.txt",
+   "files": [
+    {
+     "path": "kenney/licenses/nature-kit_License.txt",
+     "archive": "nature-kit.zip",
+     "archive_url": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+     "member": "License.txt"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/wooden_table_02",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/wooden_table_02/wooden_table_02_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/wooden_table_02/wooden_table_02_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_table_02/wooden_table_02_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/wooden_table_02/wooden_table_02.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/wooden_table_02/wooden_table_02.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/Shelf_01",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/Shelf_01/Shelf_01_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/Shelf_01/Shelf_01_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Shelf_01/Shelf_01_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/Shelf_01/Shelf_01.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/Shelf_01/Shelf_01.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/painted_wooden_bench",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/painted_wooden_bench/painted_wooden_bench_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/painted_wooden_bench/painted_wooden_bench_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/painted_wooden_bench/painted_wooden_bench_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/painted_wooden_bench/painted_wooden_bench.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/painted_wooden_bench/painted_wooden_bench.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/painted_wooden_chair_01",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/painted_wooden_chair_01/painted_wooden_chair_01_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/painted_wooden_chair_01/painted_wooden_chair_01_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/painted_wooden_chair_01/painted_wooden_chair_01_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/painted_wooden_chair_01/painted_wooden_chair_01.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/painted_wooden_chair_01/painted_wooden_chair_01.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/painted_wooden_cabinet",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/painted_wooden_cabinet/painted_wooden_cabinet_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/painted_wooden_cabinet/painted_wooden_cabinet_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/painted_wooden_cabinet/painted_wooden_cabinet_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/painted_wooden_cabinet/painted_wooden_cabinet.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/painted_wooden_cabinet/painted_wooden_cabinet.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/sofa_02",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "furniture",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/sofa_02/sofa_02_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/sofa_02/sofa_02_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/sofa_02/sofa_02_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/sofa_02/sofa_02.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/sofa_02/sofa_02.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/Barrel_01",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "container",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/Barrel_01/Barrel_01_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/Barrel_01/Barrel_01_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Barrel_01/Barrel_01_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/Barrel_01/Barrel_01.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/Barrel_01/Barrel_01.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/ceramic_vase_02",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "container",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/ceramic_vase_02/ceramic_vase_02_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/ceramic_vase_02/ceramic_vase_02_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/ceramic_vase_02/ceramic_vase_02_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/ceramic_vase_02/ceramic_vase_02.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/ceramic_vase_02/ceramic_vase_02.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/Television_01",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "appliance",
+   "difficulty": "compound",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/Television_01/Television_01_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/Television_01/Television_01_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Television_01/Television_01_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/Television_01/Television_01.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/Television_01/Television_01.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/old_tyre",
+   "source": "polyhaven",
+   "set": "trial",
+   "category": "vehicle",
+   "difficulty": "primitive",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/models/old_tyre/old_tyre_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/models/old_tyre/old_tyre_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/old_tyre/old_tyre_1k.gltf"
+    },
+    {
+     "path": "polyhaven/models/old_tyre/old_tyre.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/old_tyre/old_tyre.bin"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/probe/boulder_01",
+   "source": "polyhaven",
+   "set": "probe",
+   "category": "scan",
+   "difficulty": "probe",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/probe/boulder_01/boulder_01_1k.gltf",
+   "files": [
+    {
+     "path": "polyhaven/probe/boulder_01/boulder_01_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/boulder_01/boulder_01_1k.gltf"
+    },
+    {
+     "path": "polyhaven/probe/boulder_01/textures/boulder_01_arm_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/boulder_01/boulder_01_arm_1k.jpg"
+    },
+    {
+     "path": "polyhaven/probe/boulder_01/textures/boulder_01_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/boulder_01/boulder_01_diff_1k.jpg"
+    },
+    {
+     "path": "polyhaven/probe/boulder_01/boulder_01.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/boulder_01/boulder_01.bin"
+    },
+    {
+     "path": "polyhaven/probe/boulder_01/textures/boulder_01_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/boulder_01/boulder_01_nor_gl_1k.jpg"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/probe/rock_boulder_cracked",
+   "source": "polyhaven",
+   "set": "probe",
+   "category": "material",
+   "difficulty": "probe",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/probe/rock_boulder_cracked/rock_boulder_cracked_diff_1k.jpg",
+   "files": [
+    {
+     "path": "polyhaven/probe/rock_boulder_cracked/rock_boulder_cracked_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_cracked/rock_boulder_cracked_diff_1k.jpg"
+    },
+    {
+     "path": "polyhaven/probe/rock_boulder_cracked/rock_boulder_cracked_rough_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_cracked/rock_boulder_cracked_rough_1k.jpg"
+    },
+    {
+     "path": "polyhaven/probe/rock_boulder_cracked/rock_boulder_cracked_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_cracked/rock_boulder_cracked_nor_gl_1k.jpg"
+    },
+    {
+     "path": "polyhaven/probe/rock_boulder_cracked/rock_boulder_cracked_disp_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_cracked/rock_boulder_cracked_disp_1k.jpg"
+    }
+   ]
+  },
+  {
+   "id": "polyhaven/probe/bloem_hill_01",
+   "source": "polyhaven",
+   "set": "probe",
+   "category": "hdri",
+   "difficulty": "probe",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "attribution": "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a 'Powered by Poly Haven' credit when the API is used in a product",
+   "main": "polyhaven/probe/bloem_hill_01/bloem_hill_01_1k.hdr",
+   "files": [
+    {
+     "path": "polyhaven/probe/bloem_hill_01/bloem_hill_01_1k.hdr",
+     "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/bloem_hill_01_1k.hdr"
+    }
+   ]
+  }
+ ]
+}

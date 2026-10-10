@@ -1,0 +1,2456 @@
+{
+  "assets": [
+    {
+      "category": "prop",
+      "cost": {
+        "cpu_seconds": 16.5808762,
+        "evals": 4928,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 23,
+      "holdout": true,
+      "id": "kenney/castle-kit/flag",
+      "import": {
+        "diagonal": 0.9733842611312866,
+        "nodes": 1,
+        "parts": 5,
+        "triangles": 144,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "e18df19e5bb9702d33ee209d0910a1ea938ee49c8accb8ad3e39b24d22c88b7e",
+      "metrics": {
+        "chamfer": 0.007596602245534755,
+        "f_score": 0.9498816118524744,
+        "normal_consistency": 0.42809323467654176,
+        "precision": 0.9101,
+        "recall": 0.9933,
+        "silhouette_iou": 0.8030632918563588,
+        "size_ratio": 1.0000241994857788
+      },
+      "metrics_strict": {
+        "chamfer": 0.00760258035176548,
+        "f_score": 0.9488601062430968,
+        "normal_consistency": 0.42492303541447035,
+        "precision": 0.9094,
+        "recall": 0.9919,
+        "silhouette_iou": 0.8030741039787717,
+        "size_ratio": 1.0000241994857788
+      },
+      "notes": [
+        "refined 23 numbers: loss 0.6639 -> 0.3122"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_flag.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 144,
+        "reference_watertight": false,
+        "triangles": 72,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "lighting",
+      "cost": {
+        "cpu_seconds": 1.3121099,
+        "evals": 353,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 12,
+      "holdout": true,
+      "id": "kenney/furniture-kit/lampRoundFloor",
+      "import": {
+        "diagonal": 0.8908070921897888,
+        "nodes": 1,
+        "parts": 2,
+        "triangles": 76,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "a7636117532dc9982456c97576c0dc3081d4138de1e94bbac417fb2442b04aa4",
+      "metrics": {
+        "chamfer": 0.006750650400487413,
+        "f_score": 0.9152130125454842,
+        "normal_consistency": 0.5981561816402827,
+        "precision": 0.9914,
+        "recall": 0.8499,
+        "silhouette_iou": 0.8706212264035151,
+        "size_ratio": 0.9991085529327393
+      },
+      "metrics_strict": {
+        "chamfer": 0.013629599476381959,
+        "f_score": 0.8037985423718478,
+        "normal_consistency": 0.35928141541909064,
+        "precision": 0.93445,
+        "recall": 0.7052,
+        "silhouette_iou": 0.6137355194329076,
+        "size_ratio": 0.9991085529327393
+      },
+      "notes": [
+        "refined 12 numbers: loss 0.3126 -> 0.3126"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_lampRoundFloor.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 76,
+        "reference_watertight": true,
+        "triangles": 52,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "plant",
+      "cost": {
+        "cpu_seconds": 9.7523593,
+        "evals": 2801,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 33,
+      "holdout": true,
+      "id": "kenney/nature-kit/cactus_tall",
+      "import": {
+        "diagonal": 0.9135046005249023,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 122,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "a783a0f5c6f36a61831ef2a94405cdacbf16f990b2675f04fb58d05c5e3fe167",
+      "metrics": {
+        "chamfer": 0.005966432262815088,
+        "f_score": 0.9625438978166619,
+        "normal_consistency": 0.8081312604554256,
+        "precision": 0.9426,
+        "recall": 0.98335,
+        "silhouette_iou": 0.8857547656781692,
+        "size_ratio": 0.9998319745063782
+      },
+      "metrics_strict": {
+        "chamfer": 0.007190779242264117,
+        "f_score": 0.9172929902468261,
+        "normal_consistency": 0.7870250595105417,
+        "precision": 0.89955,
+        "recall": 0.93575,
+        "silhouette_iou": 0.8655762999652434,
+        "size_ratio": 0.9998319745063782
+      },
+      "notes": [
+        "refined 33 numbers: loss 0.3884 -> 0.2060"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_nature-kit_cactus_tall.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 122,
+        "reference_watertight": true,
+        "triangles": 88,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 5.1709042,
+        "evals": 1297,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "triangle_budget",
+        "extra_material"
+      ],
+      "free_parameters": 6,
+      "holdout": false,
+      "id": "kenney/survival-kit/bucket",
+      "import": {
+        "diagonal": 0.28005746006965637,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 68,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "191d983df5d5426d9c1ed7710ec85a39cf4198cc1c71d44a3d3c60dfb8735db1",
+      "metrics": {
+        "chamfer": 0.015308093047662136,
+        "f_score": 0.8693333999257971,
+        "normal_consistency": 0.12327006414064293,
+        "precision": 0.7997,
+        "recall": 0.95225,
+        "silhouette_iou": 0.9142363786594595,
+        "size_ratio": 0.9999922513961792
+      },
+      "metrics_strict": {
+        "chamfer": 0.014704525589768183,
+        "f_score": 0.8702225719988594,
+        "normal_consistency": 0.06201250731865828,
+        "precision": 0.8011,
+        "recall": 0.9524,
+        "silhouette_iou": 0.9090974388774468,
+        "size_ratio": 0.9999922513961792
+      },
+      "notes": [
+        "refined 5 numbers: loss 1.2603 -> 0.8745"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_survival-kit_bucket.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": false,
+        "reference_triangles": 68,
+        "reference_watertight": false,
+        "triangles": 276,
+        "watertight": true,
+        "within_budget": false
+      }
+    },
+    {
+      "category": "rock",
+      "cost": {
+        "cpu_seconds": 4.9038855,
+        "evals": 1216,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 7,
+      "holdout": true,
+      "id": "kenney/survival-kit/rock-a",
+      "import": {
+        "diagonal": 0.9213038682937622,
+        "nodes": 1,
+        "parts": 4,
+        "triangles": 104,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "e9310aa4fb7215d8c73940f4d9654f60e267b72a8f0aed1d89f2f100eab440fe",
+      "metrics": {
+        "chamfer": 0.06305148932963099,
+        "f_score": 0.26110142433801736,
+        "normal_consistency": 0.6192542822221294,
+        "precision": 0.251,
+        "recall": 0.27205,
+        "silhouette_iou": 0.6167649680101563,
+        "size_ratio": 1.000028133392334
+      },
+      "metrics_strict": {
+        "chamfer": 0.07879431824635702,
+        "f_score": 0.12448034068136273,
+        "normal_consistency": 0.557568409050256,
+        "precision": 0.11895,
+        "recall": 0.13055,
+        "silhouette_iou": 0.525859390365862,
+        "size_ratio": 1.000028133392334
+      },
+      "notes": [
+        "refined 7 numbers: loss 1.9288 -> 1.7610"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_survival-kit_rock-a.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 104,
+        "reference_watertight": true,
+        "triangles": 168,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 9.490109499999999,
+        "evals": 1633,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "wrong_topology"
+      ],
+      "free_parameters": 19,
+      "holdout": false,
+      "id": "polyhaven/ceramic_vase_02",
+      "import": {
+        "diagonal": 0.43700748682022095,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 11128,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "5017750879d5c685c675b57d6cc752e75ec40c5868946e282e54f6bd00099014",
+      "metrics": {
+        "chamfer": 0.006976502846313381,
+        "f_score": 0.9717223650385605,
+        "normal_consistency": 0.07165023433452006,
+        "precision": 1.0,
+        "recall": 0.945,
+        "silhouette_iou": 0.9694705355189427,
+        "size_ratio": 1.0002447366714478
+      },
+      "metrics_strict": {
+        "chamfer": 0.007540222774423462,
+        "f_score": 0.9674221694460219,
+        "normal_consistency": 0.0964877416948555,
+        "precision": 1.0,
+        "recall": 0.9369,
+        "silhouette_iou": 0.9680017554685458,
+        "size_ratio": 1.0002447366714478
+      },
+      "notes": [
+        "refined 18 numbers: loss 0.4456 -> 0.1264"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_ceramic_vase_02.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": false,
+        "reference_triangles": 11128,
+        "reference_watertight": true,
+        "triangles": 2496,
+        "watertight": false,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "vehicle",
+      "cost": {
+        "cpu_seconds": 1.9920556,
+        "evals": 469,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 3,
+      "holdout": false,
+      "id": "polyhaven/old_tyre",
+      "import": {
+        "diagonal": 0.8644217848777771,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 2880,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "0da05ce6d9859e371e2a17b0886b2ed81a7d6974e182358e3ac4994676cc3269",
+      "metrics": {
+        "chamfer": 0.011220498952886748,
+        "f_score": 0.9029871982281283,
+        "normal_consistency": 0.3013954672258347,
+        "precision": 0.9064,
+        "recall": 0.8996,
+        "silhouette_iou": 0.8876028102785589,
+        "size_ratio": 1.0000110864639282
+      },
+      "metrics_strict": {
+        "chamfer": 0.011218926440381772,
+        "f_score": 0.902887196810278,
+        "normal_consistency": 0.3043956376351416,
+        "precision": 0.9063,
+        "recall": 0.8995,
+        "silhouette_iou": 0.8880360011427472,
+        "size_ratio": 1.0000110864639282
+      },
+      "notes": [
+        "refined 2 numbers: loss 0.4184 -> 0.3137"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_old_tyre.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 2880,
+        "reference_watertight": true,
+        "triangles": 768,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "vehicle",
+      "cost": {
+        "cpu_seconds": 9.2448537,
+        "evals": 2317,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail"
+      ],
+      "free_parameters": 17,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/cart",
+      "import": {
+        "diagonal": 1.6970131397247314,
+        "nodes": 3,
+        "parts": 7,
+        "triangles": 608,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "3ff182b7b4ace762a90d7e06bd558f28121eb53539e645db0a06640649e47343",
+      "metrics": {
+        "chamfer": 0.011603142382165163,
+        "f_score": 0.8651030432276657,
+        "normal_consistency": 0.6085798810431984,
+        "precision": 0.9131,
+        "recall": 0.8219,
+        "silhouette_iou": 0.7722781500455851,
+        "size_ratio": 1.0005627870559692
+      },
+      "metrics_strict": {
+        "chamfer": 0.012505682395107487,
+        "f_score": 0.8484386232033158,
+        "normal_consistency": 0.5905174202635971,
+        "precision": 0.89265,
+        "recall": 0.8084,
+        "silhouette_iou": 0.7542237485512528,
+        "size_ratio": 1.0005627870559692
+      },
+      "notes": [
+        "refined 16 numbers: loss 1.1573 -> 0.4741"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_fantasy-town-kit_cart.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 608,
+        "reference_watertight": false,
+        "triangles": 92,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "lighting",
+      "cost": {
+        "cpu_seconds": 1.2919737,
+        "evals": 385,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 15,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/lantern",
+      "import": {
+        "diagonal": 1.5869169235229492,
+        "nodes": 1,
+        "parts": 3,
+        "triangles": 158,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "fed18ca10562aaae4f260caea7b9cdc51712db804dc46bb4290092b80cc4ed37",
+      "metrics": {
+        "chamfer": 0.004494904756843521,
+        "f_score": 0.98781055774876,
+        "normal_consistency": 0.7608081865038723,
+        "precision": 0.9973,
+        "recall": 0.9785,
+        "silhouette_iou": 0.8618491282794741,
+        "size_ratio": 1.0009409189224243
+      },
+      "metrics_strict": {
+        "chamfer": 0.004423636147622322,
+        "f_score": 0.9876831515274227,
+        "normal_consistency": 0.7653038796747103,
+        "precision": 0.9973,
+        "recall": 0.97825,
+        "silhouette_iou": 0.8645893997569386,
+        "size_ratio": 1.0009409189224243
+      },
+      "notes": [
+        "refined 15 numbers: loss 0.1889 -> 0.1889"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_fantasy-town-kit_lantern.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 158,
+        "reference_watertight": false,
+        "triangles": 72,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.6009775,
+        "evals": 353,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 14,
+      "holdout": true,
+      "id": "kenney/furniture-kit/bedBunk",
+      "import": {
+        "diagonal": 1.4991884231567383,
+        "nodes": 5,
+        "parts": 5,
+        "triangles": 580,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "a95d994303c11081178b5661e29ffacecefcc97d7784d635e7746d7d4b1f0a42",
+      "metrics": {
+        "chamfer": 0.007111783509621468,
+        "f_score": 0.9618864838877339,
+        "normal_consistency": 0.5937939785810139,
+        "precision": 0.97245,
+        "recall": 0.95155,
+        "silhouette_iou": 0.893527840640029,
+        "size_ratio": 1.0006444454193115
+      },
+      "metrics_strict": {
+        "chamfer": 0.007002483311499881,
+        "f_score": 0.9624267421625412,
+        "normal_consistency": 0.5946038571310859,
+        "precision": 0.97225,
+        "recall": 0.9528,
+        "silhouette_iou": 0.8933086289687481,
+        "size_ratio": 1.0006444454193115
+      },
+      "notes": [
+        "refined 13 numbers: loss 0.2107 -> 0.2107"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_bedBunk.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 580,
+        "reference_watertight": false,
+        "triangles": 96,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.4052793000000001,
+        "evals": 353,
+        "llm_turns": 2,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 13,
+      "holdout": false,
+      "id": "kenney/furniture-kit/bench",
+      "import": {
+        "diagonal": 0.6487680673599243,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 170,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "c100c5200485aedb643752ce75cd40daeddd6a9672052c02f7315d61aa354ff1",
+      "metrics": {
+        "chamfer": 0.006836952315440363,
+        "f_score": 0.990673833497363,
+        "normal_consistency": 0.8558250000000001,
+        "precision": 0.99175,
+        "recall": 0.9896,
+        "silhouette_iou": 0.9107360831186007,
+        "size_ratio": 1.0
+      },
+      "metrics_strict": {
+        "chamfer": 0.006836951952496593,
+        "f_score": 0.990673833497363,
+        "normal_consistency": 0.8558749999999999,
+        "precision": 0.99175,
+        "recall": 0.9896,
+        "silhouette_iou": 0.9107360831186007,
+        "size_ratio": 1.0
+      },
+      "notes": [
+        "refined 13 numbers: loss 0.1837 -> 0.1799"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_bench.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 170,
+        "reference_watertight": true,
+        "triangles": 120,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 5.8303597,
+        "evals": 1288,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 12,
+      "holdout": false,
+      "id": "kenney/furniture-kit/bookcaseClosed",
+      "import": {
+        "diagonal": 0.9721111059188843,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 372,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "90c80470032d288e3d5a87d18836ab46b4387001ca5438d1e4e93a682874d554",
+      "metrics": {
+        "chamfer": 0.005180508500119507,
+        "f_score": 0.9950253756092658,
+        "normal_consistency": 0.832025,
+        "precision": 0.9901,
+        "recall": 1.0,
+        "silhouette_iou": 0.9798611834636122,
+        "size_ratio": 0.9997850060462952
+      },
+      "metrics_strict": {
+        "chamfer": 0.005600116553374952,
+        "f_score": 0.9953787422141852,
+        "normal_consistency": 0.7400249999999999,
+        "precision": 0.9908,
+        "recall": 1.0,
+        "silhouette_iou": 0.9760018772222658,
+        "size_ratio": 0.9997850060462952
+      },
+      "notes": [
+        "refined 11 numbers: loss 0.1473 -> 0.0717"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_bookcaseClosed.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "gold",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 372,
+        "reference_watertight": false,
+        "triangles": 132,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.4714252,
+        "evals": 353,
+        "llm_turns": 2,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 14,
+      "holdout": false,
+      "id": "kenney/furniture-kit/chair",
+      "import": {
+        "diagonal": 0.5485435128211975,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 170,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "a8b2a16f623b915d16eefdbba42c7de7f40033217fd4896dea38d1e2b69c4f84",
+      "metrics": {
+        "chamfer": 0.004918047799225927,
+        "f_score": 0.9786895371411056,
+        "normal_consistency": 0.8871249999999999,
+        "precision": 0.9819,
+        "recall": 0.9755,
+        "silhouette_iou": 0.938690076906228,
+        "size_ratio": 1.0
+      },
+      "metrics_strict": {
+        "chamfer": 0.004918047641954413,
+        "f_score": 0.9786895371411056,
+        "normal_consistency": 0.8860250000000001,
+        "precision": 0.9819,
+        "recall": 0.9755,
+        "silhouette_iou": 0.938690076906228,
+        "size_ratio": 1.0
+      },
+      "notes": [
+        "refined 14 numbers: loss 0.1337 -> 0.1312"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_chair.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 170,
+        "reference_watertight": true,
+        "triangles": 120,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.4316588000000001,
+        "evals": 353,
+        "llm_turns": 2,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 14,
+      "holdout": false,
+      "id": "kenney/furniture-kit/desk",
+      "import": {
+        "diagonal": 0.9171273708343506,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 198,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "78e358dd09417b3d976a981afba9522b99f4046a6ff3234f6b8046b9f38bf5a6",
+      "metrics": {
+        "chamfer": 0.004938074032395855,
+        "f_score": 0.9619899615404605,
+        "normal_consistency": 0.7874657979935408,
+        "precision": 0.96965,
+        "recall": 0.95445,
+        "silhouette_iou": 0.9358562516928501,
+        "size_ratio": 0.9999739527702332
+      },
+      "metrics_strict": {
+        "chamfer": 0.008484696729884078,
+        "f_score": 0.9396679963831711,
+        "normal_consistency": 0.5626681788556278,
+        "precision": 0.959,
+        "recall": 0.9211,
+        "silhouette_iou": 0.921025770515031,
+        "size_ratio": 0.9999739527702332
+      },
+      "notes": [
+        "refined 14 numbers: loss 0.1502 -> 0.1502"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_desk.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 198,
+        "reference_watertight": false,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.3661737,
+        "evals": 353,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 14,
+      "holdout": false,
+      "id": "kenney/furniture-kit/loungeSofa",
+      "import": {
+        "diagonal": 1.1576268672943115,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 128,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "c9f5a5a7410861e5d01a3657247e0b1425125686273d8fcb205eed75ff32e935",
+      "metrics": {
+        "chamfer": 0.004702565736380348,
+        "f_score": 0.9496801492419664,
+        "normal_consistency": 0.8658598894312978,
+        "precision": 0.91015,
+        "recall": 0.9928,
+        "silhouette_iou": 0.9544621295419826,
+        "size_ratio": 1.001798152923584
+      },
+      "metrics_strict": {
+        "chamfer": 0.00599243961555313,
+        "f_score": 0.9501841509533064,
+        "normal_consistency": 0.8561172117263078,
+        "precision": 0.91095,
+        "recall": 0.99295,
+        "silhouette_iou": 0.9483261191579813,
+        "size_ratio": 1.001798152923584
+      },
+      "notes": [
+        "refined 14 numbers: loss 0.1421 -> 0.1421"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_loungeSofa.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 128,
+        "reference_watertight": true,
+        "triangles": 96,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.7088875,
+        "evals": 385,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 20,
+      "holdout": false,
+      "id": "kenney/furniture-kit/table",
+      "import": {
+        "diagonal": 1.007472038269043,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 120,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "f8142da5a6b354c57f7d33ffd9c99f8c0d2501bf364886b3597c946fd60ce9cd",
+      "metrics": {
+        "chamfer": 0.0047318168050968015,
+        "f_score": 0.9759559114183308,
+        "normal_consistency": 0.90255,
+        "precision": 0.99955,
+        "recall": 0.95345,
+        "silhouette_iou": 0.9128600789000296,
+        "size_ratio": 1.0028349161148071
+      },
+      "metrics_strict": {
+        "chamfer": 0.004589284577015558,
+        "f_score": 0.9758272948406096,
+        "normal_consistency": 0.9071750000000001,
+        "precision": 0.9995,
+        "recall": 0.95325,
+        "silhouette_iou": 0.918282369934877,
+        "size_ratio": 1.0028349161148071
+      },
+      "notes": [
+        "refined 20 numbers: loss 0.1589 -> 0.1589"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_table.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 120,
+        "reference_watertight": true,
+        "triangles": 72,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "vehicle",
+      "cost": {
+        "cpu_seconds": 2.9688299000000002,
+        "evals": 641,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 5,
+      "holdout": false,
+      "id": "kenney/nature-kit/canoe",
+      "import": {
+        "diagonal": 1.2024168968200684,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 200,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "42dd2f69c46c0954c6d2d6d2e84bf21798953e47c03ac0841cf52f9bfd85ade0",
+      "metrics": {
+        "chamfer": 0.016867367710856413,
+        "f_score": 0.6775692978630615,
+        "normal_consistency": 0.47161259958175944,
+        "precision": 0.7722,
+        "recall": 0.6036,
+        "silhouette_iou": 0.7896048958620593,
+        "size_ratio": 0.9999573826789856
+      },
+      "metrics_strict": {
+        "chamfer": 0.017717987184981392,
+        "f_score": 0.6527136956930599,
+        "normal_consistency": 0.512265387902176,
+        "precision": 0.7536,
+        "recall": 0.57565,
+        "silhouette_iou": 0.7729362403535027,
+        "size_ratio": 0.9999573826789856
+      },
+      "notes": [
+        "refined 5 numbers: loss 0.8971 -> 0.6944"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_nature-kit_canoe.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 200,
+        "reference_watertight": true,
+        "triangles": 224,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 1.588244,
+        "evals": 417,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 23,
+      "holdout": true,
+      "id": "kenney/nature-kit/fence_gate",
+      "import": {
+        "diagonal": 1.0601621866226196,
+        "nodes": 2,
+        "parts": 3,
+        "triangles": 524,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "832514f63cf893cd11134cfa84ce54990cdc6bee79ea43a462bb64ab21b67528",
+      "metrics": {
+        "chamfer": 0.004392293398200121,
+        "f_score": 0.9809432254777071,
+        "normal_consistency": 0.7282034073583981,
+        "precision": 0.9639,
+        "recall": 0.9986,
+        "silhouette_iou": 0.92610538127658,
+        "size_ratio": 0.9994385838508606
+      },
+      "metrics_strict": {
+        "chamfer": 0.00757629305641857,
+        "f_score": 0.9540372843191159,
+        "normal_consistency": 0.6565413751095244,
+        "precision": 0.9274,
+        "recall": 0.98225,
+        "silhouette_iou": 0.8199864546354234,
+        "size_ratio": 0.9994385838508606
+      },
+      "notes": [
+        "refined 23 numbers: loss 0.1149 -> 0.1138"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_nature-kit_fence_gate.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 524,
+        "reference_watertight": true,
+        "triangles": 108,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 0.5322192,
+        "evals": 129,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 1,
+      "holdout": false,
+      "id": "kenney/platformer-kit/crate-strong",
+      "import": {
+        "diagonal": 1.039230465888977,
+        "nodes": 1,
+        "parts": 27,
+        "triangles": 428,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "aaa82067307e7ac2ec9cb53ebc68650a0323cbaf88f5a1add9f773588f51175d",
+      "metrics": {
+        "chamfer": 0.043126829962334766,
+        "f_score": 0.1495419332012454,
+        "normal_consistency": 0.6548956691786647,
+        "precision": 0.24585,
+        "recall": 0.10745,
+        "silhouette_iou": 0.879056400355849,
+        "size_ratio": 1.0
+      },
+      "metrics_strict": {
+        "chamfer": 0.043126829962334766,
+        "f_score": 0.1495419332012454,
+        "normal_consistency": 0.6548956691786647,
+        "precision": 0.24585,
+        "recall": 0.10745,
+        "silhouette_iou": 0.879056400355849,
+        "size_ratio": 1.0
+      },
+      "notes": [
+        "refined 1 numbers: loss 1.4094 -> 1.4094"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_platformer-kit_crate-strong.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 428,
+        "reference_watertight": false,
+        "triangles": 12,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 1.2745395,
+        "evals": 353,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 13,
+      "holdout": false,
+      "id": "kenney/platformer-kit/fence-straight",
+      "import": {
+        "diagonal": 1.0860939025878906,
+        "nodes": 1,
+        "parts": 4,
+        "triangles": 48,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "188ca7aed01e6068e22314a2f148a040aa9fcbbdbf50e367f47a0e00d52acacf",
+      "metrics": {
+        "chamfer": 0.009694527575016619,
+        "f_score": 0.8145233591668685,
+        "normal_consistency": 0.65185,
+        "precision": 0.7293,
+        "recall": 0.9223,
+        "silhouette_iou": 0.8417586002762057,
+        "size_ratio": 1.0001047849655151
+      },
+      "metrics_strict": {
+        "chamfer": 0.012902567063951039,
+        "f_score": 0.8026876576080303,
+        "normal_consistency": 0.594075,
+        "precision": 0.70915,
+        "recall": 0.92465,
+        "silhouette_iou": 0.7792866237502494,
+        "size_ratio": 1.0001047849655151
+      },
+      "notes": [
+        "refined 12 numbers: loss 0.3975 -> 0.3975"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_platformer-kit_fence-straight.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 48,
+        "reference_watertight": true,
+        "triangles": 48,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 6.0021398,
+        "evals": 1751,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 10,
+      "holdout": false,
+      "id": "kenney/platformer-kit/ladder-long",
+      "import": {
+        "diagonal": 2.063976764678955,
+        "nodes": 1,
+        "parts": 10,
+        "triangles": 88,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "a64db97ede2e031c039d7623dc1f73e94d0bd9cde671700334bb4de4136ee6c7",
+      "metrics": {
+        "chamfer": 0.002752084621936034,
+        "f_score": 0.9539748953974896,
+        "normal_consistency": 0.8889500000089707,
+        "precision": 1.0,
+        "recall": 0.912,
+        "silhouette_iou": 0.9035522754568678,
+        "size_ratio": 0.999979555606842
+      },
+      "metrics_strict": {
+        "chamfer": 0.0027530815910065828,
+        "f_score": 0.9539748953974896,
+        "normal_consistency": 0.8889000000089706,
+        "precision": 1.0,
+        "recall": 0.912,
+        "silhouette_iou": 0.9035522754568678,
+        "size_ratio": 0.999979555606842
+      },
+      "notes": [
+        "refined 10 numbers: loss 0.2511 -> 0.1601"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_platformer-kit_ladder-long.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 88,
+        "reference_watertight": false,
+        "triangles": 72,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "prop",
+      "cost": {
+        "cpu_seconds": 8.7428962,
+        "evals": 1981,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 14,
+      "holdout": false,
+      "id": "kenney/survival-kit/campfire-pit",
+      "import": {
+        "diagonal": 0.401915967464447,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 305,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "1c42ee647536d1c75eea6ad9e9798f8eff9821918abdc35a12031b2018e86670",
+      "metrics": {
+        "chamfer": 0.016670274975508097,
+        "f_score": 0.6810268383155139,
+        "normal_consistency": 0.30843249169158826,
+        "precision": 0.621,
+        "recall": 0.7539,
+        "silhouette_iou": 0.7687226814948958,
+        "size_ratio": 1.0000578165054321
+      },
+      "metrics_strict": {
+        "chamfer": 0.03046450587187587,
+        "f_score": 0.4440628808243728,
+        "normal_consistency": 0.09446874330334587,
+        "precision": 0.4141,
+        "recall": 0.4787,
+        "silhouette_iou": 0.6148146487193686,
+        "size_ratio": 1.0000578165054321
+      },
+      "notes": [
+        "refined 12 numbers: loss 0.8282 -> 0.7084"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_survival-kit_campfire-pit.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 305,
+        "reference_watertight": false,
+        "triangles": 132,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 1.4453652,
+        "evals": 321,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 10,
+      "holdout": false,
+      "id": "kenney/survival-kit/chest",
+      "import": {
+        "diagonal": 0.45601886510849,
+        "nodes": 2,
+        "parts": 5,
+        "triangles": 322,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "499c02e815873743a55c2c5cee433fa886bd46670698dd8956435785a27c8240",
+      "metrics": {
+        "chamfer": 0.01619218764292944,
+        "f_score": 0.801879001431862,
+        "normal_consistency": 0.48329369472803047,
+        "precision": 0.8351,
+        "recall": 0.7712,
+        "silhouette_iou": 0.9050306378748514,
+        "size_ratio": 1.0000028610229492
+      },
+      "metrics_strict": {
+        "chamfer": 0.020564528070491472,
+        "f_score": 0.6358199269097767,
+        "normal_consistency": 0.4658036709383898,
+        "precision": 0.65175,
+        "recall": 0.62065,
+        "silhouette_iou": 0.8609490158837076,
+        "size_ratio": 1.0000028610229492
+      },
+      "notes": [
+        "refined 10 numbers: loss 0.4440 -> 0.4433"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_survival-kit_chest.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 322,
+        "reference_watertight": false,
+        "triangles": 72,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "prop",
+      "cost": {
+        "cpu_seconds": 1.1907219,
+        "evals": 353,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 14,
+      "holdout": false,
+      "id": "kenney/survival-kit/signpost",
+      "import": {
+        "diagonal": 0.5092827081680298,
+        "nodes": 1,
+        "parts": 3,
+        "triangles": 44,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "ce9944be43bd35b0eba8f55a7036794d4061690096f1dbfaf867a4a8d541d594",
+      "metrics": {
+        "chamfer": 0.005102294020286077,
+        "f_score": 0.9735155900174592,
+        "normal_consistency": 0.8092775909406738,
+        "precision": 0.9603,
+        "recall": 0.9871,
+        "silhouette_iou": 0.848664344228028,
+        "size_ratio": 1.000133752822876
+      },
+      "metrics_strict": {
+        "chamfer": 0.0073074489561064425,
+        "f_score": 0.9692316261797926,
+        "normal_consistency": 0.7722199647678912,
+        "precision": 0.9549,
+        "recall": 0.984,
+        "silhouette_iou": 0.8172760635391455,
+        "size_ratio": 1.000133752822876
+      },
+      "notes": [
+        "refined 14 numbers: loss 0.2457 -> 0.2457"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_survival-kit_signpost.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 44,
+        "reference_watertight": true,
+        "triangles": 44,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 13.8862085,
+        "evals": 3229,
+        "llm_turns": 2,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 19,
+      "holdout": true,
+      "id": "kenney/survival-kit/tent",
+      "import": {
+        "diagonal": 0.9330691695213318,
+        "nodes": 1,
+        "parts": 9,
+        "triangles": 124,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "ce58b6db414c70b7a1e6e47890c6a59c77a1365ee93f8b777673ad4e7e505f84",
+      "metrics": {
+        "chamfer": 0.004153250531201521,
+        "f_score": 1.0,
+        "normal_consistency": 0.7131170398624942,
+        "precision": 1.0,
+        "recall": 1.0,
+        "silhouette_iou": 0.8657957624572097,
+        "size_ratio": 1.0000262260437012
+      },
+      "metrics_strict": {
+        "chamfer": 0.0058453396713294675,
+        "f_score": 0.9858732949647584,
+        "normal_consistency": 0.6362503114124536,
+        "precision": 0.97285,
+        "recall": 0.99925,
+        "silhouette_iou": 0.7974633941049222,
+        "size_ratio": 1.0000262260437012
+      },
+      "notes": [
+        "refined 19 numbers: loss 0.4208 -> 0.1552"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_survival-kit_tent.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 124,
+        "reference_watertight": false,
+        "triangles": 108,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.3421483,
+        "evals": 353,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail"
+      ],
+      "free_parameters": 14,
+      "holdout": false,
+      "id": "kenney/survival-kit/workbench",
+      "import": {
+        "diagonal": 0.5249705910682678,
+        "nodes": 3,
+        "parts": 9,
+        "triangles": 236,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "86ab873869c70bee62a33f6f23c2eb507915d59b59e835d9b82d25560614906e",
+      "metrics": {
+        "chamfer": 0.00669887340337054,
+        "f_score": 0.8860142605190223,
+        "normal_consistency": 0.6810853185592298,
+        "precision": 0.97215,
+        "recall": 0.8139,
+        "silhouette_iou": 0.8557829136266524,
+        "size_ratio": 0.9999954700469971
+      },
+      "metrics_strict": {
+        "chamfer": 0.006641429018191712,
+        "f_score": 0.8873389413935802,
+        "normal_consistency": 0.6142428888098638,
+        "precision": 0.97185,
+        "recall": 0.81635,
+        "silhouette_iou": 0.8553908605122402,
+        "size_ratio": 0.9999954700469971
+      },
+      "notes": [
+        "refined 14 numbers: loss 0.3223 -> 0.3223"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_survival-kit_workbench.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 236,
+        "reference_watertight": false,
+        "triangles": 48,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "appliance",
+      "cost": {
+        "cpu_seconds": 1.3035569,
+        "evals": 321,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 10,
+      "holdout": true,
+      "id": "polyhaven/Television_01",
+      "import": {
+        "diagonal": 0.8890296220779419,
+        "nodes": 1,
+        "parts": 10,
+        "triangles": 1918,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "c88cfcf5f44c8fac95255d3b1ef01a5e90fe6b9d04e6997b1f0d2e98b56ab5be",
+      "metrics": {
+        "chamfer": 0.021420905881182513,
+        "f_score": 0.7458599175325746,
+        "normal_consistency": 0.7390413442057056,
+        "precision": 0.66245,
+        "recall": 0.8533,
+        "silhouette_iou": 0.904455966613152,
+        "size_ratio": 0.9984307289123535
+      },
+      "metrics_strict": {
+        "chamfer": 0.03200587175919307,
+        "f_score": 0.5509743523783736,
+        "normal_consistency": 0.6712736473508856,
+        "precision": 0.51335,
+        "recall": 0.59455,
+        "silhouette_iou": 0.8385830682558739,
+        "size_ratio": 0.9984307289123535
+      },
+      "notes": [
+        "refined 10 numbers: loss 0.5775 -> 0.5775"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_Television_01.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 1918,
+        "reference_watertight": false,
+        "triangles": 24,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.6039945,
+        "evals": 385,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 15,
+      "holdout": false,
+      "id": "polyhaven/painted_wooden_bench",
+      "import": {
+        "diagonal": 1.5474133491516113,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 630,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "5e14c84b0299429b456ee90698be7085181f889ed7dc410355e3894e92301388",
+      "metrics": {
+        "chamfer": 0.0028368789863843285,
+        "f_score": 0.9660701032528531,
+        "normal_consistency": 0.8978732440959749,
+        "precision": 0.96825,
+        "recall": 0.9639,
+        "silhouette_iou": 0.924061652587383,
+        "size_ratio": 0.9999765753746033
+      },
+      "metrics_strict": {
+        "chamfer": 0.003894700643810981,
+        "f_score": 0.9659942831262941,
+        "normal_consistency": 0.8804763068825517,
+        "precision": 0.96835,
+        "recall": 0.96365,
+        "silhouette_iou": 0.9164787970859363,
+        "size_ratio": 0.9999765753746033
+      },
+      "notes": [
+        "refined 15 numbers: loss 0.1378 -> 0.1378"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_painted_wooden_bench.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 630,
+        "reference_watertight": true,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.3062713000000001,
+        "evals": 321,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail"
+      ],
+      "free_parameters": 8,
+      "holdout": false,
+      "id": "polyhaven/painted_wooden_cabinet",
+      "import": {
+        "diagonal": 1.790056586265564,
+        "nodes": 5,
+        "parts": 6,
+        "triangles": 2227,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "99be7864f6d5a1d0bd490604ace1fc3996af16095cd8de73abfcb41e97dd8267",
+      "metrics": {
+        "chamfer": 0.016702492251475333,
+        "f_score": 0.7665305768314,
+        "normal_consistency": 0.36122881276369767,
+        "precision": 0.91235,
+        "recall": 0.6609,
+        "silhouette_iou": 0.9358684619119249,
+        "size_ratio": 0.9986376762390137
+      },
+      "metrics_strict": {
+        "chamfer": 0.016409263497697578,
+        "f_score": 0.7580503203374006,
+        "normal_consistency": 0.3369250950406478,
+        "precision": 0.8963,
+        "recall": 0.65675,
+        "silhouette_iou": 0.9486244456803739,
+        "size_ratio": 0.9986376762390137
+      },
+      "notes": [
+        "refined 8 numbers: loss 0.4660 -> 0.4660"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_painted_wooden_cabinet.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 2227,
+        "reference_watertight": false,
+        "triangles": 24,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.7945617,
+        "evals": 449,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 30,
+      "holdout": false,
+      "id": "polyhaven/painted_wooden_chair_01",
+      "import": {
+        "diagonal": 1.1801176071166992,
+        "nodes": 1,
+        "parts": 24,
+        "triangles": 724,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "c3d28ba1503dbef8f09424f455d4e574ae26a6a6e34ebf66318d55a989e3d99f",
+      "metrics": {
+        "chamfer": 0.009797199412994118,
+        "f_score": 0.8811555355383532,
+        "normal_consistency": 0.297189166790642,
+        "precision": 0.80945,
+        "recall": 0.9668,
+        "silhouette_iou": 0.7957960063543151,
+        "size_ratio": 1.0000536441802979
+      },
+      "metrics_strict": {
+        "chamfer": 0.010400393553416595,
+        "f_score": 0.8670295316615139,
+        "normal_consistency": 0.26777803771327446,
+        "precision": 0.7993,
+        "recall": 0.9473,
+        "silhouette_iou": 0.776819996326892,
+        "size_ratio": 1.0000536441802979
+      },
+      "notes": [
+        "refined 30 numbers: loss 0.3953 -> 0.3953"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_painted_wooden_chair_01.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 724,
+        "reference_watertight": true,
+        "triangles": 96,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 1.668997,
+        "evals": 417,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 22,
+      "holdout": false,
+      "id": "polyhaven/sofa_02",
+      "import": {
+        "diagonal": 2.1066431999206543,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 2728,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "7c7bd39655ab3db97e36d55224c41121fcb0be017a622a311f33ded7e6bf1810",
+      "metrics": {
+        "chamfer": 0.012579398234188136,
+        "f_score": 0.8662144415584416,
+        "normal_consistency": 0.5964126048238019,
+        "precision": 0.8718,
+        "recall": 0.8607,
+        "silhouette_iou": 0.8282886265874829,
+        "size_ratio": 0.9996303915977478
+      },
+      "metrics_strict": {
+        "chamfer": 0.022082308085323125,
+        "f_score": 0.5382339778365095,
+        "normal_consistency": 0.4898885453762998,
+        "precision": 0.51665,
+        "recall": 0.5617,
+        "silhouette_iou": 0.7828040945267938,
+        "size_ratio": 0.9996303915977478
+      },
+      "notes": [
+        "refined 22 numbers: loss 0.4208 -> 0.4208"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_sofa_02.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 2728,
+        "reference_watertight": false,
+        "triangles": 96,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 8.391239,
+        "evals": 2143,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [
+        "proportion_error"
+      ],
+      "free_parameters": 7,
+      "holdout": false,
+      "id": "polyhaven/wooden_table_02",
+      "import": {
+        "diagonal": 1.5571258068084717,
+        "nodes": 1,
+        "parts": 5,
+        "triangles": 196,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "e9c05c2f835d268ec49a54f355a5319482887d4b65f3b9edab12a8bd5c944c28",
+      "metrics": {
+        "chamfer": 0.010856837185999793,
+        "f_score": 0.9999,
+        "normal_consistency": 0.8365855797316479,
+        "precision": 0.9999,
+        "recall": 0.9999,
+        "silhouette_iou": 0.8980218976805114,
+        "size_ratio": 0.9998455047607422
+      },
+      "metrics_strict": {
+        "chamfer": 0.011785254918031512,
+        "f_score": 0.7169297188195992,
+        "normal_consistency": 0.5783016296480972,
+        "precision": 0.6859,
+        "recall": 0.7509,
+        "silhouette_iou": 0.8492224829120921,
+        "size_ratio": 0.9998455047607422
+      },
+      "notes": [
+        "refined 7 numbers: loss 0.4429 -> 0.2190"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_wooden_table_02.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 196,
+        "reference_watertight": false,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 2.0494474,
+        "evals": 417,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 21,
+      "holdout": false,
+      "id": "kenney/castle-kit/bridge-straight",
+      "import": {
+        "diagonal": 1.7643061876296997,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 192,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "2f2f947117d30031f9ec55c0f1726731c14caf724b605d83f85528a74e09e549",
+      "metrics": {
+        "chamfer": 0.014162016194965012,
+        "f_score": 0.7672696189893395,
+        "normal_consistency": 0.7109560691297054,
+        "precision": 0.69285,
+        "recall": 0.8596,
+        "silhouette_iou": 0.9184202596940472,
+        "size_ratio": 1.0001357793807983
+      },
+      "metrics_strict": {
+        "chamfer": 0.012829057005228628,
+        "f_score": 0.7497073452499172,
+        "normal_consistency": 0.71827475191243,
+        "precision": 0.69055,
+        "recall": 0.81995,
+        "silhouette_iou": 0.9232210179488245,
+        "size_ratio": 1.0001357793807983
+      },
+      "notes": [
+        "refined 21 numbers: loss 0.4576 -> 0.4576"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_bridge-straight.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 192,
+        "reference_watertight": true,
+        "triangles": 108,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 1.2292452,
+        "evals": 289,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 7,
+      "holdout": false,
+      "id": "kenney/castle-kit/gate",
+      "import": {
+        "diagonal": 1.1358444690704346,
+        "nodes": 1,
+        "parts": 5,
+        "triangles": 146,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "5f07648231c96db56edbb628bb7a5cf440de8c163f50780d51c4eaa9cb954d4e",
+      "metrics": {
+        "chamfer": 0.02201043972972159,
+        "f_score": 0.5743169277500543,
+        "normal_consistency": 0.5772977873442782,
+        "precision": 0.6084,
+        "recall": 0.54385,
+        "silhouette_iou": 0.8945751049102746,
+        "size_ratio": 0.9999874830245972
+      },
+      "metrics_strict": {
+        "chamfer": 0.02200969757718399,
+        "f_score": 0.5743169277500543,
+        "normal_consistency": 0.5831934017807088,
+        "precision": 0.6084,
+        "recall": 0.54385,
+        "silhouette_iou": 0.8945751049102746,
+        "size_ratio": 0.9999874830245972
+      },
+      "notes": [
+        "refined 7 numbers: loss 0.7391 -> 0.7391"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_gate.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 146,
+        "reference_watertight": false,
+        "triangles": 56,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 1.0527712,
+        "evals": 257,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 6,
+      "holdout": false,
+      "id": "kenney/castle-kit/stairs-stone",
+      "import": {
+        "diagonal": 1.0864815711975098,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 104,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "83ffe107b64ae60f37168b93682ffcf61bdcef751d01b7b57fd3791118250e92",
+      "metrics": {
+        "chamfer": 0.01337228371565391,
+        "f_score": 0.7483945122148519,
+        "normal_consistency": 0.4473972298562527,
+        "precision": 0.6358,
+        "recall": 0.90945,
+        "silhouette_iou": 0.819791228659844,
+        "size_ratio": 1.0002573728561401
+      },
+      "metrics_strict": {
+        "chamfer": 0.012642704067203966,
+        "f_score": 0.7374184362139918,
+        "normal_consistency": 0.4354905508100987,
+        "precision": 0.63025,
+        "recall": 0.8885,
+        "silhouette_iou": 0.8181953990498985,
+        "size_ratio": 1.0002573728561401
+      },
+      "notes": [
+        "refined 5 numbers: loss 0.5414 -> 0.5414"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_stairs-stone.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 104,
+        "reference_watertight": true,
+        "triangles": 144,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 1.5345262,
+        "evals": 353,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "missing_detail",
+        "extra_material"
+      ],
+      "free_parameters": 13,
+      "holdout": false,
+      "id": "kenney/castle-kit/tower-square",
+      "import": {
+        "diagonal": 1.9277187585830688,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 176,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "024b714671be911eaa9b7aee83d55315e4c03a6d31fb89c25210d1e4ad92ffa5",
+      "metrics": {
+        "chamfer": 0.01110919168880026,
+        "f_score": 0.8352324216881875,
+        "normal_consistency": 0.6621458618272096,
+        "precision": 0.80515,
+        "recall": 0.86765,
+        "silhouette_iou": 0.9728731420269021,
+        "size_ratio": 0.999940037727356
+      },
+      "metrics_strict": {
+        "chamfer": 0.011146159634930142,
+        "f_score": 0.8378128143998093,
+        "normal_consistency": 0.7048656311865895,
+        "precision": 0.8087,
+        "recall": 0.8691,
+        "silhouette_iou": 0.9738506995042633,
+        "size_ratio": 0.999940037727356
+      },
+      "notes": [
+        "refined 13 numbers: loss 0.3017 -> 0.3017"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_tower-square.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 176,
+        "reference_watertight": false,
+        "triangles": 84,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 1.6131502,
+        "evals": 353,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 14,
+      "holdout": false,
+      "id": "kenney/castle-kit/wall",
+      "import": {
+        "diagonal": 1.9277187585830688,
+        "nodes": 1,
+        "parts": 4,
+        "triangles": 178,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "b3f06aada171f0331f626f9fcc14689dc56cdd76493fda4e786333c3bbfb693e",
+      "metrics": {
+        "chamfer": 0.014183566079313774,
+        "f_score": 0.8223881964701376,
+        "normal_consistency": 0.7334184243902564,
+        "precision": 0.6997,
+        "recall": 0.99725,
+        "silhouette_iou": 0.9732763485308986,
+        "size_ratio": 1.0000438690185547
+      },
+      "metrics_strict": {
+        "chamfer": 0.013783497630483133,
+        "f_score": 0.8230623159382731,
+        "normal_consistency": 0.7400628029607237,
+        "precision": 0.7008,
+        "recall": 0.997,
+        "silhouette_iou": 0.9772313384641764,
+        "size_ratio": 1.0000438690185547
+      },
+      "notes": [
+        "refined 14 numbers: loss 0.3312 -> 0.3312"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_wall.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 178,
+        "reference_watertight": false,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 1.5231245,
+        "evals": 385,
+        "llm_turns": 2,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "extra_material"
+      ],
+      "free_parameters": 18,
+      "holdout": true,
+      "id": "kenney/castle-kit/wall-corner",
+      "import": {
+        "diagonal": 1.9277187585830688,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 168,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "6b23d8d1f3ff28a7c8d56c958d9f1218889123004d5f5bc8b0816abb5720b76f",
+      "metrics": {
+        "chamfer": 0.01729925809689184,
+        "f_score": 0.7873117616293379,
+        "normal_consistency": 0.7003048628866673,
+        "precision": 0.66925,
+        "recall": 0.95595,
+        "silhouette_iou": 0.9444412251953853,
+        "size_ratio": 0.9993284940719604
+      },
+      "metrics_strict": {
+        "chamfer": 0.01706994218702381,
+        "f_score": 0.7902127179518664,
+        "normal_consistency": 0.7023479962360114,
+        "precision": 0.67405,
+        "recall": 0.95475,
+        "silhouette_iou": 0.9468752831374964,
+        "size_ratio": 0.9993284940719604
+      },
+      "notes": [
+        "refined 18 numbers: loss 0.4251 -> 0.4251"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_wall-corner.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "none",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 168,
+        "reference_watertight": true,
+        "triangles": 60,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 0.9855707,
+        "evals": 289,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [],
+      "free_parameters": 7,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/roof-gable",
+      "import": {
+        "diagonal": 1.6377215385437012,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 72,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "035c95438b371862253b968179a6603cce08bcc196283d6cb55eea0f224ce519",
+      "metrics": {
+        "chamfer": 0.005068113438730584,
+        "f_score": 0.9555244435144253,
+        "normal_consistency": 0.8796600098648808,
+        "precision": 0.97125,
+        "recall": 0.9403,
+        "silhouette_iou": 0.9136802813991824,
+        "size_ratio": 0.9998083710670471
+      },
+      "metrics_strict": {
+        "chamfer": 0.024339649688094357,
+        "f_score": 0.2699928366496992,
+        "normal_consistency": 0.7220663192771104,
+        "precision": 0.26415,
+        "recall": 0.2761,
+        "silhouette_iou": 0.8355386984387841,
+        "size_ratio": 0.9998083710670471
+      },
+      "notes": [
+        "refined 7 numbers: loss 0.1826 -> 0.1826"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_fantasy-town-kit_roof-gable.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 72,
+        "reference_watertight": true,
+        "triangles": 8,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 1.4474875,
+        "evals": 385,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [],
+      "free_parameters": 15,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/stall",
+      "import": {
+        "diagonal": 1.2474339008331299,
+        "nodes": 1,
+        "parts": 9,
+        "triangles": 106,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "a0a806970bdbd0e414a6904efe6837b9be1a452d2595a76f26138452bee4c5a6",
+      "metrics": {
+        "chamfer": 0.0017517398704329026,
+        "f_score": 0.988673139158576,
+        "normal_consistency": 0.925672361060977,
+        "precision": 1.0,
+        "recall": 0.9776,
+        "silhouette_iou": 0.9692353824801188,
+        "size_ratio": 0.9999661445617676
+      },
+      "metrics_strict": {
+        "chamfer": 0.0017686605323888917,
+        "f_score": 0.9886987080625995,
+        "normal_consistency": 0.9259723610609769,
+        "precision": 1.0,
+        "recall": 0.97765,
+        "silhouette_iou": 0.9692117785466834,
+        "size_ratio": 0.9999661445617676
+      },
+      "notes": [
+        "refined 15 numbers: loss 0.0719 -> 0.0719"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_fantasy-town-kit_stall.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "gold",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 106,
+        "reference_watertight": false,
+        "triangles": 96,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 3.7260246,
+        "evals": 1021,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [],
+      "free_parameters": 9,
+      "holdout": true,
+      "id": "kenney/fantasy-town-kit/wall-wood-door",
+      "import": {
+        "diagonal": 1.4177446365356445,
+        "nodes": 2,
+        "parts": 5,
+        "triangles": 376,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "21e67533a2d0c6af704907bd9a9b9a828ff0d9cf44ff1c73f0b1bde5dea1c67c",
+      "metrics": {
+        "chamfer": 0.007356014058205038,
+        "f_score": 0.9660999094601236,
+        "normal_consistency": 0.7699117735233157,
+        "precision": 0.98415,
+        "recall": 0.9487,
+        "silhouette_iou": 0.9288606383396013,
+        "size_ratio": 0.9977532029151917
+      },
+      "metrics_strict": {
+        "chamfer": 0.01869431997800633,
+        "f_score": 0.5720185681372131,
+        "normal_consistency": 0.41741205361001193,
+        "precision": 0.4956,
+        "recall": 0.6763,
+        "silhouette_iou": 0.6829072118449546,
+        "size_ratio": 0.9977532029151917
+      },
+      "notes": [
+        "refined 9 numbers: loss 0.2159 -> 0.1508"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_fantasy-town-kit_wall-wood-door.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 376,
+        "reference_watertight": false,
+        "triangles": 24,
+        "watertight": true,
+        "within_budget": true
+      }
+    }
+  ],
+  "holdout": [
+    "polyhaven/Television_01",
+    "kenney/nature-kit/fence_gate",
+    "kenney/furniture-kit/bedBunk",
+    "kenney/castle-kit/wall-corner",
+    "kenney/nature-kit/cactus_tall",
+    "kenney/survival-kit/tent",
+    "kenney/furniture-kit/lampRoundFloor",
+    "kenney/survival-kit/rock-a",
+    "kenney/castle-kit/flag",
+    "kenney/fantasy-town-kit/wall-wood-door"
+  ],
+  "options": {
+    "evals": 900,
+    "max_prims": 12,
+    "time_budget_s": 600.0
+  },
+  "run": "llm",
+  "set": "trial",
+  "solver": "primitive-v0a.5",
+  "summary": {
+    "failures": {
+      "extra_material": 16,
+      "missing_detail": 13,
+      "proportion_error": 9,
+      "triangle_budget": 1,
+      "wrong_topology": 1
+    },
+    "mean_cpu_seconds": 3.530662675609756,
+    "mean_f_score": 0.8558421382935772,
+    "mean_free_parameters": 13.682926829268293,
+    "mean_llm_turns": 1.1219512195121952,
+    "mean_silhouette_iou": 0.8856915857286286,
+    "solved": 12,
+    "solved_holdout": 2,
+    "solved_mining": 10,
+    "tiers": {
+      "bronze": 17,
+      "gold": 2,
+      "none": 12,
+      "silver": 10
+    },
+    "total": 41,
+    "total_holdout": 10,
+    "total_mining": 31
+  }
+}

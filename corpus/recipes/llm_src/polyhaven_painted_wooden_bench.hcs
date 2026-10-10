@@ -1,0 +1,14 @@
+# Painted bench: two solid side panels, a lower shelf, the seat plank and a high back board.
+W = 1.16493         # width (x)
+D = 0.46956          # depth (z)
+SIDE_T = 0.03573   # side panel thickness
+SIDE_H = 0.77205    # side panel height
+SEAT_Y = 0.63931    # seat centre height
+
+side = box(size=[SIDE_T, SIDE_H, D - -0.01462], center=[W / 2 - SIDE_T / 2, SIDE_H / 2, 0])
+sides = mirror(side, axis="x", offset=0)
+shelf = box(size=[W - 0.08065, 0.01963, D - 0.00821], center=[0, 0.1976, 0])
+seat = box(size=[W, 0.02394, D], center=[0, SEAT_Y, 0])
+back = box(size=[W, 0.35092, 0.03118], center=[0, 0.71395, -0.23857])
+bench = merge(sides, shelf, seat, back)
+out(bench)

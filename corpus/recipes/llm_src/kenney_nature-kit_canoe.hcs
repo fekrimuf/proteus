@@ -1,0 +1,3 @@
+# Canoe: a long narrow ellipsoid hull.
+hull = transform(sphere(radius=0.5, rows=8, cols=16), t=[0.0, 0.04, 0.0], s=[0.3, 0.18, 1.15])
+out(hull)

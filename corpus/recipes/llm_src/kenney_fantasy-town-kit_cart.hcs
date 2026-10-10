@@ -1,0 +1,13 @@
+# Cart: a deck, two octagonal wheels on the sides, and two shafts at the back.
+W = 0.92         # deck width (x)
+L = 1.0          # deck length (z)
+WHEEL_R = 0.225
+WHEEL_X = 0.39
+
+deck = box(size=[W - 0.1, 0.15, L], center=[0.0, 0.27, 0.2])
+wheel = transform(tube(radius=WHEEL_R, height=0.14, cols=8), t=[WHEEL_X, WHEEL_R, 0.2], r=[0, 0, 90])
+wheels = mirror(wheel, axis="x", offset=0)
+shaft = box(size=[0.05, 0.05, 0.6], center=[0.24, 0.2, -0.45])
+shafts = mirror(shaft, axis="x", offset=0)
+cart = merge(deck, wheels, shafts)
+out(cart)

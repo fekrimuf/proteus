@@ -1,0 +1,12 @@
+# Workbench: a block body, a slightly wider top, and a flat tool laid on the top.
+BODY = 0.21414      # body footprint (square)
+BODY_H = 0.19658    # body height
+TOP = 0.29408        # top footprint (square)
+TOP_T = 0.04283     # top thickness
+
+body = box(size=[BODY, BODY_H, BODY], center=[0, BODY_H / 2, 0])
+top = box(size=[TOP, TOP_T, TOP], center=[0, BODY_H + TOP_T / 2, 0])
+plank = box(size=[0.221, 0.00646, 0.0991], center=[0.06475, 0.24268, 0.0])
+hammer = box(size=[0.10417, 0.02743, 0.03425], center=[-0.09394, 0.27824, 0.0])
+bench = merge(body, top, plank, hammer)
+out(bench)

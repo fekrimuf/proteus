@@ -1,0 +1,15 @@
+# kenney/nature-kit/fence_gate (llm-recipe, run llm)
+# Fence with a gate: four posts, two rails on each side, and the gate leaf in the middle.
+H = 0.34464        # height of the posts
+Y0 = 0.13544      # post centre height
+Z = -0.47265       # depth position
+
+outer = box(size=[0.07043, H, 0.07018], center=[0.46453, Y0, Z])
+inner = box(size=[0.10953, H, 0.03882], center=[0.18486, Y0, Z])
+posts = mirror(merge(outer, inner), axis="x", offset=0)
+rail_low = box(size=[0.35684, 0.07994, 0.03317], center=[0.24418, 0.04912, Z])
+rail_high = box(size=[0.22313, 0.06199, 0.03064], center=[0.3182, 0.21247, Z])
+rails = mirror(merge(rail_low, rail_high), axis="x", offset=0)
+leaf = box(size=[0.39, 0.286, 0.0668], center=[0, 0.14061, Z])
+gate = merge(posts, rails, leaf)
+out(gate)

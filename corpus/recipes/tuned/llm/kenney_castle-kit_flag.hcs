@@ -1,0 +1,13 @@
+# kenney/castle-kit/flag (llm-recipe, run llm)
+# Flag on a pole: a tapered square base, a thin upper pole with two collars and a finial, and a flat banner.
+BASE_H = 0.36861
+POLE_H = 0.4874
+
+base = tube(radius=0.06123, radius_top=0.03367, height=BASE_H, cols=4, center=[0.0, BASE_H / 2, 0.0])
+pole = box(size=[0.03743, POLE_H, 0.04684], center=[0.0, BASE_H + POLE_H / 2, 0.0])
+collar = box(size=[0.09128, 0.05338, 0.11192], center=[0.0, 0.52099, 0.0])
+collar_low = box(size=[0.07, 0.06467, 0.09874], center=[0.0, 0.52046, 0.0])
+finial = tube(radius=0.06103, radius_top=0.00825, height=0.09724, cols=4, center=[0.0, 0.75651, 0.0])
+banner = box(size=[0.01232, 0.252, 0.36796], center=[0.0, 0.61865, -0.20175])
+flag = merge(merge(base, pole, collar, collar_low), finial, banner)
+out(flag)
