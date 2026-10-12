@@ -408,7 +408,7 @@ impl Session {
                 let geo = self.graph.cook(node)?;
                 let scene = scene_arg(a)?;
                 let out = std::path::PathBuf::from(a.get("path").and_then(Value::as_str).map_or_else(|| format!("out/render/mcp_{node}.png"), String::from));
-                let opts = crate::blender::Opts { quick: a.get("quick").and_then(Value::as_bool).unwrap_or(false), samples: a.get("samples").and_then(Value::as_u64).map(|n| n as u32), keep: None, lod: a.get("lod").and_then(Value::as_bool).unwrap_or(false), only: None };
+                let opts = crate::blender::Opts { quick: a.get("quick").and_then(Value::as_bool).unwrap_or(false), samples: a.get("samples").and_then(Value::as_u64).map(|n| n as u32), keep: None, lod: a.get("lod").and_then(Value::as_bool).unwrap_or(false), only: None, lookdev: false };
                 let report = crate::blender::render_geometry(&geo, &format!("mcp_{node}"), scene, &out, &opts)?;
                 let first = report.pointer("/frames/0/file").and_then(Value::as_str).ok_or("Blender reported no frames")?;
                 let png = std::fs::read(first).map_err(|e| format!("{first}: {e}"))?;

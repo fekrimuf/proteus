@@ -160,7 +160,11 @@ pub fn layers_of(geo: &Geometry) -> std::collections::BTreeMap<String, Vec<Strin
 
 /// Tell the render which roles each layered material mixes (the scene file may already say, and then wins).
 pub fn inject_layers(scene: &mut Value, geo: &Geometry) {
-    for (name, roles) in layers_of(geo) {
+    inject_layers_from(scene, &layers_of(geo));
+}
+
+fn inject_layers_from(scene: &mut Value, layers: &std::collections::BTreeMap<String, Vec<String>>) {
+    for (name, roles) in layers {
         let entry = &mut scene["materials"][&name];
         if !entry.is_object() {
             *entry = json!({});
@@ -171,25 +175,81 @@ pub fn inject_layers(scene: &mut Value, geo: &Geometry) {
     }
 }
 
-/// Material names used by the geometry (base and prototypes) that neither the library nor the scene file knows.
-pub fn unknown_materials(geo: &Geometry, lib: &Value, scene: &Value) -> Vec<String> {
-    let mut names: std::collections::BTreeSet<String> = geo.material_names().into_iter().collect();
-    let mut authored: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+/// What a render needs to know about a cooked world besides its model file: the layer roles of layered materials, every material
+/// name it uses, and the names authored inside imported assets. Kept next to a cached model so the world is not cooked again.
+#[derive(Clone, Debug, Default)]
+pub struct WorldFacts {
+    pub layers: std::collections::BTreeMap<String, Vec<String>>,
+    pub names: std::collections::BTreeSet<String>,
+    pub authored: std::collections::BTreeSet<String>,
+}
+
+pub fn world_facts(geo: &Geometry) -> WorldFacts {
+    let mut f = WorldFacts { layers: layers_of(geo), names: geo.material_names().into_iter().collect(), authored: Default::default() };
     let note = |g: &Geometry, authored: &mut std::collections::BTreeSet<String>| {
         authored.extend(g.detail.keys().filter_map(|k| k.strip_prefix(pt_core::gltf::ASSET_MATERIAL_PREFIX)).map(String::from));
     };
-    for roles in layers_of(geo).values() {
-        names.extend(roles.iter().cloned());
-    }
-    note(geo, &mut authored);
+    note(geo, &mut f.authored);
     for p in geo.instances.iter().flat_map(|i| i.protos.iter()) {
         let r = p.realize();
-        names.extend(r.material_names());
-        note(&r, &mut authored);
+        f.names.extend(r.material_names());
+        note(&r, &mut f.authored);
+    }
+    f
+}
+
+/// Material names of a world that neither the library nor the scene file knows.
+pub fn unknown_from(f: &WorldFacts, lib: &Value, scene: &Value) -> Vec<String> {
+    let mut names = f.names.clone();
+    for roles in f.layers.values() {
+        names.extend(roles.iter().cloned());
     }
     // known = in the library, described by the scene, or authored in an imported asset (its textures travel with the glTF)
-    let known = |n: &str| authored.contains(n) || lib.pointer(&format!("/materials/{n}")).is_some() || scene.pointer(&format!("/materials/{n}")).is_some();
+    let known = |n: &str| f.authored.contains(n) || lib.pointer(&format!("/materials/{n}")).is_some() || scene.pointer(&format!("/materials/{n}")).is_some();
     names.into_iter().filter(|n| !known(n)).collect()
+}
+
+/// Material names used by the geometry (base and prototypes) that neither the library nor the scene file knows.
+pub fn unknown_materials(geo: &Geometry, lib: &Value, scene: &Value) -> Vec<String> {
+    unknown_from(&world_facts(geo), lib, scene)
+}
+
+fn write_sidecar(path: &Path, key: &str, f: &WorldFacts) {
+    let v = json!({"key": key, "layers": f.layers, "names": f.names, "authored": f.authored});
+    let _ = std::fs::write(path, v.to_string());
+}
+
+fn read_sidecar(path: &Path, key: &str) -> Option<WorldFacts> {
+    let v: Value = serde_json::from_str(&std::fs::read_to_string(path).ok()?).ok()?;
+    if v.get("key")?.as_str()? != key {
+        return None;
+    }
+    let strs = |x: &Value| -> std::collections::BTreeSet<String> { x.as_array().map(|a| a.iter().filter_map(|s| s.as_str().map(String::from)).collect()).unwrap_or_default() };
+    Some(WorldFacts {
+        layers: v.get("layers")?.as_object()?.iter().map(|(k, r)| (k.clone(), strs(r).into_iter().collect::<Vec<_>>())).collect(),
+        names: strs(v.get("names")?),
+        authored: strs(v.get("authored")?),
+    })
+}
+
+/// Everything that decides the exported world: the recipe, the program that cooks it (its own bytes), the tier, the crop and the
+/// cameras the crop looks through. A model written for one key is rendered again without cooking while the key holds.
+fn world_key(code: &str, scene: &Value, o: &Opts, cull: Option<f32>) -> String {
+    let mut h = blake3::Hasher::new();
+    h.update(b"world/1");
+    h.update(code.as_bytes());
+    if let Some(Ok(hex)) = std::env::current_exe().ok().map(|e| file_hash(&e)) {
+        h.update(hex.as_bytes());
+    }
+    h.update(&[o.lookdev as u8, o.lod as u8]);
+    h.update(format!("{cull:?}|{:?}", o.only).as_bytes());
+    if let (Some(_), Some(only)) = (cull, o.only.as_deref()) {
+        let names: Vec<&str> = only.split(',').map(str::trim).collect();
+        for c in scene.get("cameras").and_then(Value::as_array).into_iter().flatten().filter(|c| c.get("name").and_then(Value::as_str).is_some_and(|n| names.contains(&n))) {
+            h.update(c.to_string().as_bytes());
+        }
+    }
+    h.finalize().to_hex()[..16].to_string()
 }
 
 fn find_recipe(name: &str) -> Result<PathBuf, String> {
@@ -207,6 +267,9 @@ pub struct Opts {
     pub lod: bool,
     /// Render only these cameras of the scene (names, comma separated): look development on one view.
     pub only: Option<String>,
+    /// Look-development tier: recipes choose lighter assets through `lookdev(full, light)`, and with `only` the world is cropped to
+    /// what those cameras can see (`cull_m`, 60 m unless `--cull` says otherwise).
+    pub lookdev: bool,
 }
 
 fn load_library(root: &Path) -> Value {
@@ -303,14 +366,31 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
     }
     let path = find_recipe(input)?;
     let code = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    // The crop (look development, with `--only`): drop what the chosen cameras cannot see, so a one-view render fits in memory.
+    // `--cull METRES` sets the radius; `--lookdev` alone means 60 m.
+    let cull = std::env::var("PT_VIEW_CULL_M").ok().and_then(|s| s.parse::<f32>().ok()).filter(|r| *r > 0.0).or_else(|| o.lookdev.then_some(60.0)).filter(|_| o.only.is_some());
+    // The cooked world is kept next to its model file under a key; a render that changes only the scene file, a style or the render
+    // script (materials, light, camera) opens the cached model and goes straight to Blender instead of cooking for minutes.
+    let key = world_key(&code, &scene, o, cull);
+    let work = o.keep.clone().unwrap_or_else(|| repo_root().join("out/render"));
+    let (cached_glb, side) = (work.join(format!("{stem}.glb")), work.join(format!("{stem}.world.json")));
+    if std::env::var("PT_FRESH_WORLD").is_err() && cached_glb.exists() {
+        if let Some(facts) = read_sidecar(&side, &key) {
+            eprintln!("cooked world cache hit ({key}): not cooking again (--fresh forces it)");
+            let mut sc = prepare_scene(scene, "description", o)?;
+            inject_layers_from(&mut sc, &facts.layers);
+            let unknown = unknown_from(&facts, &load_library(&repo_root()), &sc);
+            return run_blender(&cached_glb, &sc, unknown, &stem, out, o, &[]);
+        }
+    }
     // The graph and the cooked world are dropped before Blender starts: a large world is gigabytes here and Blender needs
     // several times the model's size to import it, and the two together do not fit in the memory of an ordinary desktop.
     let (glb, scene, unknown) = {
         let mut g = Graph::new();
+        g.lookdev = o.lookdev;
         let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
         let mut geo = (*g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?).clone();
-        // `--cull METRES` (look development, with `--only`): drop what the chosen cameras cannot see, so a one-view render fits in memory
-        if let (Some(r), Some(only)) = (std::env::var("PT_VIEW_CULL_M").ok().and_then(|s| s.parse::<f32>().ok()).filter(|r| *r > 0.0), o.only.as_deref()) {
+        if let (Some(r), Some(only)) = (cull, o.only.as_deref()) {
             let names: Vec<&str> = only.split(',').map(str::trim).collect();
             let cams: Vec<crate::grounding::Camera> = crate::grounding::cameras_of(&scene).into_iter().filter(|c| names.contains(&c.name.as_str())).collect();
             if !cams.is_empty() {
@@ -318,7 +398,10 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
                 eprintln!("view cull {r} m: kept {kept} of {total} instances");
             }
         }
-        export_for_render(&geo, &stem, scene, o)?
+        let facts = world_facts(&geo);
+        let made = export_for_render(&geo, &stem, scene, o)?;
+        write_sidecar(&side, &key, &facts);
+        made
     };
     run_blender(&glb, &scene, unknown, &stem, out, o, &[])
 }
@@ -328,7 +411,7 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
 pub fn bake_layers(model: &Path, mut scene: Value, geo: &Geometry, work: &Path, res: u32) -> Result<BTreeMap<String, Value>, String> {
     resolve_style(&mut scene)?;
     inject_layers(&mut scene, geo);
-    let o = Opts { quick: false, samples: None, keep: Some(work.to_path_buf()), lod: false, only: None };
+    let o = Opts { quick: false, samples: None, keep: Some(work.to_path_buf()), lod: false, only: None, lookdev: false };
     let dir = work.join("bake");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let extra = vec!["bake=1".to_string(), format!("bake_dir={}", std::env::current_dir().unwrap_or_default().join(&dir).display()), format!("bake_res={res}")];
@@ -425,11 +508,14 @@ pub fn render_scene_cmd(args: &[String]) -> Result<(), String> {
     let pos: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
     let flag_val = |f: &str| args.iter().position(|a| a == f).and_then(|i| args.get(i + 1));
     let (Some(input), Some(scene), Some(out)) = (pos.first(), pos.get(1), pos.get(2)) else {
-        return Err("usage: pt render-scene <recipe|file.glb> <scene.json> <out.png> [--quick] [--samples N] [--keep DIR] [--lod] [--only CAMERA,CAMERA [--cull METRES]]".into());
+        return Err("usage: pt render-scene <recipe|file.glb> <scene.json> <out.png> [--quick] [--samples N] [--keep DIR] [--lod] [--only CAMERA,CAMERA [--cull METRES]] [--lookdev] [--fresh]".into());
     };
-    let opts = Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: flag_val("--keep").map(PathBuf::from), lod: args.iter().any(|a| a == "--lod"), only: flag_val("--only").cloned() };
+    let opts = Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: flag_val("--keep").map(PathBuf::from), lod: args.iter().any(|a| a == "--lod"), only: flag_val("--only").cloned(), lookdev: args.iter().any(|a| a == "--lookdev") };
     if let Some(r) = flag_val("--cull") {
         std::env::set_var("PT_VIEW_CULL_M", r);
+    }
+    if args.iter().any(|a| a == "--fresh") {
+        std::env::set_var("PT_FRESH_WORLD", "1");
     }
     let report = render(input, Path::new(scene), Path::new(out), &opts)?;
     println!("{}", serde_json::to_string_pretty(&report).unwrap_or_default());

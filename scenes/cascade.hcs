@@ -154,7 +154,7 @@ water = set_material(normals(blast(water_cells, group="wet", keep_selected=1)), 
 # ---- assets: CC0 scans (Poly Haven) with their authored materials ----
 M = "polyhaven/models/"
 def scan(name, part, h, size, sink=0.0):
-    return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, height=h, size=size, sink=sink)
+    return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, height=h, size=size, sink=sink, max_triangles=lookdev(0, 120000))
 
 def scaled(name, part, s):
     return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, scale=s)
@@ -164,15 +164,15 @@ def scaled(name, part, s):
 def tree(name, part, cap):
     return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, max_triangles=cap)
 
-fir_a = tree("fir_tree_01", "fir_tree_01_a", 700000)
-fir_b = tree("fir_tree_01", "fir_tree_01_b", 600000)
-fir_c = tree("fir_tree_01", "fir_tree_01_c", 600000)
-young_a = tree("fir_sapling_medium", "fir_sapling_medium_a", 300000)
-young_b = tree("fir_sapling_medium", "fir_sapling_medium_b", 300000)
-young_c = tree("fir_sapling_medium", "fir_sapling_medium_c", 250000)
-pine_a = tree("pine_sapling_medium", "pine_sapling_medium_a", 450000)
-pine_b = tree("pine_sapling_medium", "pine_sapling_medium_b", 400000)
-pine_c = tree("pine_sapling_medium", "pine_sapling_medium_c", 350000)
+fir_a = tree("fir_tree_01", "fir_tree_01_a", lookdev(700000, 175000))
+fir_b = tree("fir_tree_01", "fir_tree_01_b", lookdev(600000, 150000))
+fir_c = tree("fir_tree_01", "fir_tree_01_c", lookdev(600000, 150000))
+young_a = tree("fir_sapling_medium", "fir_sapling_medium_a", lookdev(300000, 75000))
+young_b = tree("fir_sapling_medium", "fir_sapling_medium_b", lookdev(300000, 75000))
+young_c = tree("fir_sapling_medium", "fir_sapling_medium_c", lookdev(250000, 62500))
+pine_a = tree("pine_sapling_medium", "pine_sapling_medium_a", lookdev(450000, 112500))
+pine_b = tree("pine_sapling_medium", "pine_sapling_medium_b", lookdev(400000, 100000))
+pine_c = tree("pine_sapling_medium", "pine_sapling_medium_c", lookdev(350000, 87500))
 seedling_a = scaled("fir_sapling", "fir_sapling_a", 1.6)
 seedling_b = scaled("fir_sapling", "fir_sapling_b", 1.6)
 seedling_c = scaled("pine_sapling_small", "pine_sapling_small_b", 1.0)
@@ -222,9 +222,9 @@ tall_c = clump("grass_medium_01_tall_c", 3.1)
 large_a = clump("grass_medium_01_large_a", 2.6)
 large_b = clump("grass_medium_01_large_b", 2.4)
 mid_a = clump("grass_medium_01_mid_a", 2.8)
-tile_a = grass_tile(71, 760, tall_a, large_b, mid_a)
-tile_b = grass_tile(72, 700, large_a, tall_b, large_b)
-tile_c = grass_tile(73, 640, mid_a, tall_c, large_a)
+tile_a = grass_tile(71, lookdev(760, 260), tall_a, large_b, mid_a)
+tile_b = grass_tile(72, lookdev(700, 240), large_a, tall_b, large_b)
+tile_c = grass_tile(73, lookdev(640, 220), mid_a, tall_c, large_a)
 
 # ---- placement on the near level. Rules read the soft masks, the slope, the distance to the channel's edge (river_sd, metres,
 # negative in the water) and absolute elevation. `hero` is 1 around the hero reach and 0 far from it. ----

@@ -483,7 +483,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     // 2. scene (style folded in, layers injected) and audits
     let scene_text = std::fs::read_to_string(scene_path.as_str()).map_err(|e| format!("{scene_path}: {e}"))?;
     let mut scene: Value = serde_json::from_str(scene_text.trim_start_matches('\u{feff}')).map_err(|e| format!("{scene_path}: {e}"))?;
-    let opts = blender::Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: Some(out_dir.clone()), lod: false, only: None };
+    let opts = blender::Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: Some(out_dir.clone()), lod: false, only: None, lookdev: false };
     blender::resolve_style(&mut scene)?;
     blender::inject_layers(&mut scene, &geo);
     let root = blender::repo_root();

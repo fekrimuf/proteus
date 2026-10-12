@@ -107,6 +107,9 @@ pub struct Graph {
     /// Stamp every element with the node that created it (enables `explain`).
     #[serde(skip)]
     pub provenance: bool,
+    /// Quality tier for look development: recipes read it with `lookdev(full, light)` and choose lighter assets and fewer clumps.
+    #[serde(skip)]
+    pub lookdev: bool,
     /// Fuse chains of pointwise nodes into one pass (on by default; off only for tests).
     #[serde(skip)]
     pub no_fusion: bool,
@@ -129,6 +132,7 @@ impl Default for Graph {
             assets: BTreeMap::new(),
             frame: one(),
             provenance: false,
+            lookdev: false,
             no_fusion: false,
             cache: HashMap::new(),
             cache_dir: None,

@@ -37,7 +37,7 @@ enum Flow {
 
 const MAX_STEPS: u64 = 5_000_000;
 const MAX_NODES: usize = 200_000;
-const BUILTINS: &[&str] = &["frame", "range", "len", "min", "max", "abs", "sum", "round", "int", "float", "sin", "cos", "sqrt", "floor", "ceil", "radians", "degrees", "lerp", "out", "spec", "print", "asset", "str", "pow"];
+const BUILTINS: &[&str] = &["frame", "range", "len", "min", "max", "abs", "sum", "round", "int", "float", "sin", "cos", "sqrt", "floor", "ceil", "radians", "degrees", "lerp", "out", "spec", "print", "asset", "str", "pow", "lookdev"];
 
 pub struct Interp<'g> {
     pub g: &'g mut Graph,
@@ -557,6 +557,12 @@ impl<'g> Interp<'g> {
                 }
                 self.g.frame = v as f32;
                 V::None
+            }
+            "lookdev" => {
+                if a.len() != 2 {
+                    return Err(d(pos, "lookdev() takes 2 arguments", "lookdev(full, light): the value for a final render, the cheaper one for look development"));
+                }
+                if self.g.lookdev { a[1].clone() } else { a[0].clone() }
             }
             "abs" => V::Num(n1(self, "abs")?.abs()),
             "round" => V::Num(n1(self, "round")?.round()),
