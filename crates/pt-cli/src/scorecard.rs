@@ -250,7 +250,7 @@ fn run_validator(glb: &Path) -> Value {
     let Ok(sink) = std::fs::File::create(&report) else { return json!({"available": false}) };
     let Ok(sink_err) = sink.try_clone() else { return json!({"available": false}) };
     // the summary line ("Errors: 0, Warnings: 0, ...") goes to stderr, the JSON report to stdout: both into the one file
-    let Ok(mut child) = Command::new(&exe).arg(&glb).arg("-o").stdout(sink).stderr(sink_err).spawn() else { return json!({"available": false}) };
+    let Ok(mut child) = crate::lowload::spawn(Command::new(&exe).arg(&glb).arg("-o").stdout(sink).stderr(sink_err)) else { return json!({"available": false}) };
     let limit = std::env::var("PT_VALIDATOR_SECONDS").ok().and_then(|s| s.parse::<u64>().ok()).unwrap_or(900);
     let started = Instant::now();
     loop {
@@ -294,7 +294,7 @@ fn run_godot(glb: &Path, extra: &[&str], windowed: bool) -> Value {
         cmd.arg("--headless");
     }
     cmd.arg("--path").arg(&project).args(["--script", "referee.gd", "--"]).arg(&glb).args(extra);
-    let Ok(out) = cmd.output() else { return json!({"available": false}) };
+    let Ok(out) = crate::lowload::output(&mut cmd) else { return json!({"available": false}) };
     let text = String::from_utf8_lossy(&out.stdout);
     match text.lines().find_map(|l| l.strip_prefix("REFEREE_JSON ")).and_then(|j| serde_json::from_str::<Value>(j).ok()) {
         Some(mut v) => {
@@ -458,7 +458,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let pos: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
     let flag_val = |f: &str| args.iter().position(|a| a == f).and_then(|i| args.get(i + 1));
     let (Some(recipe), Some(scene_path)) = (pos.first(), pos.get(1)) else {
-        return Err("usage: pt scorecard <recipe.hcs> <scene.json> --out DIR [--no-render] [--no-fps] [--quick] [--samples N] [--notes TEXT] [--reuse]".into());
+        return Err("usage: pt scorecard <recipe.hcs> <scene.json> --out DIR [--no-render] [--no-fps] [--quick] [--samples N] [--notes TEXT] [--reuse] [--bake] [--judge]".into());
     };
     let out_dir = PathBuf::from(flag_val("--out").ok_or("--out DIR is required")?);
     std::fs::create_dir_all(&out_dir).map_err(|e| e.to_string())?;
@@ -521,7 +521,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
         }
     }
     let mut baked_report = json!({});
-    if !args.iter().any(|a| a == "--no-bake") && !blender::layers_of(&geo).is_empty() {
+    if args.iter().any(|a| a == "--bake") && !blender::layers_of(&geo).is_empty() {
         let t = Instant::now();
         let kept_bake = if reuse { finished_stage(&out_dir.join("bake.report.json"), "/baked", "albedo") } else { None };
         let baked: BTreeMap<String, Value> = match kept_bake.and_then(|r| r.get("baked").and_then(Value::as_object).cloned()) {
@@ -595,7 +595,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     if foils.is_empty() {
         foils = crate::judge_bench::DEFAULT_FOILS.iter().map(|s| s.to_string()).collect();
     }
-    let judge_report = match (&brief, args.iter().any(|a| a == "--no-judge" || a == "--no-render"), frame_files.is_empty()) {
+    let judge_report = match (&brief, !args.iter().any(|a| a == "--judge") || args.iter().any(|a| a == "--no-render"), frame_files.is_empty()) {
         (Some(b), false, false) => {
             let t = Instant::now();
             match crate::judge_bench::judge_frames(&crate::judge::Judge::local(), &frame_files, b, &foils) {

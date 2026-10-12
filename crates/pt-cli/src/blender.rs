@@ -361,7 +361,7 @@ fn run_blender(model: &Path, scene: &Value, unknown: Vec<String>, stem: &str, ou
     }
     let script = root.join("corpus/tools/render_scene.py");
     let mut cmd = Command::new(&exe);
-    cmd.args(["-b", "--factory-startup", "-P"]).arg(&script).arg("--");
+    cmd.args(["-b", "--factory-startup", "-t"]).arg(crate::lowload::threads().to_string()).arg("-P").arg(&script).arg("--");
     cmd.arg(format!("model={}", model.display()))
         .arg(format!("scene={}", scene_file.display()))
         .arg(format!("out={}", out.display()))
@@ -397,7 +397,7 @@ fn run_blender(model: &Path, scene: &Value, unknown: Vec<String>, stem: &str, ou
         }
     }
     cmd.args(extra);
-    let output = cmd.output().map_err(|e| format!("could not start Blender: {e}"))?;
+    let output = crate::lowload::output(&mut cmd).map_err(|e| format!("could not start Blender: {e}"))?;
     let text = String::from_utf8_lossy(&output.stdout);
     let mut report: Value = std::fs::read_to_string(&report_file).ok().and_then(|t| serde_json::from_str(&t).ok()).ok_or_else(|| {
         let tail: Vec<&str> = text.lines().rev().take(25).collect::<Vec<_>>().into_iter().rev().collect();

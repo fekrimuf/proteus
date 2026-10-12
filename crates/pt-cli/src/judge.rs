@@ -354,12 +354,13 @@ impl Judge {
         std::fs::create_dir_all(&self.cache).map_err(|e| e.to_string())?;
         let log_path = self.cache.join("server.log");
         let log = std::fs::File::create(&log_path).map_err(|e| e.to_string())?;
-        let child = Command::new(&exe)
+        let mut server = Command::new(&exe);
+        server
             .args(["-m", &model, "--mmproj", &mmproj, "-ngl", "99", "-c", SERVER_CONTEXT, "-np", "1", "--host", "127.0.0.1", "--port", &self.port.to_string(), "--temp", "0", "--seed", "1"])
             .stdout(Stdio::from(log.try_clone().map_err(|e| e.to_string())?))
-            .stderr(Stdio::from(log))
-            .spawn()
-            .map_err(|e| format!("could not start the judge server: {e}"))?;
+            .stderr(Stdio::from(log));
+        // low priority, and killed when pt exits, so no judge server is left holding the GPU
+        let child = crate::lowload::spawn_uncapped(&mut server).map_err(|e| format!("could not start the judge server: {e}"))?;
         *self.child.borrow_mut() = Some(child);
         self.wait_ready(&log_path)
     }

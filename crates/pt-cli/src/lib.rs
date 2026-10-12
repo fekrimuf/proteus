@@ -8,6 +8,7 @@ pub mod docs;
 pub mod gym;
 pub mod judge;
 pub mod judge_bench;
+pub mod lowload;
 pub mod matchcmd;
 pub mod mcp;
 pub mod top;
