@@ -329,7 +329,24 @@ pub fn report(geo: &Geometry, scene: &Value, radius: f32, frames: Option<&std::p
             "worst": seen.iter().take(8).map(|f| json!({"kind": f.kind, "what": label(f.proto), "at": [f.pos[0], f.pos[1], f.pos[2]], "height": f.height, "amount": f.amount, "pixel": px(f)})).collect::<Vec<_>>(),
         }));
     }
+    // where the world's triangles are: per material, triangles, points used and the horizontal extent in metres
+    let mut mats: std::collections::BTreeMap<String, (usize, f32, f32, f32, f32)> = Default::default();
+    {
+        let names = geo.prim_materials();
+        let p = geo.p();
+        for i in 0..geo.n_prims() {
+            let ids = geo.prim_points(i);
+            let e = mats.entry(names[i].unwrap_or("(none)").to_string()).or_insert((0, f32::MAX, f32::MAX, f32::MIN, f32::MIN));
+            e.0 += ids.len().saturating_sub(2);
+            for &v in ids {
+                let q = p[v as usize];
+                *e = (e.0, e.1.min(q[0]), e.2.min(q[2]), e.3.max(q[0]), e.4.max(q[2]));
+            }
+        }
+    }
     Ok(json!({
+        "base_points": geo.n_points(),
+        "base_materials": mats.iter().map(|(k, v)| json!({"material": k, "triangles": v.0, "x": [v.1, v.3], "z": [v.2, v.4]})).collect::<Vec<_>>(),
         "instances": inst.map_or(0, |i| i.len()),
         "findings": by_kind,
         "flat_prototypes": flat.iter().map(|(p, k)| json!({"proto": label(*p), "kind": k})).collect::<Vec<_>>(),
@@ -384,6 +401,38 @@ pub fn review_tiles_cmd(args: &[String]) -> Result<(), String> {
     }
     println!("wrote {} tiles to {out}", cols * rows);
     Ok(())
+}
+
+/// Look development: drop every instance the chosen cameras cannot see, so a one-view render of a big world fits in the memory of
+/// a desktop. Kept: everything within `radius` metres of a camera (it can cast shadows into the view), everything inside the view
+/// cone out to four times that, and the far stand-ins (`lod_hint`, a few triangles each). Returns (kept, total).
+pub fn cull_to_view(geo: &mut Geometry, cams: &[Camera], radius: f32) -> (usize, usize) {
+    let Some(inst) = geo.instances.as_ref() else { return (0, 0) };
+    let total = inst.len();
+    let far_standin: Vec<bool> = inst.protos.iter().map(|p| pt_core::lod::hinted_cull(p).is_some()).collect();
+    let keep: Vec<u32> = (0..total as u32)
+        .filter(|&k| {
+            let k = k as usize;
+            if far_standin[inst.proto_id[k] as usize] {
+                return true;
+            }
+            let pos = [inst.xf[k][3], inst.xf[k][7], inst.xf[k][11]];
+            cams.iter().any(|c| {
+                let d = ((pos[0] - c.x).powi(2) + (pos[2] - c.z).powi(2)).sqrt();
+                d <= radius || in_view(c, pos, radius * 4.0)
+            })
+        })
+        .collect();
+    let kept = keep.len();
+    if kept < total {
+        let inst = geo.instances.as_mut().unwrap();
+        let proto_id: Vec<u32> = keep.iter().map(|&k| inst.proto_id[k as usize]).collect();
+        let xf: Vec<[f32; 12]> = keep.iter().map(|&k| inst.xf[k as usize]).collect();
+        inst.attrs = inst.attrs.gather(&keep);
+        inst.proto_id = std::sync::Arc::new(proto_id);
+        inst.xf = std::sync::Arc::new(xf);
+    }
+    (kept, total)
 }
 
 /// For the scorecard: (objects floating or hanging inside a camera view, objects mostly under water inside a camera view, cameras

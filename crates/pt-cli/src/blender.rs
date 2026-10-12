@@ -308,7 +308,16 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
     let (glb, scene, unknown) = {
         let mut g = Graph::new();
         let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
-        let geo = g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?;
+        let mut geo = (*g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?).clone();
+        // `--cull METRES` (look development, with `--only`): drop what the chosen cameras cannot see, so a one-view render fits in memory
+        if let (Some(r), Some(only)) = (std::env::var("PT_VIEW_CULL_M").ok().and_then(|s| s.parse::<f32>().ok()).filter(|r| *r > 0.0), o.only.as_deref()) {
+            let names: Vec<&str> = only.split(',').map(str::trim).collect();
+            let cams: Vec<crate::grounding::Camera> = crate::grounding::cameras_of(&scene).into_iter().filter(|c| names.contains(&c.name.as_str())).collect();
+            if !cams.is_empty() {
+                let (kept, total) = crate::grounding::cull_to_view(&mut geo, &cams, r);
+                eprintln!("view cull {r} m: kept {kept} of {total} instances");
+            }
+        }
         export_for_render(&geo, &stem, scene, o)?
     };
     run_blender(&glb, &scene, unknown, &stem, out, o, &[])
@@ -416,9 +425,12 @@ pub fn render_scene_cmd(args: &[String]) -> Result<(), String> {
     let pos: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
     let flag_val = |f: &str| args.iter().position(|a| a == f).and_then(|i| args.get(i + 1));
     let (Some(input), Some(scene), Some(out)) = (pos.first(), pos.get(1), pos.get(2)) else {
-        return Err("usage: pt render-scene <recipe|file.glb> <scene.json> <out.png> [--quick] [--samples N] [--keep DIR] [--lod] [--only CAMERA,CAMERA]".into());
+        return Err("usage: pt render-scene <recipe|file.glb> <scene.json> <out.png> [--quick] [--samples N] [--keep DIR] [--lod] [--only CAMERA,CAMERA [--cull METRES]]".into());
     };
     let opts = Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: flag_val("--keep").map(PathBuf::from), lod: args.iter().any(|a| a == "--lod"), only: flag_val("--only").cloned() };
+    if let Some(r) = flag_val("--cull") {
+        std::env::set_var("PT_VIEW_CULL_M", r);
+    }
     let report = render(input, Path::new(scene), Path::new(out), &opts)?;
     println!("{}", serde_json::to_string_pretty(&report).unwrap_or_default());
     Ok(())
