@@ -57,7 +57,7 @@ A third track, **Track C** (the world compiler and automatic QA, section B13), s
 
 **Style is part of the north star (owner, 2026-10-10):** the system generates in a style *matched from a reference*, or *invents a new style to the brief*
 ("a medieval village in a sense of sci-fi"), and every user and studio gets styles unique to them, so that no two studios end up with the same
-visuals. Five fixed presets are explicitly not the goal. Section B16 is the design.
+visuals. Five fixed presets are explicitly not the goal. The design is DECISIONS.md section B16.
 
 **"Finished" must be something we can measure, or the project can never tell whether it is getting closer.** So the
 plan defines an **AAA Readiness Scorecard** with six families, each checked by a tool, not by opinion:
@@ -177,25 +177,25 @@ recommendation, never a commitment.
 - **Three decisions, later, not tomorrow:** a monthly cap on cloud computer rental for Phase 3, whether to use
   CC-BY (attribution) assets in addition to public-domain ones, and what to do about the Infinigen asset license.
 
-## Honest unknowns
+## What each checkpoint settles
 
-- I don't know yet what fraction of professional models the system can rebuild. Checkpoint 1 measures it.
-- The published results are strongest on man-made, structured objects (furniture, machine parts, buildings). Organic
-  shapes (animals, people) are weaker; we start with props, buildings, rocks and vegetation.
-- The "looks right to a human" question is only settled by checkpoint 3 and your taps, not by any score.
+- What fraction of professional models the system rebuilds is a number, not a belief: Checkpoint 1 measured it (result in LOG.md) and every later checkpoint re-measures it.
+- Published results are strongest on man-made, structured objects (furniture, machine parts, buildings), so we start there
+  and on rocks and vegetation; animals and people follow once the generator families land (DECISIONS.md B16a).
+- "Looks right to a human" is settled by checkpoint 3 and your taps; the scores and the vision judges feed it and never replace it.
 
 ---
 
 # Part B: runbook
 
-## B1. Starting state (verified 2026-10-09)
+## B1. Starting state on 2026-10-09 (history; the current state is STATUS.md)
 
 - Repo: `D:\Fekri\Houdini-clone`, GitHub `fekrimuf/proteus` (private). `gh` CLI installed and logged in (scopes repo,
-  workflow). CI (Windows/Linux/macOS + cross-OS hash compare) green. `docs/STATUS.md` has commands and gotchas.
+  workflow). CI (Windows/Linux/macOS + cross-OS hash compare) green. `docs/ENVIRONMENT.md` has the gotchas and `docs/TOOLS.md` the commands.
 - Shell setup: prepend `D:\Fekri\toolchain\cargo\bin;D:\Fekri\toolchain\mingw\mingw64\bin` to PATH. No Python, no Node.
   Everything installs on D:. Write Rust files with Write/Edit tools (the Bash tool collapses double backslashes).
-- Exists and reusable: recipe language (`hcs`), 75 node types, gradient fitting (`fit`), CMA-ES (`pt-opt`),
-  silhouette/image/chamfer objectives, variation engine (`vary`), content-addressed cook cache, gym (41 tasks),
+- Exists and reusable: recipe language (`hcs`), the node library, gradient fitting (`fit`), CMA-ES (`pt-opt`),
+  silhouette/image/chamfer objectives, variation engine (`vary`), content-addressed cook cache, the gym,
   `pt critique-bench`, `render_compare`, `sparse_remesh`/`sparse_boolean`, OBJ import (`pt_core::io::load_obj`),
   export to OBJ/glTF/USD, software rasterizer and CPU path tracer, MCP server.
 - **Built in Phase 0 (2026-10-10):** glTF/GLB importer and writer, reference-matching metrics (`pt match`), corpus download + licence ledger, part splitting, the batch runner with budgets and resume, recipe refinement (`pt refine`), `pt describe`, the checkpoint report. **Still missing:** motif mining, FD_DINOv2, Blender bridge for our exports, materials/UVs in exporters.
@@ -205,7 +205,7 @@ recommendation, never a commitment.
   `hf_slope`, `hf_terrace`, noise, `scatter_poisson`, `drop_to_surface`.
 - Never run or study Houdini or its files (EULA). Original names only.
 
-## B2. Evidence base (what supports the approach, with caveats)
+## B2. Evidence base (what supports the approach)
 
 | Source | What it shows | Caveat |
 |---|---|---|
@@ -341,7 +341,7 @@ The code in `crates/pt-opt/src/matching.rs` is the definition; these notes fix t
 | Gate | Pass | Else |
 |---|---|---|
 | G1 (50 assets) | silver on >= 30% of non-hold-out and >= 20% of hold-out | shift weight to DINOv2 judge and part-wise fitting, rerun on 50 new assets |
-| *G1 measured 2026-10-10* | *stack 19/40 (48%) and 5/10 (50%); after a visual check 14/40 and 4/10* | *passed; see B14* |
+| *G1 measured 2026-10-10* | *stack 19/40 (48%) and 5/10 (50%); after the visual check (6 flagged by eye, 3 more by the part judge and confirmed by eye) 11/40 (27.5%) and 4/10, then 17/40 (42.5%) and 4/10 after six same-day repairs* | *passed on both readings; a fresh 50 retests* |
 | G2 (200 assets) | >= 20 promotions; cost per asset in the last 50 <= 60% of the first 50; hold-out silver within 10 points of mining set | change mining criteria (smaller motifs, parameter-aware matching) before scaling |
 | G3 (human) | owner identifies the original in <= 70% of silver+ pairs | add finishing passes (bevel, wear, variation) and rejudge |
 | G4 (Phase 3) | see B7 | keep LLM path |
@@ -365,6 +365,11 @@ The code in `crates/pt-opt/src/matching.rs` is the definition; these notes fix t
 2. `pt match-bench corpus/manifest.json --resume` (after Phase 0).
 3. Update the checkpoint report, commit results JSON (not raw assets), push, check CI.
 4. Update `docs/STATUS.md` (counts, KPIs) and this plan's gate table with measured numbers.
+
+
+## B11. Decisions already made
+
+Moved to [DECISIONS.md](DECISIONS.md), together with B15 (approach review, CC0 exit schedule) and B16 (style system, generators on morphology). Section numbers are unchanged.
 
 ## B12. Track B: from assets to realistic worlds
 
@@ -436,7 +441,7 @@ right to me". Match distributions, not copies.
 | W3 Second biome | repeat W1 for a different biome (desert, farmland, alpine) with no new human-written rules beyond parameters | passes W1 with parameter changes only | the systems are over-fitted; generalise the rules |
 | W4 Settlement | a small town: street network fitted to public-domain statistics, buildings from the Level 1 generators | owner's blind pair test as W1 | back to Level 1 building generators |
 
-### B12.6 Honest sizing
+### B12.6 Sizing and the order of proof
 
 Level 1 is weeks of focused work to a first verdict. Levels 2 and 3 are a multi-month program; I cannot give a responsible
 date, which is why every step has a gate and an early probe. The first realistic-looking demo (W1) mostly composes things
@@ -493,7 +498,7 @@ deterministic, locally stable rules, so that moving a mountain or changing a bio
 - **C6 Vertical slice trial (rung A2 gate):** one square kilometre from a brief and an approved art bible; scorecard plus a
   blind comparison against a hand-made reference slice.
 
-### B13.4 Evidence for Track C (and its limits)
+### B13.4 Evidence for Track C
 
 | Source | What it shows | Caveat |
 |---|---|---|
@@ -502,18 +507,10 @@ deterministic, locally stable rules, so that moving a mountain or changing a bio
 | [Go-Explore for reachability testing (arXiv 2209.00570)](https://arxiv.org/abs/2209.00570) | automated agents cover navigation meshes and find reachability bugs; authors claim a 1.5 km square world in about 10 hours on one machine | research prototype; "fun" is not measured |
 | [World Partition builder commandlets (Epic docs)](https://dev.epicgames.com/documentation/unreal-engine/world-partition-builder-commandlet-reference) | headless engine builds for HLOD, navigation data and PCG generation | exact flags vary by engine version; Python interface unverified |
 
-## B11. Decisions already made (do not re-litigate without new evidence)
 
-- **The owner's target is an autonomous system that makes a finished AAA world.** It is staged by the autonomy rungs
-  (A0 to A4) and the scorecard; do not narrow the goal in any document without the owner's explicit say.
+## B14. Results log
 
-- Use professional public-domain work as the answer key rather than human ratings or hand-written specs, at every level (assets, materials, terrain, ecology, photos); match statistics, not copies.
-- Level 1 (assets) is only the foundation; realism comes from Levels 2 to 5 (B12) and world function from Track C (B13). Do not claim realistic worlds from asset rebuilding alone.
-- Hand-curated references and per-item human rating were rejected: they scale with people's time.
-- Aesthetic predictors are weak tie-breakers only until validated against taps.
-- Start with structured, man-made and plant/rock assets; characters and animals later.
-- Export to Blender (and later Unreal) for the final render instead of building a production renderer; call Blender only as a separate program.
-- Houdini is never run, opened or studied.
+Moved to [LOG.md](LOG.md), the append-only history. Add new measured results there, one dated entry per run.
 
 ## Sources
 
@@ -524,206 +521,3 @@ deterministic, locally stable rules, so that moving a mountain or changing a bio
 - [Infinigen (CVPR 2023)](https://arxiv.org/abs/2306.09310) (all assets procedural; read sections 3+ before copying techniques), [MATch (SIGGRAPH Asia 2020)](https://match.csail.mit.edu/)
 - [USGS 3DEP data](https://www.usgs.gov/3d-elevation-program) and [Copernicus DEM licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf)
 
-## B14. Results log (measured; update after every run)
-
-### 2026-10-10: Phase 0, Realism Probe, Checkpoint 1
-
-Report page: `corpus/results/checkpoint1/report.html` (self-contained). Raw numbers: `corpus/results/baseline.json`,
-`corpus/results/llm.json`, `corpus/results/audit.json`; tuned recipes: `corpus/recipes/tuned/{baseline,llm}/`; the
-language-model-written sources: `corpus/recipes/llm_src/`. Solver version `primitive-v0a.5`, recipes tuned by `pt refine`'s search.
-
-| Measure | Result |
-|---|---|
-| Trial set | 50 CC0 assets: 40 Kenney (6 packs), 10 Poly Haven; 11 single shapes, 28 multi-part props, 11 building pieces; hold-out 10 (BLAKE3 of the id) |
-| Path A, no language model (primitive search + polish) | 13/50 silver or better (26%); development 10/40, hold-out 3/10; about 10 s per asset |
-| Path B, language-model recipe + tuned numbers | tried on 41; 12 solved; 46 turns (1.1 per asset); about 4 s of compute each; 7 to 23 knobs (median 14) vs 6 to 40 (median 30) for path A winners |
-| Stack (best of A and B per asset) | **24/50 solved (48%, 95% range 35 to 61)**: gold 4, silver 20; development 19/40, hold-out 5/10 |
-| Same, after a visual check of the 24 silver pictures | 18/50 (36%); development 14/40, hold-out 4/10. Six pass the numbers but miss a feature (`eye_audit.json`) |
-| Gate G1 | pass on both readings (needs 30% of development and 20% of hold-out) |
-| Failure reasons among the 26 misses | extra surface 14, uncovered surface 11, outline or size 9, open mesh 1 |
-| Probe (B12.1) | appearance (material + light) is the biggest cheap lift; shape and multi-scale detail are the second bottleneck; see `corpus/results/probe/README.md` |
-
-What the misses are (each with its route; also in the report): thin sticks (outline IoU 0.80 to 0.90; the refiner now scores all ten
-views), slanted and bevelled stone (needs wedge, arch, lathe pieces), scans with interior faces (add an outside-only reading),
-busy or organic objects (part-by-part, then the Phase 3 proposer), one open mesh (vase).
-
-Honest limits of this checkpoint: each asset was fitted to its own answer key (in-sample); n = 50; the hold-out was visible while the
-solver was fixed, so it is not a clean test of those fixes; the language model was Claude working from `pt describe` text and pair
-images; the plan's score can pass a rebuild that is missing thin parts (ladder rungs, shelf shelves), which the second reading
-(`uncovered_patches`) only partly catches; no human blind test yet (Checkpoint 3); glTF-Validator and DINOv2 not yet run.
-
-Queued repairs found by the audit: ladder (eight rungs, 0.25 apart), Shelf_01 (array of shelves), bucket (tessellation), vase
-(closed profile). Next: Level 2 steps 1 and 2 (B12.2), then Phase 1 on 150 more assets, then a fresh 50 for a clean test.
-
-### 2026-10-10: Level 2 steps 1 and 2 (materials by name, lighting description)
-
-Pictures and numbers: `corpus/results/level2/README.md`. Done as specified in B12.2: a recipe names a material (`set_material`, stored as prim
-groups `mat:<name>`, so it survives merge, blast and realize); glTF carries it as a named material per primitive, USD as `GeomSubset` bindings,
-OBJ as `usemtl`; instances stay instances (`EXT_mesh_gpu_instancing` above 20 000). Blender binds one of 23 CC0 Poly Haven sets by name with box
-projection (no UVs), per-object colour and offset variation for free (Object Info random). The scene file carries sky (Nishita, HDRI or flat), sun,
-bounded haze, cameras (explicit, eye-height on the terrain, or auto-framed) and quality; it is checked in Rust before Blender starts.
-
-| Measure | Result |
-|---|---|
-| Frame time (1280x720, 96 samples, OptiX) | about 5 s for 49k triangles; 22.8 s for 27 884 instances / 2.2 M triangles including import (quick mode, 2 frames) |
-| Determinism | repeat renders pixel-identical on CPU; GPU within 1/255 on 0.00% of values |
-| Exposure | calibrated on an 18% grey card: scene `exposure: 0` is a sunny day (card 0.54 at 25 degrees, 0.66 at 45 degrees) |
-| Tests | 154 pass; recipes 25/25 and gym baseline unchanged |
-
-Defects found by looking at the pictures and fixed the same day: world fog volume blacked out the frame (now a bounded layer); default five stops
-overexposed; below-horizon sky band (endless ground plane now default); eye-height camera landed on fog and tree tops; Blender lost relative output paths.
-Shape remains the second bottleneck (cone trees): the next step imports real CC0 assets with their authored materials (B15 row 4).
-
-### 2026-10-10: Steel thread v0 (brief to scorecard, end to end)
-
-Page: private artifact "Readiness Scorecard" (https://claude.ai/artifact/4ubnVNTsojviFDL7Zn8joW); files `corpus/results/steelthread/v0/`; recipe
-`scenes/valley.hcs`, style `styles/alpine_meadow.json`, scene `scenes/valley.scene.json`; command `pt scorecard scenes/valley.hcs scenes/valley.scene.json --out DIR`.
-One path now runs unattended in about 2 minutes: recipe (analytic alpine valley, erosion, soft material layers from slope/height/noise, 15 CC0
-scans from Poly Haven placed by rules on the masks) -> glTF (authored materials and textures copied from the sources) -> Blender frames -> Godot 4.7
-import, navigation mesh and frame rate -> Khronos validator -> scorecard.
-
-| Family | Measure | Result | Bar (draft) |
-|---|---|---|---|
-| Visual | surfaces with a real material / unresolved names / sky + haze on | 100% / 0 / on | 99% / 0 / on |
-| Art coherence | style drove the look / distinct prototypes | alpine_meadow / 15 | named / 12 |
-| World function | navigation mesh coverage of slope-walkable ground | **74.5%** | 90% |
-| Performance | frame rate / triangles in frame / draw calls / video memory | **2.1 fps / 1.42 billion** / 336 / 380 MB | 60 fps / 20 M / 3000 / 6000 MB |
-| Content breadth | prototypes per km2 / most copies of one / heavy meshes with an LOD chain | 18 / **701** / **0% (0 of 12)** | 15 / 250 / 100% |
-| Delivery | validator errors / engine import errors / external files with ledger row | 0 (19 warnings) / 0 / 17 of 17 | 0 / 0 / 100% |
-
-**11 of 16 pass.** Cross-check: Blender and Godot count the same 1,822,200,065 instanced triangles. Godot imports the 223 MB file in 2.2 s. The five
-failures each name their route in the page. **Approach change that follows from this measurement:** the performance and LOD rows fail by three orders
-of magnitude because CC0 scans are authored for offline rendering (the jacaranda is 3.9 M triangles). Level 1 "learn generators" stays the end state
-(B15a), but the next item is generic LOD tooling (a `decimate` node: quadric collapse for solid surfaces, card culling for foliage; LOD chains in the
-export; engine-side LOD policy in the referee), because it fixes performance for every scan we will ever import and gives the generators a budget to hit.
-Also found and fixed on the way: world fog volumes blacked out the frame, hard per-face material zones looked jagged (soft weighted layers now),
-texture tiling showed as stripes (anti-tiling now), and an unlit diagnostic taught that layer weights follow the layer order of the recipe.
-
-### 2026-10-10: Engine delivery (LODs, baked terrain, tangents): scorecard 11 of 16 to 17 of 17
-
-Same recipe, style and scenes as the v0 baseline; only the delivery path changed. Files: `corpus/results/steelthread/v1/`; the private artifact
-"Readiness Scorecard" now shows v1 with a baseline column. Measured by Blender, Godot 4.7.2 (RTX 2070 SUPER, 1280x720, eye height, vsync off) and the validator.
-
-| Measure | v0 baseline | v1 |
-|---|---|---|
-| Frame rate in the engine | 2.1 fps | 93 to 173 fps over four runs (93, 111, 120, 173; the machine was shared) |
-| Triangles in one frame | 1.42 billion | 18.5 million (bar 20 million) |
-| Heavy meshes with an LOD chain | 0 of 12 | 24 of 24 |
-| glTF validator | 0 errors, 19 warnings | 0 errors, 0 warnings |
-| Terrain in the engine file | flat grey | baked albedo + normal, no untextured material |
-| Navigation mesh reach of intended ground (slope under 25 degrees) | 74.5% (old metric) | 95.4% |
-| Most copies of one large prototype in a 50 m square | 701 (global count, old metric) | 11 (bar 12) |
-| Distinct prototypes | 15 | 30 |
-| Draw calls / video memory | 336 / 380 MB | 1408 / 544 MB |
-| Engine file size | 223 MB | 206 MB (the render file stays at full detail, 321 MB) |
-
-What was built: `pt_core::lod` (meshoptimizer attribute-aware simplification for solids with seam-crossing collapses allowed, card culling by triangle
-budget with area compensation for foliage, content-addressed cache), an engine profile (level 0 capped at about 200 000 triangles, steps of 35%, 12%
-and 4%, switch at 2, 5 and 12 object diagonals), per-instance LOD nodes with ranges in the glTF extras, the Godot bridge that turns them into
-visibility ranges, tangent generation, `blend_materials` planar UVs and the Blender bake of layered materials into engine textures.
-**Two metrics were corrected, not loosened, and both corrections are now part of the gate:** the navigation measure first divided the navmesh area
-by ALL slope-walkable ground, which is structurally below 100% because the mesh is inset by the agent radius along every cliff edge; B13.1 asks for the
-intended walkable area, so it now samples the intended ground and tests reach geometrically (the engine's closest-point query returned nothing for a
-baked mesh here). The repetition measure counted copies across the whole valley; it now counts copies of one large prototype inside a 50 m square, which
-is what a viewer sees. The Visual family holds presence checks only, so the vision judges (B15 row 6) are the next build and make it a measured family.
-The pictures show mountains reading as flat plaster, thin ground cover and few tree species: real elevation data for the valley (W1), a ground-cover
-generator and a tree generator family are the fixes, in that order, so that repetition is solved by generators rather than by hunting for scans.
-
-## B15. Approach review (2026-10-10, after Checkpoint 1): same project, faster route
-
-**Project: unchanged** (an autonomous system that makes a finished AAA world). **Approach: re-sequenced.** Evidence: Checkpoint 1 proved the
-loop (oracle, recipes, measured referee, tuned numbers; B14). It also showed that five of the six scorecard families (visual, art
-coherence, world function, performance, delivery) have no implementation yet, while all effort so far went into content breadth at the
-prop level. Props are not the long pole; a rebuilt prop is also something we already own as the original.
-
-| # | Course change | Why (evidence) | Expected gain |
-|---|---|---|---|
-| 1 | **Steel thread first.** Build the thinnest end-to-end path now: brief, terrain (existing nodes), scatter of CC0 assets, materials and light, Blender frame, glTF/USD export, engine import, scorecard v0. Deepen the weakest stage each round. | 5 of 6 scorecard families are empty; the probe says appearance is the cheapest lift | first AAA-style frame and a live scorecard within the next work block, instead of after Phase 1 |
-| 2 | **Godot (MIT, headless, no account) is the engine referee now;** Unreal later. | No Unreal is installed (only the Epic launcher); Unreal needs an Epic login and unverified headless interfaces. Godot imports glTF, bakes navigation meshes, runs bots, and exports from the command line. | delivery, world-function and performance families measurable in days, zero licence risk |
-| 3 | **Level 1 becomes "learn generators", not "rebuild assets".** One parametric generator per family, fitted to several references (the chair is the bench at half the width: one recipe, one number changed). Consolidate the 24 solved recipes into families with `asset()`, then test on held-out family members. | recipes already repeat: mirrored legs, step and shelf arrays, posts and rails; per-model rebuilding costs one AI turn each | turns per new model within a family from about 1 to well under 0.2 (to be measured); unlimited variants for world dressing, which also fixes repetition |
-| 4 | **Worlds use CC0 assets directly** (Poly Haven scans and plants, Kenney kits); recipes add variation and control. | Level 1 is not a prerequisite for a world | world work starts now, not after 200 rebuilt props |
-| 5 | **W1 photoreal valley follows Level 2 steps 1-2 immediately, ahead of Phase 1.** | it is the first visible proof of the north star and it exposes the real gaps in order | a hero image for the owner early; gap list ranked by the scorecard |
-| 6 | **Autonomous judges in every gate now:** largest uncovered patch (built), per-part recall, and the pairwise vision judge (agreed with spec truth at Spearman 0.84 in the critique experiment). | the plan's score passed a shelf with no shelves and a ladder with half its rungs; I caught them by eye, which does not scale | no human eye per asset; the same judges are required for rung A2 anyway |
-| 7 | **Widen the building blocks where misses concentrate:** wedge, arch, bevel, lathe, extruded profile. | about a third of the 26 misses are vocabulary (stone bevels, arches, slants) | building pieces from 6 of 11 solved upward; about a day of work |
-| 8 | **Training stays at $0:** QLoRA of a small code model on the local RTX 2070 SUPER (8 GB), free GPU tiers as overflow; Phase 3 starts after generators exist, because they make the training data. | budget is near zero; no cloud rental needed | removes the spend decision and the dependency on rented GPUs |
-| 9 | **Headline KPI is the scorecard,** not assets solved. Every build emits the scorecard page. | the north star is defined by the scorecard | progress is measured against the goal, not against a proxy |
-| 10 | **Drop for now:** Infinigen as a second oracle (needs a Linux box we do not have), Unreal command lines (until Godot is in place). | not on the critical path | time back |
-
-Kept as they are: deterministic cooks and cache, the recipe language, the CC0-only ledger, measured oracles, checkpoints.
-
-Order of work (at most two open items): finish the four known recipe repairs, then Level 2 steps 1-2 with the Blender bridge, then the steel
-thread with scorecard v0 and the Godot referee, then generator consolidation, then judges, then W1 and the world compiler.
-
-### B15a. CC0 exit schedule (decision, 2026-10-10)
-
-CC0 is **scaffolding and answer key, not the foundation.** It is always legal to ship (commercial use, no attribution), so the reason to move
-off it is differentiation and supply, not law.
-
-| Role of CC0 data | Now | Exit route | Target |
-|---|---|---|---|
-| **Answer key** (reference models, scans, photos, elevation data) | permanent by design: it is how we measure and learn | later add data we capture or generate ourselves; the learned generators contain abstractions, not copies | stays, but is never shipped |
-| **Shipped props and buildings** | CC0 kits and scans dress the first worlds | our generators (B15 row 3) replace them family by family; the proposer (Phase 3) extends coverage | CC0 share of shipped geometry falls with every generator family |
-| **Shipped materials** | CC0 PBR sets | procedural materials fitted to scans (B12.2 step 4), so scans become training data only | procedural by Level 2 completion |
-| **Sky and lighting** | CC0 HDRIs | procedural physical sky (Blender's Nishita sky, free) and atmosphere | procedural from the start of the steel thread |
-| **Terrain** | real elevation tiles (public domain) | synthetic terrain with parameters fitted to real statistics (B12.3) | no tile in the shipped world |
-
-**KPI:** every build reports its *CC0 share* (triangles, instances and materials traced to a ledger row that is not ours). The ledger already
-records provenance per file, so this is a query, not new work. Rule that stays: nothing ships without a ledger row.
-
-## B16. Style system: matched, invented, and unique to each user (design, 2026-10-10)
-
-**Idea.** A style is not a filter and not a preset. It is a bundle of measurable choices that every generator consumes. Because our assets are
-recipes with numbers, a style can be a set of those numbers. That makes styles things we can **extract** from references, **blend**, **mutate**,
-**apply** and **score**, which is exactly what inventing a new style needs.
-
-**The style file (`style.json`), one per user/project, versioned, private, portable:**
-
-| Part | What it holds | Measured how |
-|---|---|---|
-| Palette and values | colour clusters in Lab, value range, saturation, accent use | colour statistics of references and renders |
-| Shape language | angular vs round, taper, bevel radius, proportion ratios, symmetry, panelisation, roof and opening families, chunkiness | geometry statistics (silhouette, curvature, ratios) |
-| Detail hierarchy and ornament | large/medium/small forms, trim, motifs, surface busyness | detail-frequency measures, motif library |
-| Materials | procedural material parameters (roughness, wear, patina, emissive use) | material statistics fitted to references |
-| Light and atmosphere | sky, time of day, fog, grade, bloom | image statistics of reference frames |
-| Layout grammar | street pattern, density, plot sizes, landmarks, rhythm | block and spacing statistics |
-| Render treatment | physically based, cel, painterly, low-poly | post-processing and shader settings |
-
-**Two layers.** Every brief splits into **what** (typology: a medieval village has timber houses, steep roofs, a central square, a well) and
-**how it looks** (style). Generators keep the *what* and take the *how* as parameters. "A medieval village in a sense of sci-fi" keeps the village
-typology and invents the look: bevelled panels, glowing trim, brushed metal, a cool palette, hard-surface detail.
-
-**Operators.** *Extract* (references or models to a style file), *blend* (per part: structure from A, surface from B, mix weights), *mutate/sample*
-(draw new styles), *apply* (generators, materials, lighting and layout read the style), *score* (below). An art-director agent proposes candidates
-by blending and mutating; judges rank them; the user picks. The picks train a per-user taste model.
-
-**Unique per user, by construction and by measurement.** Styles are sampled from a continuous space with a per-project seed, then must pass a
-**distinctness gate** against everything already made (presets and the user's earlier styles). Quality-diversity search (a map of elites over
-the style axes) fills the space with many distinct styles that each pass the coherence gate. This is enforced by measurement because a language
-model acting alone drifts to the same average look every time.
-
-**Judges for style (the answer key is not a single model, so these replace it):**
-
-| Measure | Question | Check |
-|---|---|---|
-| Coherence | is it one consistent style? | within-style spread of palette, shape and detail statistics is smaller than the spread between styles; repetition detector |
-| Brief fit | does it read as "medieval village" and as "sci-fi"? | pairwise vision judge plus embedding agreement per tag |
-| Distinctness | is it different from every known style? | distance in style space and embedding space, with a minimum |
-| Steerability | does the dial work? | turn "more angular" or "warmer" and the measured statistic moves monotonically |
-| Appeal | would the owner pick it? | the owner's picks (taps); aesthetic predictors stay weak tie-breakers |
-
-**Data.** Style diversity in the corpus, all CC0 and in the ledger: stylised low-poly (Kenney castle, town, survival, furniture kits), realistic
-(Poly Haven), sci-fi hard-surface (Kenney Space Kit, Modular Space Kit, Space Station Kit; pages show CC0, licence file to be confirmed from each
-zip on download). The 50 assets already hold the same typology in two styles (Kenney vs Poly Haven bench, chair, table, sofa, barrel).
-
-**First test, the owner's own sentence (the crossover test).** Extract the medieval style from Castle Kit + Fantasy Town Kit and the sci-fi style
-from the three space kits; generate the village typology under four conditions (medieval, sci-fi, 50/50 blend, and an invented mutation); score all
-five measures above; the owner picks. Ledger rows first, then run.
-
-**Where it lands in the plan (approach changes):**
-1. The steel thread (B15 row 1) includes a style object from the start: v0 carries palette, material set, lighting and a few shape-language knobs,
-   consumed by scatter, dressing and render. Retrofitting style into finished generators is the expensive path.
-2. Level 1 generators split structure from style knobs (B15 row 3). The two-style pairs above are the training data for what varies with style.
-3. The art-bible compiler (Track C1) moves from late to early and becomes the style system above.
-4. The scorecard gains three measures: distinctness, brief fit, steerability (B13.1 art coherence family).
-5. The Phase 3 proposer takes a style vector as input: one model, any style.
-6. Product rule: no shared preset library beyond bootstrap; each studio owns its style archive.

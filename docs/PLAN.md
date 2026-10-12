@@ -198,19 +198,35 @@ Geometry, DAG, 9 SOPs, OBJ/glTF, MCP server. *Proved the loop; will be refactore
 | `.hip`/`.hda` compatibility | Importer for the supported subset; native format remains source of truth. |
 | LLM judge reliability | Combine hard metrics with VLM scoring; calibrate on human-rated sets; keep specs as the hard gate. |
 
-## 10. Next tasks (Phase 1 start)
+## 10. Phase 1 start tasks (done)
 
-0. Rename `hc-*` → `pt-*` (§12 D1) and run the week-1 spike (§12 D10).
-1. Geo v2: columnar COW attribute store with domains and groups; port the 9 SOPs.
-2. Instance table + lazy `copy_to_points`; realize-on-demand.
-3. Provenance column and `explain(vertex)`.
-4. Content-addressed cook keys, deterministic RNG, disk cache, hash-based incremental invalidation.
-5. IR skeleton + interpreter backend + pointwise fusion; microbenchmarks vs the naive path.
-6. `#[sop]` node-definition macro (schema, docs, golden test, MCP exposure).
-7. Software rasterizer `render_preview` (shaded / wire / attribute heatmap / multi-angle sheet).
-8. `validate` + richer `cook` stats + `batch`/checkpoints.
-9. Benchmark harness skeleton + Phase 1 gate scenes; CI with hash-determinism check.
-10. `hcs` grammar draft and attribute-flow type-system design doc.
+All ten Phase 1 start tasks (Geometry v2, instance tables, provenance, content-addressed cooking, the IR skeleton with pointwise fusion, the node macro, the software rasterizer, validate/batch/checkpoints, the benchmark harness with CI determinism check, the `hcs` grammar and attribute-flow type system) are built and gated; dated detail is in [LOG.md](LOG.md). What is next is in [STATUS.md](STATUS.md).
+
+## 11. Status and coverage
+
+Current state lives in [STATUS.md](STATUS.md); every count and score is generated in [generated/state.md](generated/state.md), so this section quotes none.
+
+| Phase | State |
+|---|---|
+| 0 Seed, 1 Kernel | Done. Gates measured (5M instances plus terrain, determinism across thread counts and across Windows, Linux and macOS in CI). |
+| 2 Language, checking, autodiff | Done. Node library, recipes and gym are counted in the generated state. |
+| 3 Fields, terrain, optimization | Done for dense volumes; sparse volumes exist as `SparseVolume` with `sparse_remesh` and `sparse_boolean`, and become a first-class attribute next. |
+| 4 Seeing, UI, gym | Done: web UI, path tracer, critique metrics, vision judges (local, free), gym with build, repair and edit tasks. |
+| 5 Simulation | Particles, cloth, smoke, fracture and rigid bodies done; pyro, FLIP, hair and surrogates follow. |
+| 6 Render, USD | Path tracer, USD with PointInstancer and recover-from-images done; Blender Cycles for photographic stills; Godot as engine referee. |
+| 7 Production breadth | TOP-style farm runner done; the rest is below. |
+
+Coverage still to add, each with its route:
+
+* Native GUI window: the web UI is the GUI; an egui shell reuses the same API; a native wgpu viewport follows.
+* Fire/pyro, FLIP water, vellum hair/grains, neural surrogates, differentiable simulation: wrap or port open solvers, interop first.
+* Alembic, FBX, MaterialX, Blender/Unreal live links: USD and glTF today; the others behind cargo features.
+* COP (compositing), CHOP, KineFX rigging, crowds, Python bindings, WASM plugins, browser build, CRDT multiplayer: the JSON-RPC (MCP) and gym protocols are already language-agnostic, so they plug in as clients.
+* Sparse volumes as a first-class `Geometry` attribute, sparse smoothing/displace/advection, then sparse smoke (rock at 2.5 mm voxels is 166 MB sparse against 4.3 GB dense, `pt sparse-bench`).
+* Small node ops (polybevel, convex hull, lattice): follow `crates/pt-sop/src/deform.rs`.
+* Legal and naming: original names only; Houdini is never run or studied (EULA, D1). Final product name is an owner decision.
+
+Beyond-Houdini track: B1 differentiable (autodiff, gradient fit, CMA inverse design) done for procedurals; B3 scored recipes and gym baselines in place, promotion pipeline built (`propose_recipe`, `pt recipes-accept`); B4 incremental cooking done, neural surrogates next; B5 diff/merge and shared live session done, CRDT next.
 
 ## 12. Research-driven decisions (from `reports/Houdini clone architecture validation.md`)
 
@@ -266,21 +282,3 @@ Four experiments, each with a pass/fail line:
 2. **Determinism:** cook a golden scene under `ref-cpu` on two OSes (Windows + WSL/Linux or CI) at 1 and N threads; pass if manifest hashes are identical.
 3. **Memory/fusion baseline:** 20-node wrangle chain on 10M points, naive copy-per-node vs COW+fusion; record the real ratio to replace the targets above.
 4. **Gym arms:** 10 T1 tasks via `hcs`-like Python-subset vs. flat tools with a baseline agent; record success rate and tokens to pick the default surface.
-
-## 11. Status
-
-Authoritative, measured status lives in [STATUS.md](STATUS.md). Summary against this plan:
-
-| Phase | State |
-|---|---|
-| 0 Seed, 1 Kernel | Done (gates measured: 0.89 s / 856 MB; determinism across thread counts; cross-OS untested) |
-| 2 Language, checking, autodiff | Done (60 node types vs the 80+ target; 17 recipes) |
-| 3 Fields, terrain, optimization | Done (dense volumes only; sparse volumes pending) |
-| 4 Seeing, UI, gym | Mostly done (web UI instead of a native window; path tracer; critique metrics; 22 gym tasks) |
-| 5 Simulation | Mostly done (particles, cloth, smoke, fracture + rigid bodies; no pyro/FLIP/hair/surrogates/differentiable sim) |
-| 6 Render, USD | Partial (path tracer, USD with PointInstancer, recover-from-images gate; no Alembic/FBX/MaterialX/live links) |
-| 7 Production breadth | Partial (TOP-style farm runner; no COP/CHOP/KineFX/crowds/Python/WASM/browser build) |
-
-Beyond-Houdini track: B1 differentiable (autodiff + gradient fit + CMA inverse design) done for procedurals; B3 scored recipes/gym
-baselines in place, promotion pipeline pending; B4 incremental cooking done, neural surrogates not started; B5 diff/merge and shared
-live session done, CRDT not started.

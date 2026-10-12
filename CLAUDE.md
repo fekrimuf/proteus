@@ -38,4 +38,18 @@ Shape of a report: result vs target (one line), decision and next step (one line
 
 ## Start here
 
-Read `docs/STATUS.md` first: it holds the verified project state, commands, gotchas and next steps.
+Read `docs/STATUS.md` first: it holds the current state, open items and next steps (8 KB cap). `docs/README.md` indexes the rest; read others on demand.
+
+## Commits
+
+- **Commit on your own judgement; never wait for the owner to order it.** Commit when an item is finished and verified, at every wrap-up, and before any risky or sweeping change. Work that sits uncommitted for a session is a defect (the docs drifted from git for a day because of it).
+- **Local commits only.** Pushing, force-pushing, amending published history and deleting branches stay owner decisions: ask for those.
+- **Keep commits clean:** group by theme (code, world and corpus results, docs) rather than one lump; run `pt docs-check` first when docs changed; never commit secrets, the owner's copyrighted reference picture, or large generated files (check `.gitignore`); plain-English message that says what changed and why.
+
+## Docs discipline
+
+- **File facts by lifetime:** intent in PLAN, choices in DECISIONS, now in STATUS, history in LOG, machine and gotchas in ENVIRONMENT, commands in TOOLS.
+- **Never type a number that changes** (tests, recipes, gym, ledger, scores). `pt status --write` generates `docs/generated/state.md`; link to it.
+- **Wrap-up routine:** move what happened to `docs/LOG.md` (append, dated), rewrite `docs/STATUS.md` (do not append; set its `Updated:` date), run `pt status --write` and `pt docs-check`. `pt docs-check` also runs in CI.
+- **Windows paths in docs:** write them in backticks with real backslashes and check the file afterwards with `pt docs-check` (the Bash tool eats backslashes; use the Write or Edit tools).
+- **Memory stays thin:** the memory files hold what the repo cannot (owner preferences, lessons, pointers), never a second copy of STATUS.
