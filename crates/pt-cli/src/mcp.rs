@@ -714,6 +714,7 @@ const RECIPES: &[(&str, &str)] = &[
     ("23_spring_and_cable", include_str!("../../../recipes/23_spring_and_cable.hcs")),
     ("24_hillside_village", include_str!("../../../recipes/24_hillside_village.hcs")),
     ("25_carved_boulder", include_str!("../../../recipes/25_carved_boulder.hcs")),
+    ("26_clearing_planted_by_asking", include_str!("../../../recipes/26_clearing_planted_by_asking.hcs")),
 ];
 
 fn parse_space(a: &Value) -> Result<Vec<pt_opt::ParamRef>, String> {

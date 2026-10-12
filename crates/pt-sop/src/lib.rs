@@ -11,6 +11,7 @@ mod deform;
 pub mod flow;
 pub mod kernel;
 mod prims;
+mod refindex;
 mod sdf;
 pub mod sparse;
 mod sim;
@@ -122,7 +123,7 @@ pub fn schema(kind: &str) -> Option<NodeSchema> {
 /// Minimum number of connected inputs needed to cook (merge accepts 1..4).
 pub fn min_inputs(kind: &str) -> usize {
     match kind {
-        "merge" | "pop_sim" | "cloth_sim" | "switch" => 1,
+        "merge" | "pop_sim" | "cloth_sim" | "switch" | "wrangle" => 1,
         "copy_variants" => 2,
         _ => schema(kind).map_or(0, |s| s.inputs),
     }
@@ -725,6 +726,95 @@ mod tests {
         let c = cook1("copy_to_points", &[], &[b, s]);
         let w = cook1("wrangle", &[("class", json!("instance")), ("code", json!("@P.y += 10.0;"))], &[c]);
         assert!(w.instances.unwrap().xf.iter().all(|m| m[7] > 9.0));
+    }
+
+    fn col(g: &Geometry, name: &str) -> Vec<f32> {
+        g.point.get(name).unwrap_or_else(|| panic!("no attribute {name}")).as_f32().unwrap().to_vec()
+    }
+
+    #[test]
+    fn wrangle_asks_its_second_input() {
+        // a ground tilted to y = 0.1 x that carries w = x
+        let flat = cook1("grid", &[("size", json!([10.0, 10.0])), ("rows", json!(10)), ("cols", json!(10))], &[]);
+        let ground = cook1("wrangle", &[("code", json!("@P.y = @P.x * 0.1; @w = @P.x;"))], &[flat]);
+        let spread = cook1("grid", &[("size", json!([6.0, 6.0])), ("rows", json!(3)), ("cols", json!(3))], &[]);
+
+        // rays from 20 m up: distance and hit height, a miss going up
+        let up = cook1("wrangle", &[("code", json!("@P.y = 20.0;"))], &[spread.clone()]);
+        let code = "@down = ray_dist(@P, {0.0, -1.0, 0.0}); vec3 hit = ray_pos(@P, {0.0, -1.0, 0.0}); @gy = hit.y; @miss = ray_dist(@P, {0.0, 1.0, 0.0}); @nup = ray_n(@P, {0.0, -1.0, 0.0}).y;";
+        let q = cook1("wrangle", &[("code", json!(code))], &[up, ground.clone()]);
+        let (down, gy, miss, nup) = (col(&q, "down"), col(&q, "gy"), col(&q, "miss"), col(&q, "nup"));
+        for (i, p) in q.p().iter().enumerate() {
+            assert!((down[i] - (20.0 - 0.1 * p[0])).abs() < 1e-3, "ray from {p:?}: {}", down[i]);
+            assert!((gy[i] - 0.1 * p[0]).abs() < 1e-3 && miss[i] == -1.0 && nup[i] > 0.9);
+        }
+
+        // on the ground: the surface is at distance 0 and an attribute is read back where it was written
+        let on = cook1("wrangle", &[("code", json!("@P.y = @P.x * 0.1;"))], &[spread.clone()]);
+        let q = cook1("wrangle", &[("code", json!("@sd = surf_dist(@P); @wx = surf_f(\"w\", @P); @far = surf_dist(@P + {0.0, 3.0, 0.0});"))], &[on, ground.clone()]);
+        let (sd, wx, far) = (col(&q, "sd"), col(&q, "wx"), col(&q, "far"));
+        for (i, p) in q.p().iter().enumerate() {
+            assert!(sd[i] < 1e-3 && (wx[i] - p[0]).abs() < 1e-3, "at {p:?}: distance {} w {}", sd[i], wx[i]);
+            assert!((far[i] - 3.0 / 1.01f32.sqrt()).abs() < 5e-3, "3 m above a 0.1 slope is {} from it", far[i]);
+        }
+
+        // asking the same points: crowding counts include the point itself, near_dist_other does not
+        let q = cook1("wrangle", &[("code", json!("@crowd = near_count(@P, 2.1); @gap = near_dist_other(@P); @self = near_dist(@P);"))], &[spread.clone(), spread.clone()]);
+        let (crowd, gap, me) = (col(&q, "crowd"), col(&q, "gap"), col(&q, "self"));
+        assert!(gap.iter().all(|g| (g - 2.0).abs() < 1e-5) && me.iter().all(|m| *m == 0.0));
+        assert_eq!((crowd.iter().cloned().fold(0.0, f32::max), crowd.iter().cloned().fold(9.0, f32::min)), (5.0, 3.0), "interior 5, corner 3");
+
+        // instance origins of the second input, with their attributes
+        let boxes = cook1("array", &[("count", json!(3)), ("offset", json!([4.0, 0.0, 0.0]))], &[cook1("box", &[], &[])]);
+        let probe = cook1("curve", &[("points", json!([[0.5, 0.0, 0.0], [7.0, 0.0, 0.0]]))], &[]);
+        let q = cook1("wrangle", &[("ref_class", json!("instance")), ("code", json!("@d = near_dist(@P); @ox = near_pos(@P).x;"))], &[probe, boxes]);
+        let (d, ox) = (col(&q, "d"), col(&q, "ox"));
+        assert!((d[0] - 0.5).abs() < 1e-5 && (d[1] - 1.0).abs() < 1e-5, "{d:?}");
+        assert!((ox[0] - 0.0).abs() < 1e-5 && (ox[1] - 8.0).abs() < 1e-5, "{ox:?}");
+
+        // the same question, the same answer, on any thread count
+        let big = cook1("scatter", &[("count", json!(6000)), ("seed", json!(4))], &[cook1("grid", &[("size", json!([20.0, 20.0]))], &[])]);
+        let ask = |threads: usize| {
+            let pool = rayon::ThreadPoolBuilder::new().num_threads(threads).build().unwrap();
+            pool.install(|| cook1("wrangle", &[("code", json!("@a = near_sum(\"pscale\", @P, 1.5) + near_dist_other(@P) + near_count(@P, 2.0);"))], &[big.clone(), big.clone()]).content_hash())
+        };
+        assert_eq!(ask(1), ask(4));
+    }
+
+    #[test]
+    fn wrangle_questions_say_what_to_fix() {
+        let g = Arc::new(cook1("grid", &[], &[]));
+        let mut p = Params::new();
+        p.insert("class".into(), json!("point"));
+        p.insert("ref_class".into(), json!("point"));
+        p.insert("code".into(), json!("@d = near_dist(@P);"));
+        let err = cook("wrangle", &p, &[Some(g.clone())]).unwrap_err();
+        assert!(err.contains("second input") && err.contains("connect"), "{err}");
+        p.insert("code".into(), json!("@d = surf_f(\"nope\", @P);"));
+        let err = cook("wrangle", &p, &[Some(g.clone()), Some(g.clone())]).unwrap_err();
+        assert!(err.contains("no attribute \"nope\"") && err.contains("available"), "{err}");
+        p.insert("code".into(), json!("@d = near_v(\"P\", @P).x + near_f(\"P\", @P);"));
+        let err = cook("wrangle", &p, &[Some(g.clone()), Some(g.clone())]).unwrap_err();
+        assert!(err.contains("is a vec3") && err.contains("near_v"), "{err}");
+        p.insert("code".into(), json!("@d = near_count(@P);"));
+        let err = cook("wrangle", &p, &[Some(g.clone()), Some(g.clone())]).unwrap_err();
+        assert!(err.contains("takes 2 argument"), "{err}");
+        p.insert("code".into(), json!("@d = near_dist(@P);"));
+        p.insert("ref_class".into(), json!("instance"));
+        let err = cook("wrangle", &p, &[Some(g.clone()), Some(g)]).unwrap_err();
+        assert!(err.contains("no instances"), "{err}");
+        // the attribute-flow check reads the second input too, before anything cooks
+        use flow::effect;
+        let grid = effect("grid", &Params::new(), &[]).unwrap();
+        let mut w = Params::new();
+        w.insert("class".into(), json!("point"));
+        w.insert("code".into(), json!("@h = surf_f(\"P\", @P).x;"));
+        let err = effect("wrangle", &w, &[Some(grid.clone()), Some(grid.clone())]).err().unwrap();
+        assert!(err[0].message.contains("is a vec3"), "{}", err[0].message);
+        w.insert("code".into(), json!("@h = near_dist(@P);"));
+        let ok = effect("wrangle", &w, &[Some(grid.clone()), Some(grid.clone())]).unwrap();
+        assert!(ok.point.contains_key("h"));
+        assert!(effect("wrangle", &w, &[Some(grid)]).err().unwrap()[0].message.contains("second input"));
     }
 
     #[test]

@@ -9,6 +9,7 @@ pub mod math;
 pub mod noise;
 pub mod rng;
 pub mod sparse;
+pub mod spatial;
 pub mod validate;
 
 pub use column::{AttrSet, Column};

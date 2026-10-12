@@ -3,11 +3,13 @@
 //! respect to the program's `ch()` parameters. Scalars are stored splatted across 3 lanes,
 //! so float and vec3 share all arithmetic.
 
-use crate::check::{Bin, Fn_, IStmt, Ir, Special};
+use crate::check::{Bin, Fn_, IStmt, Ir, Special, Q};
+use crate::query::{RefQuery, FAR};
 use crate::Program;
 use pt_core::math;
 use pt_core::noise;
 use pt_core::rng::rand4;
+use pt_core::spatial::SurfHit;
 use rayon::prelude::*;
 
 #[derive(Clone, Copy)]
@@ -141,9 +143,58 @@ pub struct Outputs<const G: usize> {
 struct St<'a, const G: usize> {
     slots: Vec<Val<G>>,
     chans: &'a [[f32; 3]],
+    rq: Option<&'a RefQuery<'a>>,
     ptnum: f32,
     numpt: f32,
     frame: f32,
+}
+
+/// Answers a question about the second input. The answers are constants as far as gradients go (a distance or a hit is not
+/// differentiated), so `fit` treats them as fixed.
+fn query<const G: usize>(q: Q, a: &[[f32; 3]], st: &St<G>) -> [f32; 3] {
+    let Some(rq) = st.rq else { return [0.0; 3] };
+    let g = rq.geo;
+    let s = |x: f32| [x; 3];
+    let fview = |i: usize, idx: u32| match &rq.attrs[i] {
+        Some(AttrView::F(v)) => v.get(idx as usize).copied().unwrap_or(0.0),
+        _ => 0.0,
+    };
+    let vview = |i: usize, idx: u32| match &rq.attrs[i] {
+        Some(AttrView::V(v)) => v.get(idx as usize).copied().unwrap_or([0.0; 3]),
+        _ => [0.0; 3],
+    };
+    let f_at = |i: usize, h: &SurfHit| fview(i, h.pts[0]) * h.bary[0] + fview(i, h.pts[1]) * h.bary[1] + fview(i, h.pts[2]) * h.bary[2];
+    let v_at = |i: usize, h: &SurfHit| {
+        let (x, y, z) = (vview(i, h.pts[0]), vview(i, h.pts[1]), vview(i, h.pts[2]));
+        [0, 1, 2].map(|c| x[c] * h.bary[0] + y[c] * h.bary[1] + z[c] * h.bary[2])
+    };
+    match q {
+        Q::NearDist => g.nearest_point(a[0], None).map_or(s(FAR), |h| s(h.1)),
+        Q::NearDistOther => g.nearest_point(a[0], Some(st.ptnum as u32)).map_or(s(FAR), |h| s(h.1)),
+        Q::NearPos => g.nearest_point(a[0], None).map_or([0.0; 3], |h| g.point_pos(h.0)),
+        Q::NearCount => {
+            let mut n = 0.0f32;
+            g.points_within(a[0], a[1][0], &mut |_| n += 1.0);
+            s(n)
+        }
+        Q::NearF(i) => g.nearest_point(a[0], None).map_or(s(0.0), |h| s(fview(i, h.0))),
+        Q::NearV(i) => g.nearest_point(a[0], None).map_or([0.0; 3], |h| vview(i, h.0)),
+        Q::NearSum(i) => {
+            let mut sum = 0.0f32;
+            g.points_within(a[0], a[1][0], &mut |j| sum += fview(i, j));
+            s(sum)
+        }
+        Q::SurfDist => g.closest_surface(a[0]).map_or(s(FAR), |h| s(h.dist)),
+        Q::SurfPos => g.closest_surface(a[0]).map_or([0.0; 3], |h| h.pos),
+        Q::SurfN => g.closest_surface(a[0]).map_or([0.0; 3], |h| h.n),
+        Q::SurfF(i) => g.closest_surface(a[0]).map_or(s(0.0), |h| s(f_at(i, &h))),
+        Q::SurfV(i) => g.closest_surface(a[0]).map_or([0.0; 3], |h| v_at(i, &h)),
+        Q::RayDist => g.ray(a[0], a[1]).map_or(s(-1.0), |h| s(h.dist)),
+        Q::RayPos => g.ray(a[0], a[1]).map_or([0.0; 3], |h| h.pos),
+        Q::RayN => g.ray(a[0], a[1]).map_or([0.0; 3], |h| h.n),
+        Q::RayF(i) => g.ray(a[0], a[1]).map_or(s(0.0), |h| s(f_at(i, &h))),
+        Q::RayV(i) => g.ray(a[0], a[1]).map_or([0.0; 3], |h| v_at(i, &h)),
+    }
 }
 
 fn eval<const G: usize>(ir: &Ir, st: &St<G>) -> Val<G> {
@@ -188,6 +239,10 @@ fn eval<const G: usize>(ir: &Ir, st: &St<G>) -> Val<G> {
         Ir::Call(f, args) => {
             let a: Vec<Val<G>> = args.iter().map(|e| eval(e, st)).collect();
             call(*f, &a)
+        }
+        Ir::Query(q, args) => {
+            let a: Vec<[f32; 3]> = args.iter().map(|e| eval(e, st).v).collect();
+            Val { v: query(*q, &a, st), d: [[0.0; 3]; G] }
         }
     }
 }
@@ -308,13 +363,18 @@ const CHUNK: usize = 4096;
 
 impl Program {
     pub fn run<const G: usize>(&self, inp: &Inputs) -> Outputs<G> {
+        self.run_with(inp, None)
+    }
+
+    /// Runs the program with a second input to ask questions of (`RefQuery::attrs` has one view per `Program::refs`).
+    pub fn run_with<const G: usize>(&self, inp: &Inputs, rq: Option<&RefQuery>) -> Outputs<G> {
         let written: Vec<usize> = (0..self.attrs.len()).filter(|&i| self.attrs[i].written).collect();
         let nchunks = inp.n.div_ceil(CHUNK);
         let parts: Vec<Vec<(Vec<[f32; 3]>, Vec<[[f32; 3]; G]>)>> = (0..nchunks)
             .into_par_iter()
             .map(|ci| {
                 let (lo, hi) = (ci * CHUNK, ((ci + 1) * CHUNK).min(inp.n));
-                let mut st = St::<G> { slots: vec![Val::zero(); self.nslots], chans: &inp.chans, ptnum: 0.0, numpt: inp.n as f32, frame: inp.frame };
+                let mut st = St::<G> { slots: vec![Val::zero(); self.nslots], chans: &inp.chans, rq, ptnum: 0.0, numpt: inp.n as f32, frame: inp.frame };
                 let mut outs: Vec<(Vec<[f32; 3]>, Vec<[[f32; 3]; G]>)> = written.iter().map(|_| (Vec::with_capacity(hi - lo), Vec::with_capacity(hi - lo))).collect();
                 for i in lo..hi {
                     st.ptnum = i as f32;

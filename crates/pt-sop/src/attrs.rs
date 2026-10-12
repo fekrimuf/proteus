@@ -15,10 +15,11 @@ type Inputs<'a> = &'a [Option<Arc<Geometry>>];
 
 pub fn schemas() -> Vec<NodeSchema> {
     vec![
-        sch("wrangle", "Run a VEX-style snippet per point (class=point) or per instance (class=instance). Read/write attributes with @name; tunables via ch(\"name\") defined in `channels`. Example: @P.y += noise(@P * ch(\"f\")) * ch(\"a\");", 1, D::Piecewise, G::PerPoint, vec![
+        sch("wrangle", "Run a VEX-style snippet per point (class=point) or per instance (class=instance). Read/write attributes with @name; tunables via ch(\"name\") defined in `channels`. Example: @P.y += noise(@P * ch(\"f\")) * ch(\"a\");\nOPTIONAL SECOND INPUT = the geometry you ask questions of (it is only read, never changed). Points/instances: near_dist(p), near_dist_other(p) (skips @ptnum, for self-queries), near_pos(p), near_count(p, r), near_f(\"attr\", p), near_v(\"attr\", p), near_sum(\"attr\", p, r). Its surface: surf_dist(p), surf_pos(p), surf_n(p), surf_f(\"attr\", p), surf_v(\"attr\", p). Rays: ray_dist(origin, dir) (-1 = miss), ray_pos, ray_n, ray_f(\"attr\", origin, dir), ray_v. Examples: keep trees 4 m from a hut: @keep = step(4.0, surf_dist(@P)); height above the ground under a point: @h = @P.y - ray_pos(@P + {0.0, 100.0, 0.0}, {0.0, -1.0, 0.0}).y; crowding: @crowd = near_count(@P, 6.0) - 1.0 (when the second input is the same points). Answers are constants for fitting (not differentiated).", 2, D::Piecewise, G::PerPoint, vec![
             ps("code", json!(""), "Snippet (see pt-vex): float/vec3 vars, @attrs, if/else, bounded for, functions."),
             ps("class", json!("point"), "point | instance."),
             ps("channels", json!({}), "Named numbers/arrays for ch()/chv(), e.g. {\"amp\": 0.5}."),
+            ps("ref_class", json!("point"), "What near_* questions measure on the second input: point (its points) | instance (its instance origins and their attributes). surf_* and ray_* always use its base surface."),
         ]),
         sch("attrib_create", "Create a constant attribute.", 1, D::Smooth, G::PerPoint, vec![
             ps("name", json!("attr"), "Attribute name."),
@@ -88,7 +89,7 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Option<Res> {
         inputs.get(i).and_then(|g| g.as_deref()).ok_or_else(|| format!("{kind}: input {i} is not connected"))
     };
     Some(match kind {
-        "wrangle" => inp(0).and_then(|g| wrangle(g, p)),
+        "wrangle" => inp(0).and_then(|g| wrangle(g, inputs.get(1).and_then(|x| x.as_deref()), p)),
         "attrib_create" => inp(0).and_then(|g| attrib_create(g, p)),
         "attrib_delete" => inp(0).map(|g| attrib_delete(g, p)),
         "attrib_rename" => inp(0).and_then(|g| attrib_rename(g, p)),
@@ -156,15 +157,83 @@ fn column_for(ty: Ty, vals: &[[f32; 3]]) -> Column {
     }
 }
 
-fn wrangle(src: &Geometry, p: &Params) -> Res {
+/// The second input of a wrangle as the program sees it: positions for `near_*` (points, or instance origins) and the attribute
+/// sets the lookups read.
+struct RefSide<'a> {
+    geo: &'a Geometry,
+    pts: Vec<[f32; 3]>,
+    instance: bool,
+}
+
+impl<'a> RefSide<'a> {
+    fn new(geo: &'a Geometry, class: &str) -> Result<Self, String> {
+        match class {
+            "point" => Ok(RefSide { geo, pts: geo.p().to_vec(), instance: false }),
+            "instance" => {
+                let inst = geo.instances.as_ref().ok_or("wrangle ref_class=instance but the second input has no instances (put copy_to_points or array upstream of it, or use ref_class=point)")?;
+                Ok(RefSide { geo, pts: inst.xf.iter().map(|m| [m[3], m[7], m[11]]).collect(), instance: true })
+            }
+            o => Err(format!("wrangle ref_class must be 'point' or 'instance', got '{o}'")),
+        }
+    }
+
+    fn near_set(&self) -> &'a pt_core::AttrSet {
+        match (&self.geo.instances, self.instance) {
+            (Some(i), true) => &i.attrs,
+            _ => &self.geo.point,
+        }
+    }
+
+    fn envs(&self) -> (AttrTys, AttrTys) {
+        let mut near = env_of(self.near_set());
+        if self.instance {
+            near.insert("P".into(), Ty::Vec3);
+        }
+        (near, env_of(&self.geo.point))
+    }
+
+    fn views(&self, prog: &Program) -> Vec<Option<AttrView<'_>>> {
+        prog.refs
+            .iter()
+            .map(|a| {
+                let set = match a.scope {
+                    pt_vex::Scope::Near => self.near_set(),
+                    pt_vex::Scope::Surf => &self.geo.point,
+                };
+                if a.name == "P" && a.scope == pt_vex::Scope::Near && self.instance {
+                    return Some(AttrView::V(&self.pts));
+                }
+                match set.get(&a.name) {
+                    Some(Column::F32(v)) => Some(AttrView::F(v.as_slice())),
+                    Some(Column::V3(v)) => Some(AttrView::V(v.as_slice())),
+                    _ => None,
+                }
+            })
+            .collect()
+    }
+}
+
+fn wrangle(src: &Geometry, refg: Option<&Geometry>, p: &Params) -> Res {
     let code = p.s("code");
     let frame = p.f("__frame");
     let frame = if frame == 0.0 { 1.0 } else { frame };
+    let side = refg.map(|g| RefSide::new(g, &p.s("ref_class"))).transpose()?;
+    let envs = side.as_ref().map(RefSide::envs);
+    let refenv = envs.as_ref().map(|(near, surf)| pt_vex::RefEnv { near, surf });
+    // runs the program, with the second input indexed when the code asks it anything
+    let run = |prog: &Program, inp: &VInputs| {
+        let index = side.as_ref().filter(|_| prog.uses != pt_vex::QueryUse::default()).map(|s| crate::refindex::RefIndex::build(prog.uses, &s.pts, s.geo));
+        let rq = match (&side, &index) {
+            (Some(s), Some(ix)) => Some(pt_vex::RefQuery { geo: ix, attrs: s.views(prog) }),
+            _ => None,
+        };
+        prog.run_with::<0>(inp, rq.as_ref())
+    };
     match p.s("class").as_str() {
         "point" => {
-            let prog = pt_vex::analyze(&code, &env_of(&src.point)).map_err(|d| diags_to_string("wrangle code", &d))?;
+            let prog = pt_vex::analyze_ref(&code, &env_of(&src.point), refenv.as_ref()).map_err(|d| diags_to_string("wrangle code", &d))?;
             let inp = VInputs { n: src.n_points(), attrs: views(&prog, &src.point, None), chans: channel_values(&prog, p)?, frame };
-            let out = prog.run::<0>(&inp);
+            let out = run(&prog, &inp);
             let mut g = src.clone();
             for (ai, vals, _) in &out.written {
                 let a = &prog.attrs[*ai];
@@ -176,10 +245,10 @@ fn wrangle(src: &Geometry, p: &Params) -> Res {
             let inst = src.instances.as_ref().ok_or("wrangle class=instance but input has no instances")?;
             let mut env = env_of(&inst.attrs);
             env.insert("P".into(), Ty::Vec3);
-            let prog = pt_vex::analyze(&code, &env).map_err(|d| diags_to_string("wrangle code", &d))?;
+            let prog = pt_vex::analyze_ref(&code, &env, refenv.as_ref()).map_err(|d| diags_to_string("wrangle code", &d))?;
             let ps: Vec<[f32; 3]> = inst.xf.iter().map(|m| [m[3], m[7], m[11]]).collect();
             let inp = VInputs { n: inst.len(), attrs: views(&prog, &inst.attrs, Some(&ps)), chans: channel_values(&prog, p)?, frame };
-            let out = prog.run::<0>(&inp);
+            let out = run(&prog, &inp);
             let mut ni = inst.clone();
             for (ai, vals, _) in &out.written {
                 let a = &prog.attrs[*ai];

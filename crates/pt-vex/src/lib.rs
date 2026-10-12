@@ -10,9 +10,11 @@ pub mod fit;
 mod interp;
 mod lex;
 mod parse;
+pub mod query;
 
-pub use check::analyze;
+pub use check::{analyze, analyze_ref};
 pub use interp::{AttrView, Inputs, Outputs};
+pub use query::{QueryUse, RefAttr, RefEnv, RefGeo, RefQuery, Scope};
 
 use serde_json::{json, Value};
 
@@ -71,6 +73,10 @@ pub struct Program {
     pub nslots: usize,
     pub attrs: Vec<AttrSlot>,
     pub chans: Vec<(String, Ty)>,
+    /// Attributes of the second input the program reads, in the order `RefQuery::attrs` must supply them.
+    pub refs: Vec<RefAttr>,
+    /// Which spatial index of the second input the program needs.
+    pub uses: QueryUse,
 }
 
 /// Number of gradient channels available to `sum_grad`.

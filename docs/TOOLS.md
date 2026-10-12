@@ -6,8 +6,8 @@ Changes when a command or crate is added. Counts are not quoted here; see [gener
 
 | Crate | Role |
 |---|---|
-| `pt-core` | Geometry v2 (columnar COW attributes, instance tables, groups, volumes), deterministic math/RNG/noise, OBJ/glTF/USD/`ptgeo` I/O, validation. |
-| `pt-vex` | VEX-style language: lexer, parser, type checker (line/col diagnostics with fixes), interpreter generic over autodiff channels, `fit` (gradient fitting). |
+| `pt-core` | Geometry v2 (columnar COW attributes, instance tables, groups, volumes), deterministic math/RNG/noise, OBJ/glTF/USD/`ptgeo` I/O, validation, `spatial` (point tree and triangle tree: nearest point, points within a radius, closest surface point, rays). |
+| `pt-vex` | VEX-style language: lexer, parser, type checker (line/col diagnostics with fixes), interpreter generic over autodiff channels, `fit` (gradient fitting), `query` (the `near_*`, `surf_*` and `ray_*` questions a wrangle asks its second input; AGENT_GUIDE "Asking the world questions"). |
 | `pt-sop` | ~85 node types (incl. `set_material`, `blend_materials`, `import_asset`, `copy_variants`, `dem`, `hf_flow` with river channels, `hf_fit`, `hf_hole`, `hf_refine`, `lod_hint`): primitives, curves + deformers (bend twist taper sweep revolve resample drop_to_surface...), sparse SDF ops (sparse_remesh, sparse_boolean), attributes, groups, topology ops, terrain and nested heightfield levels, hydrology, SDF, simulation adapters, fused point kernel, attribute-flow `effect()`. |
 | `pt-sim` | Solvers: particles, PBD cloth, smoke (stable fluids), rigid bodies (rapier3d, enhanced-determinism). |
 | `pt-graph` | Node DAG, content-addressed cook cache with early cutoff, provenance, expressions (`$F`, `ch("node/param")`), assets/`repeat`, static `check()`, `merge` (diff + 3-way). |

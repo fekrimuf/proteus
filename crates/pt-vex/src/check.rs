@@ -1,6 +1,7 @@
 //! Type checking and lowering of the AST to IR. All diagnostics carry a position and a fix.
 
 use crate::parse::{parse, Expr, Pos, Stmt, Target};
+use crate::query::{QueryUse, RefAttr, RefEnv, Scope};
 use crate::{suggest, AttrSlot, Diag, Program, Ty};
 use std::collections::{BTreeMap, HashMap};
 
@@ -10,6 +11,28 @@ pub enum Fn_ {
     Min, Max, Pow, Step, Clamp, Mix, Smoothstep, Fit,
     Length, Normalize, Dot, Cross, Distance, Noise, Fbm, Rand,
     Atan2, Atan, Asin, Acos, Mod,
+}
+
+/// A question asked of the second input. `usize` is the index into `Program::refs` of the attribute it reads.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Q {
+    NearDist,
+    NearDistOther,
+    NearPos,
+    NearCount,
+    NearF(usize),
+    NearV(usize),
+    NearSum(usize),
+    SurfDist,
+    SurfPos,
+    SurfN,
+    SurfF(usize),
+    SurfV(usize),
+    RayDist,
+    RayPos,
+    RayN,
+    RayF(usize),
+    RayV(usize),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -35,6 +58,7 @@ pub enum Ir {
     Not(Box<Ir>),
     Bin(Bin, Box<Ir>, Box<Ir>),
     Call(Fn_, Vec<Ir>),
+    Query(Q, Vec<Ir>),
     Chan(usize),
     ChanV(usize),
     Special(Special),
@@ -54,13 +78,71 @@ const FUNCS: &[&str] = &[
     "atan2", "atan", "asin", "acos", "mod", "radians", "degrees",
 ];
 
+/// One question a program can ask of its second input. `attr` is Some when the first argument is an attribute name in quotes
+/// (read from that scope); `args` are the remaining arguments.
+struct QSpec {
+    name: &'static str,
+    attr: Option<Scope>,
+    args: &'static [Ty],
+    ret: Ty,
+    sig: &'static str,
+}
+
+const FL: Ty = Ty::Float;
+const V3: Ty = Ty::Vec3;
+
+const QUERIES: &[QSpec] = &[
+    QSpec { name: "near_dist", attr: None, args: &[V3], ret: FL, sig: "near_dist(p) -> metres to the closest point of the second input (1e9 if it has none)" },
+    QSpec { name: "near_dist_other", attr: None, args: &[V3], ret: FL, sig: "near_dist_other(p) -> like near_dist but skips the point whose index equals @ptnum (use when both inputs are the same geometry)" },
+    QSpec { name: "near_pos", attr: None, args: &[V3], ret: V3, sig: "near_pos(p) -> position of the closest point of the second input" },
+    QSpec { name: "near_count", attr: None, args: &[V3, FL], ret: FL, sig: "near_count(p, radius) -> how many points of the second input lie within radius metres" },
+    QSpec { name: "near_f", attr: Some(Scope::Near), args: &[V3], ret: FL, sig: "near_f(\"attr\", p) -> float attribute of the closest point of the second input" },
+    QSpec { name: "near_v", attr: Some(Scope::Near), args: &[V3], ret: V3, sig: "near_v(\"attr\", p) -> vec3 attribute of the closest point of the second input" },
+    QSpec { name: "near_sum", attr: Some(Scope::Near), args: &[V3, FL], ret: FL, sig: "near_sum(\"attr\", p, radius) -> sum of a float attribute over the points within radius" },
+    QSpec { name: "surf_dist", attr: None, args: &[V3], ret: FL, sig: "surf_dist(p) -> metres to the closest point on the surface of the second input (1e9 if it has none)" },
+    QSpec { name: "surf_pos", attr: None, args: &[V3], ret: V3, sig: "surf_pos(p) -> the closest point on the surface of the second input" },
+    QSpec { name: "surf_n", attr: None, args: &[V3], ret: V3, sig: "surf_n(p) -> face normal there, turned toward p" },
+    QSpec { name: "surf_f", attr: Some(Scope::Surf), args: &[V3], ret: FL, sig: "surf_f(\"attr\", p) -> float point attribute interpolated at the closest surface point" },
+    QSpec { name: "surf_v", attr: Some(Scope::Surf), args: &[V3], ret: V3, sig: "surf_v(\"attr\", p) -> vec3 point attribute interpolated at the closest surface point" },
+    QSpec { name: "ray_dist", attr: None, args: &[V3, V3], ret: FL, sig: "ray_dist(origin, direction) -> metres along the ray to the first surface of the second input, or -1 for a miss" },
+    QSpec { name: "ray_pos", attr: None, args: &[V3, V3], ret: V3, sig: "ray_pos(origin, direction) -> where the ray first hits (zero vector for a miss)" },
+    QSpec { name: "ray_n", attr: None, args: &[V3, V3], ret: V3, sig: "ray_n(origin, direction) -> face normal at the hit, facing the origin (zero vector for a miss)" },
+    QSpec { name: "ray_f", attr: Some(Scope::Surf), args: &[V3, V3], ret: FL, sig: "ray_f(\"attr\", origin, direction) -> float point attribute interpolated at the hit (0 for a miss)" },
+    QSpec { name: "ray_v", attr: Some(Scope::Surf), args: &[V3, V3], ret: V3, sig: "ray_v(\"attr\", origin, direction) -> vec3 point attribute interpolated at the hit (zero vector for a miss)" },
+];
+
+fn query_op(name: &str, ai: usize) -> Q {
+    match name {
+        "near_dist" => Q::NearDist,
+        "near_dist_other" => Q::NearDistOther,
+        "near_pos" => Q::NearPos,
+        "near_count" => Q::NearCount,
+        "near_f" => Q::NearF(ai),
+        "near_v" => Q::NearV(ai),
+        "near_sum" => Q::NearSum(ai),
+        "surf_dist" => Q::SurfDist,
+        "surf_pos" => Q::SurfPos,
+        "surf_n" => Q::SurfN,
+        "surf_f" => Q::SurfF(ai),
+        "surf_v" => Q::SurfV(ai),
+        "ray_dist" => Q::RayDist,
+        "ray_pos" => Q::RayPos,
+        "ray_n" => Q::RayN,
+        "ray_f" => Q::RayF(ai),
+        _ => Q::RayV(ai),
+    }
+}
+
 struct Cx<'a> {
     env: &'a BTreeMap<String, Ty>,
+    refenv: Option<&'a RefEnv<'a>>,
     diags: Vec<Diag>,
     scopes: Vec<HashMap<String, (usize, Ty)>>,
     nslots: usize,
     attrs: Vec<AttrSlot>,
     chans: Vec<(String, Ty)>,
+    refs: Vec<RefAttr>,
+    uses: QueryUse,
 }
 
 type L = Option<(Ir, Ty)>;
@@ -129,7 +211,7 @@ impl<'a> Cx<'a> {
         match e {
             Expr::Num(v, _) => Some((Ir::Const(*v), Ty::Float)),
             Expr::Str(_, p) => {
-                self.err(*p, "strings are only allowed inside ch(\"name\") / chv(\"name\")".into(), "remove the string");
+                self.err(*p, "strings are only allowed as the attribute name of ch(\"name\"), chv(\"name\") and the near_/surf_/ray_ lookups".into(), "remove the string");
                 None
             }
             Expr::Var(name, p) => match self.find_var(name) {
@@ -216,6 +298,69 @@ impl<'a> Cx<'a> {
         }
     }
 
+    /// A question asked of the second input: resolves the attribute name (if any) against what the second input offers.
+    fn query_call(&mut self, spec: &QSpec, args: &[Expr], p: Pos) -> L {
+        let name = spec.name;
+        let Some(renv) = self.refenv else {
+            self.err(p, format!("{name}() asks the second input a question, but this node has none"), "connect the geometry you want to ask about to the node's second input");
+            return None;
+        };
+        let want = spec.args.len() + usize::from(spec.attr.is_some());
+        if args.len() != want {
+            self.err(p, format!("{name}() takes {want} argument(s) but got {}", args.len()), format!("signature: {}", spec.sig));
+            return None;
+        }
+        let mut rest = args;
+        let mut ai = 0usize;
+        if let Some(scope) = spec.attr {
+            let Expr::Str(attr, sp) = &args[0] else {
+                self.err(p, format!("the first argument of {name}() is the attribute name in quotes"), format!("signature: {}", spec.sig));
+                return None;
+            };
+            let avail = match scope {
+                Scope::Near => renv.near,
+                Scope::Surf => renv.surf,
+            };
+            let Some(&ty) = avail.get(attr) else {
+                let names: Vec<&str> = avail.keys().map(String::as_str).collect();
+                let hint = suggest(attr, &names).map(|s| format!("did you mean \"{s}\"? ")).unwrap_or_default();
+                self.err(*sp, format!("the second input has no attribute \"{attr}\" (available: {names:?})"), format!("{hint}create it upstream of the second input"));
+                return None;
+            };
+            if ty != spec.ret {
+                let (have, fix) = match ty {
+                    Ty::Float => ("float", "use the _f function (near_f, surf_f, ray_f)"),
+                    Ty::Vec3 => ("vec3", "use the _v function (near_v, surf_v, ray_v)"),
+                };
+                self.err(*sp, format!("attribute \"{attr}\" of the second input is a {have}, but {name}() returns the other type"), fix);
+                return None;
+            }
+            ai = match self.refs.iter().position(|r| r.name == *attr && r.scope == scope) {
+                Some(i) => i,
+                None => {
+                    self.refs.push(RefAttr { name: attr.clone(), ty, scope });
+                    self.refs.len() - 1
+                }
+            };
+            rest = &args[1..];
+        }
+        let mut ir = Vec::new();
+        for (e, want) in rest.iter().zip(spec.args) {
+            let (i, t) = self.expr(e)?;
+            if t != *want {
+                self.err(p, format!("wrong argument types for {name}()"), format!("signature: {}", spec.sig));
+                return None;
+            }
+            ir.push(i);
+        }
+        if name.starts_with("near_") {
+            self.uses.near = true;
+        } else {
+            self.uses.surf = true;
+        }
+        Some((Ir::Query(query_op(name, ai), ir), spec.ret))
+    }
+
     fn call(&mut self, name: &str, args: &[Expr], p: Pos) -> L {
         if name == "ch" || name == "chv" {
             let [Expr::Str(s, _)] = args else {
@@ -237,6 +382,9 @@ impl<'a> Cx<'a> {
                 }
             };
             return Some((if ty == Ty::Float { Ir::Chan(idx) } else { Ir::ChanV(idx) }, ty));
+        }
+        if let Some(spec) = QUERIES.iter().find(|q| q.name == name) {
+            return self.query_call(spec, args, p);
         }
         let mut a = Vec::new();
         for e in args {
@@ -380,8 +528,10 @@ impl<'a> Cx<'a> {
                 }
             },
             _ => {
-                let hint = suggest(name, FUNCS).map(|s| format!("did you mean {s}()? ")).unwrap_or_default();
-                self.err(p, format!("unknown function '{name}'"), format!("{hint}available: {}", FUNCS.join(", ")));
+                let mut all: Vec<&str> = FUNCS.to_vec();
+                all.extend(QUERIES.iter().map(|q| q.name));
+                let hint = suggest(name, &all).map(|s| format!("did you mean {s}()? ")).unwrap_or_default();
+                self.err(p, format!("unknown function '{name}'"), format!("{hint}available: {}", all.join(", ")));
                 return None;
             }
         };
@@ -511,11 +661,16 @@ impl<'a> Cx<'a> {
 }
 
 pub fn analyze(code: &str, env: &BTreeMap<String, Ty>) -> Result<Program, Vec<Diag>> {
+    analyze_ref(code, env, None)
+}
+
+/// Like `analyze`, for a node with a second input whose attributes are `refenv`; the near_/surf_/ray_ questions are available.
+pub fn analyze_ref(code: &str, env: &BTreeMap<String, Ty>, refenv: Option<&RefEnv>) -> Result<Program, Vec<Diag>> {
     let ast = parse(code).map_err(|d| vec![d])?;
-    let mut cx = Cx { env, diags: vec![], scopes: vec![HashMap::new()], nslots: 0, attrs: vec![], chans: vec![] };
+    let mut cx = Cx { env, refenv, diags: vec![], scopes: vec![HashMap::new()], nslots: 0, attrs: vec![], chans: vec![], refs: vec![], uses: QueryUse::default() };
     let stmts = cx.stmts(&ast);
     if !cx.diags.is_empty() {
         return Err(cx.diags);
     }
-    Ok(Program { stmts, nslots: cx.nslots, attrs: cx.attrs, chans: cx.chans })
+    Ok(Program { stmts, nslots: cx.nslots, attrs: cx.attrs, chans: cx.chans, refs: cx.refs, uses: cx.uses })
 }

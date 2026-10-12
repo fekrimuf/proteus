@@ -63,6 +63,41 @@ and differentiable w.r.t. `ch()` values.
 `check_hcs` / `check_graph` predict which attributes exist at every node **without cooking** and
 flag mistakes such as `copy_to_points(..., orient_to_normal=1)` fed by points without `N`.
 
+## Asking the world questions (a wrangle's second input)
+
+A wrangle can take a **second input**: geometry it may ask questions of (it is only read). Without one a wrangle sees nothing but its
+own point, so every placement rule used to need a special node; with one, a rule is a line. Worked example:
+`recipes/26_clearing_planted_by_asking.hcs` (trees stand on a hill, keep 2.5 m from a hut, and the crowded ones stay small).
+
+```python
+standing = wrangle(seeds, ground, code="""
+vec3 top = @P + {0.0, 100.0, 0.0};
+@P = ray_pos(top, {0.0, -1.0, 0.0});                 // stand on the ground
+@slope = degrees(acos(clamp(ray_n(top, {0.0, -1.0, 0.0}).y, 0.0, 1.0)));
+""")
+asked = wrangle(standing, hut, code="@hut_gap = surf_dist(@P);")        # how far is the hut?
+spaced = wrangle(kept, kept, code="@pscale *= 1.0 - 0.07 * clamp(near_count(@P, 4.0) - 1.0, 0.0, 5.0);")   # how crowded am I?
+```
+
+| Question | Answer |
+|---|---|
+| `near_dist(p)`, `near_dist_other(p)`, `near_pos(p)` | distance to / position of the nearest point of the second input (`_other` skips the point with index `@ptnum`: use it when both inputs are the same points) |
+| `near_count(p, r)`, `near_sum("attr", p, r)` | how many points lie within `r` metres (the point itself counts when it is in the second input), and the sum of a float attribute over them |
+| `near_f("attr", p)`, `near_v("attr", p)` | float / vec3 attribute of the nearest point |
+| `surf_dist(p)`, `surf_pos(p)`, `surf_n(p)` | distance to, position on and face normal (turned toward `p`) of the closest point of the second input's base surface |
+| `surf_f("attr", p)`, `surf_v("attr", p)` | a point attribute interpolated at that closest point |
+| `ray_dist(o, d)`, `ray_pos`, `ray_n`, `ray_f("attr", o, d)`, `ray_v` | the first surface the ray meets, from either side (`ray_dist` is -1 and the others zero for a miss); the normal faces the origin |
+
+* **One second input per wrangle**: chain wranglers for several questions (ground first, then the hut). `ref_class="instance"` makes the
+  `near_*` questions measure the second input's instance origins and their attributes (put the trees there to ask "is a tree near?");
+  `surf_*` and `ray_*` always use its base surface (`realize` instances first if they matter).
+* Attribute names are quoted and checked before anything cooks (`check_hcs` says what the second input offers, with a did-you-mean).
+  An empty second input answers 1e9 for distances and 0 for everything else.
+* Answers are constants for `fit_wrangle` and `optimize` (a distance or a hit is not differentiated), and identical on every thread count
+  and machine (equal distances go to the lower index).
+* **Stand on the ground with a ray, not a guess**: `ray_pos(@P + {0.0, 100.0, 0.0}, {0.0, -1.0, 0.0})` is the surface height under a
+  point on any mesh (`drop_to_surface` is the same idea for heightfields and also settles a footprint).
+
 ## Technique notes
 
 * **Scale**: model in real meters (door 2.0, person 1.8, stair rise 0.18). Add a `height` spec.

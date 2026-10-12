@@ -420,7 +420,7 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             }
             Ok(e)
         }
-        "wrangle" => wrangle_effect(p, &in0()),
+        "wrangle" => wrangle_effect(p, &in0(), ins.get(1).cloned().flatten().as_ref()),
         "group_by_expression" => {
             let e = in0();
             let code = format!("@__sel = ({});", p.s("expression"));
@@ -435,9 +435,25 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
     }
 }
 
-fn wrangle_effect(p: &Params, e: &GeoEnv) -> Result<GeoEnv, Vec<FlowDiag>> {
+fn wrangle_effect(p: &Params, e: &GeoEnv, refe: Option<&GeoEnv>) -> Result<GeoEnv, Vec<FlowDiag>> {
     use pt_core::ParamExt;
     let class = p.s("class");
+    // the second input as the program sees it (see `RefSide` in attrs.rs): points or instance origins for near_*, base points for surf_*/ray_*
+    let ref_envs: Option<(AttrTys, AttrTys)> = match refe {
+        None => None,
+        Some(r) => Some(match p.s("ref_class").as_str() {
+            "instance" => match &r.inst {
+                Some(i) => {
+                    let mut near = i.clone();
+                    near.insert("P".into(), Ty::Vec3);
+                    (near, r.point.clone())
+                }
+                None => return Err(vec![fd("ref_class=instance but the second input has no instances", "put copy_to_points/array upstream of the second input, or use ref_class=point")]),
+            },
+            _ => (r.point.clone(), r.point.clone()),
+        }),
+    };
+    let ref_env = ref_envs.as_ref().map(|(near, surf)| pt_vex::RefEnv { near, surf });
     let mut out = e.clone();
     let mut env = match class.as_str() {
         "point" => e.point.clone(),
@@ -451,7 +467,7 @@ fn wrangle_effect(p: &Params, e: &GeoEnv) -> Result<GeoEnv, Vec<FlowDiag>> {
         },
         o => return Err(vec![fd(format!("class must be 'point' or 'instance', got '{o}'"), "set class")]),
     };
-    let prog = pt_vex::analyze(&p.s("code"), &env).map_err(|ds| ds.iter().map(|d| fd(format!("code {}:{}: {}", d.line, d.col, d.msg), d.fix.clone())).collect::<Vec<_>>())?;
+    let prog = pt_vex::analyze_ref(&p.s("code"), &env, ref_env.as_ref()).map_err(|ds| ds.iter().map(|d| fd(format!("code {}:{}: {}", d.line, d.col, d.msg), d.fix.clone())).collect::<Vec<_>>())?;
     let chans = p.get("channels").and_then(Value::as_object);
     let missing: Vec<&str> = prog.chans.iter().map(|c| c.0.as_str()).filter(|n| chans.is_none_or(|m| !m.contains_key(*n))).collect();
     if !missing.is_empty() {

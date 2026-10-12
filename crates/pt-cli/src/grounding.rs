@@ -424,6 +424,18 @@ pub fn cull_to_view(geo: &mut Geometry, cams: &[Camera], radius: f32) -> (usize,
         })
         .collect();
     let kept = keep.len();
+    // what is left, by prototype: the render's memory goes where the instance count and the triangles per instance multiply
+    let mut per = vec![0usize; inst.protos.len()];
+    for &k in &keep {
+        per[inst.proto_id[k as usize] as usize] += 1;
+    }
+    let mut rows: Vec<(usize, usize)> = per.iter().enumerate().map(|(p, n)| (*n, p)).filter(|r| r.0 > 0).collect();
+    rows.sort_by(|a, b| b.cmp(a));
+    for (n, p) in rows.iter().take(6) {
+        let g = &inst.protos[*p];
+        let name = g.material_names().first().cloned().unwrap_or_else(|| format!("proto {p}"));
+        eprintln!("  {n} x {name}: {} triangles each{}", g.triangles().len(), if far_standin[*p] { " (far stand-in)" } else { "" });
+    }
     if kept < total {
         let inst = geo.instances.as_mut().unwrap();
         let proto_id: Vec<u32> = keep.iter().map(|&k| inst.proto_id[k as usize]).collect();

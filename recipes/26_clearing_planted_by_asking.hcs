@@ -1,0 +1,42 @@
+# A hut on a hill, planted by asking the world.
+# Technique: a wrangle's SECOND input is geometry you may ask questions of. Seeds ask the hill where the ground is under them
+# (ray_pos / ray_n straight down), ask the hut how far it is (surf_dist), and ask each other how crowded it is (near_count),
+# so each rule is one line instead of one special-purpose node. Chain the questions: one second input per wrangle.
+hill = wrangle(grid(size=[40, 40], rows=80, cols=80), code="""
+@P.y = 3.0 * exp(-(@P.x * @P.x + @P.z * @P.z) / 120.0);
+""")
+ground = normals(hill)
+hut = transform(box(size=[4.0, 2.6, 3.0]), t=[0.0, 4.0, 0.0])
+
+seeds = scatter_poisson(grid(size=[40, 40]), count=400, min_dist=1.8, seed=5, pscale_min=0.8, pscale_max=1.4)
+
+# 1. stand on the ground: height and steepness from rays dropped from above
+standing = wrangle(seeds, ground, code="""
+vec3 top = @P + {0.0, 100.0, 0.0};
+vec3 down = {0.0, -1.0, 0.0};
+@P = ray_pos(top, down);
+@slope = degrees(acos(clamp(ray_n(top, down).y, 0.0, 1.0)));
+""")
+
+# 2. keep clear of the hut: distance from each foot to the hut's surface
+asked = wrangle(standing, hut, code="@hut_gap = surf_dist(@P);")
+allowed = group_by_expression(asked, name="ok", expression="@hut_gap > 2.5 && @slope < 25.0")
+kept = blast(allowed, group="ok", keep_selected=1)
+
+# 3. crowded trees stay small: count the neighbours within 4 m (the point itself is counted, hence the minus one)
+spaced = wrangle(kept, kept, code="""
+float crowd = clamp(near_count(@P, 4.0) - 1.0, 0.0, 5.0);
+@pscale = @pscale * (1.0 - 0.07 * crowd);
+""")
+
+tree = wrangle(tube(radius=0.5, radius_top=0.0, height=3.0, cols=7, center=[0, 1.5, 0]), code="@Cd = vec3(0.1, 0.3, 0.14);")
+trees = copy_to_points(tree, spaced, rot_y_random=360, seed=8)
+hut_painted = wrangle(hut, code="@Cd = vec3(0.7, 0.55, 0.4);")
+ground_painted = wrangle(ground, code="@Cd = mix(vec3(0.3, 0.45, 0.2), vec3(0.5, 0.45, 0.35), smoothstep(0.0, 3.0, @P.y));")
+clearing = merge(ground_painted, hut_painted, trees)
+
+spec(clearing, "width", min=39.0, max=41.0)
+spec(clearing, "instances", min=40)
+spec(clearing, "attribute", name="Cd")
+spec(clearing, "finite")
+out(clearing)
