@@ -1,6 +1,6 @@
 # Decisions (design choices that stay fixed until new evidence changes them)
 
-Section numbers (B11, B15, B15a, B16, B16a) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
+Section numbers (B11, B15, B15a, B16, B16a, B17, B18) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
 
 ## B11. Decisions already made (do not re-litigate without new evidence)
 
@@ -150,3 +150,27 @@ change: the judges take two briefs from the start, and the tree family is design
 5. Every heavy child program starts at low priority, under a memory cap, and is killed when `pt` exits (`pt_cli::lowload`; `PT_HEAVY_MEM_GB`, `PT_HEAVY_THREADS`). A job that would swap the machine fails by itself instead.
 
 **Effect:** about three weeks off the timeline (B12.6) and no GPU-heavy step in the normal loop.
+
+## B18. The capability track: nine agent capabilities, in this order (decision, 2026-10-12)
+
+**Evidence.** Reading the engine as the agent that drives it, five things cost the most turns: the language cannot ask the world a question (a wrangle sees only its own point, so each placement rule became a special node: `settle`, the water-depth rules); nothing links a pixel of a frame to the instance and rule that made it (`explain` needs an index); scatter writes only position, direction and size, so a changed count or seed reshuffles every instance (the owner's approved placements do not survive a rebuild); the rigid-body solver knows only a flat plane; a look-development render pays a whole-world import. The big-name Houdini families (RBD/Vellum dressing, USD layers, Copernicus-style materials, ecology, building grammars) were parked as "later" although an engine ships their baked results, not live simulations.
+
+**Order (each item is finished and verified before the next; at most two open at once). Targets are plan dates from the measured pace of one gated step a day.**
+
+| # | Capability (Houdini analogue) | Size | Why here | Target |
+|---|---|---|---|---|
+| 1 | **Geometry queries in the language**: nearest point/surface, neighbour count and sums, ray hits, attribute lookups on a second input (VEX queries) | S-M | foundation: every later rule is a one-liner on it; replaces the hand-made `settle` and water-depth nodes | 2026-10-13 |
+| 2 | **Pixel pick**: a frame pixel to prototype, instance, creating node and rule, height over ground (viewport pick, spreadsheet) | S | the owner's note on a frame becomes a fix at the rule in one query | 2026-10-14 |
+| 3 | **Simulation as set dressing**: rigid bodies settle on the real terrain, cloth drapes, ropes hang; resting poses saved as instances (RBD, Vellum, grains) | S-M | solvers exist; first big-name result visible in a frame; floating stones fixed by physics | 2026-10-16 |
+| 4 | **Fast pictures**: cook and render only a region, keep one render session open and send only what changed (IPR, Hydra delegate) | M | every later item is judged by renders; the uncommitted `--cull` is the first slice | 2026-10-19 |
+| 5 | **Stable identity and overrides**: every instance gets an id from its rule and place; keep, move, remove and add edits are stored against it and replayed on rebuild (stable `id`, Edit, Takes) | M | an approved world must survive a rebuild | 2026-10-21 |
+| 6 | **Layered world file**: base layer, style variant, owner-overrides layer, exported to USD (Solaris, USD layers and variants) | M | one recipe many looks; each studio owns its layer; needs 5 | 2026-10-24 |
+| 7 | **Nature that grows**: seeds compete for light, water and slope, grow and die; size-aware spacing; the tree and ground-cover family on morphology knobs (Solver loops, Labs Biome) | M-L | closes repetition and the CC0 share; the stage 2 gate; uses 1, 3, 5 | 2026-11-03 |
+| 8 | **Procedural materials**: texture graph in the same language, masks from curvature and occlusion, fitted to a reference photo by the optimizer, baked to engine textures (Copernicus) | M-L | the CC0 exit and the studio-unique surface; stage 3 | 2026-11-10 |
+| 9 | **Buildings and layouts from grammars**: split, repeat and component rules, roads, lots, roofs, terrain pads and curve carving (Labs Building Generator, PolyPath) | L | the "medieval village in a sci-fi sense" brief needs it; uses 1, 4, 6, 8 | 2026-11-24 |
+
+**Reasons for the order.** 1 to 3 are small and make everything after them cheaper and visible in frames. 4 to 6 protect the owner's approved work and speed every iteration. 7 to 9 are the biggest and use everything before them. Dependencies: 5 before 6 (overrides are keyed by identity), 1 before 7 and 9, 4 before 7 to 9 (they need many renders), 8 after 6 so a style is a layer.
+
+**Parked behind, route ready** (they stay in PLAN.md): water bake (a shallow-water pass on the heightfield for flow and foam maps, Blender's fluid simulator for hero splashes), smoke and fire (Blender's solvers driven from the recipe, baked to flipbooks), life (herds, flocks and fish from the particle solver, CC0 animated models), tiled resumable world builds (`pt top`), cliffs with overhangs and caves from signed-distance terrain (`sparse_boolean`). Rule for all: published methods and open-source code only, Houdini is never run (B11); Blender is the heavy simulator and is called as a separate program, results cached by content hash.
+
+**Effect on B12.6.** Stage 1 keeps its date. Stage 2's building kit moves to item 9 (it pulls the settlement work of stage 4 forward; stage 4 keeps its date); stage 2's gate is trees and ground cover. Stage 3 is item 8.

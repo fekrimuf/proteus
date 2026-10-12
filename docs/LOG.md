@@ -228,3 +228,9 @@ Measured in the engine on the creek world (`out/sc_cascade_test`, no render): 10
 * **Fixed:** `drop_to_surface footprint` (settle onto the lowest ground under the object) and `import_asset sink`, water-depth rules for stones, slope caps, in `scenes/cascade.hcs`. After: 6 mostly-under-water and 2 hanging across the world, none floating or hanging in any camera view. Not yet re-rendered.
 * **Guard:** two scorecard rows, `pt review-tiles`, and a review rule in CLAUDE.md (B7: a frame is reviewed with the annotated check and enlarged tiles).
 * **Same day:** DECISIONS B17 (the owner's eye is the quality gate) and `pt_cli::lowload` (heavy children at low priority, memory-capped, killed with `pt`; bake and judge opt-in).
+
+## 2026-10-12 (evening): the capability track
+
+* **Owner asked** what the big Houdini features would do for an agent driving the product. Two reviews of the engine as its user: plumbing (geometry queries, pixel pick, stable identity, ecology, fast pictures, building grammars) and the headline families (simulation dressing, layered world file, procedural materials). Checked in code: the language has no geometry queries, scatter writes only position, direction and size, `explain` needs an index, the rigid-body solver has a flat ground plane only.
+* **Decided:** nine capabilities in a fixed order with plan dates (DECISIONS B18); stage 2's building kit moves to the grammar item, stage 3 is the materials item (PRO_QUALITY_PLAN B12.6 note). Parked with a route: water bake, smoke and fire (Blender's solvers), life, tiled world builds, signed-distance cliffs.
+* **Same day, found uncommitted from the morning:** `--cull` for one-view look-development renders and per-material triangle stats in `pt ground-check` (verified and committed with this entry).
