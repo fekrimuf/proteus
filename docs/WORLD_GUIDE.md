@@ -199,3 +199,11 @@ of clumps. Dress the hero patch separately and densely (`scatter_poisson` on the
 Measured on the way (creek world, eye-level camera, RTX 2070 SUPER, 1280x720): a node per instance never finished importing; tiles under one
 parent took 10 minutes (removing a child of a parent with 60 000 children is linear); grouped tiles import in 8 seconds. Triangles in one
 frame went 160 million, 64, 49, 30, 21 as the levels, the ground-cover class and the terrain split went in.
+
+## Placement that cannot float or drown (2026-10-12, from the east frame of the creek world)
+
+Two defects were seen in `frame_east.png` after the world was called good: moss caps hovering over the water and flat stones lying in it. `pt ground-check` measured them: 1805 stones mostly under water and 1613 objects hanging over a slope or bank across the world (272 and 40 in the east view), and the yellow boxes of its annotated frame sat exactly on the flat stones. Two causes, two permanent rules:
+
+* **Hanging objects:** a point is on the ground, but a 2 m rock or a 5 m grass tile is not a point, so on a slope or a cut bank one side hangs in air. `drop_to_surface footprint=R` settles each point onto the lowest ground under a ring of R x pscale metres and writes `settle_drop`; the scene rejects points that would need burying deeper than a limit. `import_asset sink=F` buries a fraction of an object's height. The scene's `settle(points, footprint, limit)` applies both to rocks, logs, bushes, ferns, weeds and grass tiles. Result: 1613 hanging objects fell to 2.
+* **Drowned stones:** the creek bed lies 0.5 to 0.85 m under the water, so a stone shorter than that shows only a flat lid (or none, and reads as a flat patch through the refracting water). Stones are placed in the water only where the water depth is under 4 to 20% of their scale (`@water_y - @P.y < k * @pscale`). Result: 1805 fell to 6.
+* **Guard:** `pt scorecard` has two rows (objects floating or hanging in a camera view: bar 0; stones mostly under water in a view: bar 10), and CLAUDE.md requires a frame to be reviewed with the annotated check and the zoom tiles before it is called good.

@@ -52,3 +52,10 @@ Code: `pt-core/src/gltf.rs` (GLB reader and writer), `pt-opt/src/{matching,solve
 |---|---|
 | `pt status [--write]` | prints, or with `--write` stores in `docs/generated/state.md`, every number the docs may quote (node types, test functions, recipes, gym, ledger, scorecard runs) |
 | `pt docs-check` | fails on a stale `state.md`, a broken link, a file over its size budget, a banned heading, a mangled Windows path, a STATUS older than the last commit, or a document missing from the index; runs in CI |
+
+## Placement and frame review
+
+| Command | What it does |
+|---|---|
+| `pt ground-check <recipe.hcs> <scene.json> [--radius M] [--frames DIR --annotate DIR]` | cooks the world on the CPU (no render, no GPU) and lists, per scene camera, objects that float, hang over a slope or bank, are mostly under water (flat lids) or buried; with `--frames` it writes `ground_<camera>.png` with each one boxed (red float, orange hanging, yellow shallow, magenta buried). Fails when anything floats or hangs inside a view. Two rows of `pt scorecard` use the same rules |
+| `pt review-tiles <frame.png> <out_dir>` | cuts a frame into six tiles, each enlarged 2x, so a frame is reviewed at full resolution tile by tile |

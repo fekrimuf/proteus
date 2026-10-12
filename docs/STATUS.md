@@ -9,18 +9,18 @@ Numbers (tests, recipes, gym, ledger, scorecard runs) are not written here: they
 ## State
 
 * **Engine and tools:** the kernel, language, simulation, gym, vision judges (local Qwen3-VL-8B), Blender Cycles renderer, Godot engine referee and the `pt scorecard` all work end to end. Cross-OS determinism holds in CI.
-* **Worlds:** `scenes/valley` (analytic), `scenes/teton` (real USGS elevation, scorecard v4: judge brief fit 6.0 of 10 against a bar of 7) and `scenes/cascade` (the eye-level creek built for the owner's target picture; the engine rows measured 106 fps, 97.2% walkable ground, validator clean; its render frames hold up when opened).
+* **Worlds:** `scenes/valley` (analytic), `scenes/teton` (real USGS elevation, scorecard v4: judge brief fit 6.0 of 10 against a bar of 7) and `scenes/cascade` (the eye-level creek built for the owner's target picture; the engine rows measured 106 fps, 97.2% walkable ground, validator clean). The cascade east frame was found to have hovering moss and flat half-drowned stones (open item 1).
 * **Assets:** Checkpoint 1 on the strict reading is 21 of 50 (development 17 of 40, hold-out 4 of 10); open repairs are the cactus arms, bench scrolls and tower score.
 * **Visual bar:** the owner's reference is a Skyrim-style creek with a timber mill (path in ENVIRONMENT.md). Frames are compared with it by eye; the valley is not close.
 
 ## Open items (in this order)
 
-1. Render one frame with `tune_authored` in `corpus/tools/render_scene.py` and the two `rock_moss_set_*` style entries (they grey the scanned rocks that render orange in direct sun in `frame_east.png`), then move the `village` camera onto the lit side of the hut. The look is judged by the owner's eye against the reference (DECISIONS.md B17), so these come first.
+1. Re-render the `east` frame (quick mode, one frame; it loads the GPU, so say so first) with the placement fix and the rock colour fix (`tune_authored` in `corpus/tools/render_scene.py` and the two `rock_moss_set_*` style entries: the scanned rocks render orange in direct sun), then review it with `pt ground-check --frames --annotate` and `pt review-tiles`. In the same tiles, the grass shows pale paper-like flakes (backlit blades under `foliage_translucency`) that read as bits floating in the air: find the cause on the grass material and fix it. Then move the `village` camera onto the lit side of the hut. The look is judged by the owner's eye against the reference (DECISIONS.md B17), so these come first.
 2. Ask the owner for the 10 blind pairs (our creek world against a hand-built baseline): the stage 1 gate.
 3. Optional delivery check for the creek world, light by default: `pt scorecard scenes/cascade.hcs scenes/cascade.scene.json --out out/steelthread_v5 --samples 128 --baseline corpus/results/steelthread/v4/scorecard.json`. The terrain bake is `--bake` and the vision judge `--judge`; both take the machine, so say so before using them. Triangles in one frame were 20.6 million against a bar of 20; one more trim went in after that measurement.
 4. Give `run_godot` a timeout: a stalled Godot import blocked the scorecard once (the 270 000-node import). The tiled exporter removed that cause; the timeout removes the class.
 
-Verified on 2026-10-12: `cargo check -p pt-cli` compiles the `scorecard --reuse` and bake-cache edits that had never been compiled. Heavy child programs (Blender, Godot, the validator, the judge server) now start at low priority, under a memory cap, and die with `pt` (`pt_cli::lowload`); a test proves the cap stops a runaway child.
+Verified on 2026-10-12: heavy child programs now start at low priority, under a memory cap, and die with `pt` (`pt_cli::lowload`; a test proves the cap stops a runaway child). `pt ground-check` found 1805 half-drowned stones and 1613 hanging objects in the creek world; ground-aware placement (`drop_to_surface footprint`, `import_asset sink`, water-depth rules in `scenes/cascade.hcs`) took them to 6 and 2, and the world now cooks with nothing floating or hanging in any camera view. The fix is measured on the geometry only: **the frames have not been re-rendered yet**, so `out/steelthread_v5/frame_east.png` still shows the old defects.
 
 ## Next after the open items
 
