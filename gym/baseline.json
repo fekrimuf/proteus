@@ -1,8 +1,8 @@
 {
   "mean": {
-    "null_agent": 0.43327272727272703,
+    "null_agent": 0.4317111111111109,
     "oracle": 1.0,
-    "perturbed": 0.7335681818181817
+    "perturbed": 0.7394888888888888
   },
   "tasks": [
     {
@@ -267,6 +267,14 @@
       "oracle": 1.0,
       "perturbed_best_of_3": 0.788,
       "task": "28_stable_orchard",
+      "tier": "T3"
+    },
+    {
+      "kind": "build",
+      "null_agent": 0.363,
+      "oracle": 1.0,
+      "perturbed_best_of_3": 1.0,
+      "task": "29_conifer_grove",
       "tier": "T3"
     },
     {

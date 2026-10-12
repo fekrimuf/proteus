@@ -36,6 +36,22 @@ pub fn demo_graph(grid_res: i64, count: i64) -> Result<Graph, String> {
     Ok(g)
 }
 
+/// `pt gen-texture needles OUT.png [--seed N] [--size PX]`: a texture the program draws itself (a conifer needle spray with alpha).
+fn gen_texture_cmd(args: &[String]) -> Result<(), String> {
+    let usage = "usage: pt gen-texture needles OUT.png [--seed N] [--size PX]";
+    let [kind, out, rest @ ..] = args else { return Err(usage.into()) };
+    let flag = |f: &str| rest.iter().position(|a| a == f).and_then(|i| rest.get(i + 1)).and_then(|s| s.parse::<i64>().ok());
+    match kind.as_str() {
+        "needles" => {
+            let img = pt_sop::gen_texture::needle_spray(flag("--size").unwrap_or(512).clamp(64, 4096) as usize, flag("--seed").unwrap_or(1));
+            pt_sop::gen_texture::write_png(std::path::Path::new(out), &img)?;
+            println!("wrote {out} ({} x {})", img.w, img.h);
+            Ok(())
+        }
+        _ => Err(usage.into()),
+    }
+}
+
 fn demo(out_dir: &str) -> Result<(), String> {
     let mut g = demo_graph(80, 200)?;
     std::fs::create_dir_all(out_dir).map_err(|e| e.to_string())?;
@@ -154,6 +170,7 @@ fn main() {
         Some("review-tiles") => pt_cli::grounding::review_tiles_cmd(&args[2..]),
         Some("pick") => pt_cli::pick::pick_cmd(&args[2..]),
         Some("edit") => pt_cli::edits::edit_cmd(&args[2..]),
+        Some("gen-texture") => gen_texture_cmd(&args[2..]),
         Some("world") => pt_cli::world::world_cmd(&args[2..]),
         Some("docs-check") => pt_cli::docs::check_cmd(&args[2..]),
         Some("trace") => trace_cmd(&args[2..]),

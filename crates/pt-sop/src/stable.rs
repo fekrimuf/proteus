@@ -23,7 +23,7 @@ pub const ID: &str = "pid";
 
 pub fn schemas() -> Vec<NodeSchema> {
     vec![
-        sch("scatter_stable", "Blue-noise scatter whose points keep their identity. Points are decided by the cell of the world they stand in and the seed, never by a count or an order: change the terrain, a mask, the density or anything elsewhere and every surviving point stays exactly where it was, with the same `pid`. Points are placed on what is seen from above (the first surface under a ray from the sky), spaced at least `min_dist` apart on the map (horizontally: a change of height never decides which points stay). Writes `P`, `N` (up-facing normal), `pscale` and the integer attribute `pid` (the packed cell coordinates, unique per point). Copy nodes key their randomness on `pid`, so a rotation or a variant is also stable.", 1, D::None, G::Whole, vec![
+        sch("scatter_stable", "Blue-noise scatter whose points keep their identity. Points are decided by the cell of the world they stand in and the seed, never by a count or an order: change the terrain, a mask, the density or anything elsewhere and every surviving point stays exactly where it was, with the same `pid`. Points are placed on what is seen from above (the first surface under a ray from the sky), spaced at least `min_dist` apart on the map (horizontally: a change of height never decides which points stay). Writes `P`, `N` (up-facing normal), `pscale`, two stable random numbers `u` and `v` in [0, 1) (for \"keep with probability w\" rules: `@u < w`) and the integer attribute `pid` (the packed cell coordinates, unique per point). Copy nodes key their randomness on `pid`, so a rotation or a variant is also stable.", 1, D::None, G::Whole, vec![
             ps("min_dist", json!(1.0), "Minimum distance between points (m); the cell is min_dist / 1.5."),
             ps("seed", json!(1), "Seed."),
             ps("density", json!(1.0), "Share 0..1 of the possible points kept. Lowering it only removes points (by each point's own hash); the rest do not move."),
@@ -137,6 +137,10 @@ fn scatter_stable(src: &Geometry, p: &Params) -> Res {
     g.point.set("N", Column::from_v3(taken.iter().map(|&i| cands[i].n).collect()));
     g.point.set("pscale", Column::from_f32(taken.iter().map(|&i| smin + (smax - smin) * unit(mix(cands[i].h ^ 4))).collect()));
     g.point.set(ID, Column::from_i32(taken.iter().map(|&i| pack(cands[i].cx, cands[i].cz)).collect()));
+    // two stable random numbers per point, readable in a wrangle (`@u`, `@v`): for rules like "keep with probability w" that must
+    // not change which points are kept elsewhere
+    g.point.set("u", Column::from_f32(taken.iter().map(|&i| unit(mix(cands[i].h ^ 5))).collect()));
+    g.point.set("v", Column::from_f32(taken.iter().map(|&i| unit(mix(cands[i].h ^ 6))).collect()));
     Ok(g)
 }
 

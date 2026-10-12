@@ -740,6 +740,9 @@ class Materials:
             elif spec.get("kind") == "water":
                 m = water_material(name, spec)
                 self.stats.setdefault(name, {"resolved": True, "textured": True, "kind": "water", "triangles": 0})
+            elif spec.get("kind") == "foliage":
+                m, ok = foliage_material(name, spec)
+                self.stats.setdefault(name, {"resolved": True, "textured": ok, "kind": "foliage", "triangles": 0})
             elif "polyhaven" in spec:
                 m, textured_ok = pbr_material(name, spec)
                 self.stats.setdefault(name, {"resolved": True, "textured": textured_ok, "triangles": 0})
@@ -749,6 +752,38 @@ class Materials:
                 self.stats.setdefault(name, {"resolved": True, "textured": False, "triangles": 0})
         self.cache[key] = m
         return m
+
+
+def foliage_material(name, spec):
+    """Cards of needles or leaves drawn by the program (`pt gen-texture`): an RGBA picture whose alpha is the cut-out, on cards the
+    `tree_*` generators make (their own UVs). Double sided, a little translucent against the sun like every plant. The picture is
+    `spec["texture"]`, a path under the repository (or absolute). Returns (material, picture found)."""
+    root = os.path.dirname(os.path.dirname(os.path.dirname(args.get("library", ""))))
+    path = spec.get("texture", "")
+    full = path if os.path.isabs(path) else os.path.join(root, path)
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    bsdf.inputs["Roughness"].default_value = float(spec.get("roughness", 0.65))
+    found = os.path.exists(full)
+    if found:
+        img = bpy.data.images.load(full)
+        img.alpha_mode = "STRAIGHT"
+        tx = nt.nodes.new("ShaderNodeTexImage")
+        tx.image = img
+        tx.extension = "CLIP"
+        nt.links.new(tx.outputs["Color"], bsdf.inputs["Base Color"])
+        nt.links.new(tx.outputs["Alpha"], bsdf.inputs["Alpha"])
+    else:
+        warn("foliage material '%s': texture '%s' not found; flat green cards" % (name, full))
+        bsdf.inputs["Base Color"].default_value = (0.03, 0.09, 0.02, 1.0)
+    m.use_backface_culling = False
+    tune_authored(m, spec)
+    translucency = float(SCENE.get("render", {}).get("foliage_translucency", 0.0))
+    if found and translucency > 0.0:
+        add_translucency(m, translucency)
+    return m, found
 
 
 def has_image_texture(m):

@@ -381,6 +381,7 @@ pub fn pick_cmd(args: &[String]) -> Result<(), String> {
     let mut g = Graph::new();
     g.provenance = true;
     g.knobs = crate::blender::knobs_of(&scene)?;
+    g.lookdev = rest.iter().any(|a| a == "--lookdev"); // pick in the same tier the frame was rendered in
     let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
     let node = rep.outputs.first().ok_or("recipe has no out()")?.clone();
     let mut all = Vec::new();

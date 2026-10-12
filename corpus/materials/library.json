@@ -38,6 +38,7 @@
   "gravel":           {"polyhaven": "gravelly_sand",          "scale_m": 2.48, "bump": 0.6, "fallback": [0.45, 0.40, 0.34], "roughness": 0.95},
   "cobblestone":      {"polyhaven": "cobblestone_floor_04",   "scale_m": 1.50, "bump": 0.8, "fallback": [0.38, 0.37, 0.34], "roughness": 0.85},
   "wood_planks":      {"polyhaven": "weathered_brown_planks", "scale_m": 1.80, "bump": 0.5, "fallback": [0.30, 0.20, 0.12], "roughness": 0.8},
+  "conifer_needles":  {"kind": "foliage", "texture": "corpus/generated/needles_a.png", "roughness": 0.7, "fallback": [0.03, 0.09, 0.02], "note": "needle sprays DRAWN by the program (pt gen-texture needles): an RGBA picture, no scan"},
   "bark":             {"polyhaven": "bark_brown_02",          "scale_m": 1.00, "bump": 0.9, "fallback": [0.22, 0.16, 0.11], "roughness": 0.9},
   "brick_red":        {"polyhaven": "red_brick_03",           "scale_m": 1.00, "bump": 0.6, "fallback": [0.50, 0.22, 0.16], "roughness": 0.85},
   "stone_blocks":     {"polyhaven": "castle_wall_slates",     "scale_m": 2.50, "bump": 0.8, "fallback": [0.40, 0.38, 0.35], "roughness": 0.9},

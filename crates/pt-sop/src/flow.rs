@@ -295,6 +295,9 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             if !e.has_surface {
                 return Err(vec![fd(format!("{kind} needs a polygon surface but its input has none"), "scatter onto a grid/box/sphere, or put `realize` before it if the input is instances")]);
             }
+            if kind == "scatter_stable" {
+                return Ok(GeoEnv::base_points(&[("N", Ty::Vec3), ("pscale", Ty::Float), ("u", Ty::Float), ("v", Ty::Float)], false));
+            }
             Ok(GeoEnv::base_points(&[("N", Ty::Vec3), ("pscale", Ty::Float)], false))
         }
         "copy_to_points" => {

@@ -17,6 +17,8 @@ pub mod sparse;
 mod sim;
 mod stable;
 mod terrain;
+pub mod gen_texture;
+mod gen_tree;
 mod topo;
 
 use kernel::PointOp;
@@ -111,6 +113,7 @@ pub fn schemas() -> Vec<NodeSchema> {
     v.extend(attrs::schemas());
     v.extend(topo::schemas());
     v.extend(stable::schemas());
+    v.extend(gen_tree::schemas());
     v.extend(terrain::schemas());
     v.extend(sdf::schemas());
     v.extend(sparse::schemas());
@@ -213,6 +216,9 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Res {
         return r;
     }
     if let Some(r) = stable::cook(kind, p, inputs) {
+        return r;
+    }
+    if let Some(r) = gen_tree::cook(kind, p, inputs) {
         return r;
     }
     if let Some(r) = sparse::cook(kind, p, inputs) {

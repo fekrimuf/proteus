@@ -365,6 +365,7 @@ pub fn ground_check_cmd(args: &[String]) -> Result<(), String> {
     let scene: Value = serde_json::from_str(std::fs::read_to_string(scene_path).map_err(|e| format!("{scene_path}: {e}"))?.trim_start_matches('\u{feff}')).map_err(|e| format!("{scene_path}: {e}"))?;
     let mut g = pt_graph::Graph::new();
     g.knobs = crate::blender::knobs_of(&scene)?;
+    g.lookdev = rest.iter().any(|a| a == "--lookdev");
     let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
     let geo = g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?;
     drop(g);

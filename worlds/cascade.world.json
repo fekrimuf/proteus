@@ -1,11 +1,12 @@
 {
   "name": "cascade",
-  "note": "The calm reach of Cascade Creek: one recipe, two looks. The overcast variant is a different style (grey light, stronger mist) with its own knobs (thicker forest, more fallen wood); both read the owner's decisions from edits/cascade.json unless a variant names another file.",
+  "note": "The calm reach of Cascade Creek: one recipe, three looks. 'evening' and 'overcast' are styles (light, mist, materials) with their own knobs (overcast: thicker forest, more fallen wood). 'grown' is the evening style with a forest made from knobs instead of scans (knob tree_source = generated). All read the owner's decisions from edits/cascade.json unless a variant names another file.",
   "recipe": "scenes/cascade.hcs",
   "scene": "scenes/cascade.scene.json",
   "default_variant": "evening",
   "variants": {
     "evening": {"style": "styles/cascade_evening.json"},
-    "overcast": {"style": "styles/cascade_overcast.json"}
+    "overcast": {"style": "styles/cascade_overcast.json"},
+    "grown": {"style": "styles/cascade_evening.json", "knobs": {"tree_source": "generated"}}
   }
 }

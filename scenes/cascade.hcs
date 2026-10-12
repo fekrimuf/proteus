@@ -173,6 +173,25 @@ young_c = tree("fir_sapling_medium", "fir_sapling_medium_c", lookdev(250000, 625
 pine_a = tree("pine_sapling_medium", "pine_sapling_medium_a", lookdev(450000, 112500))
 pine_b = tree("pine_sapling_medium", "pine_sapling_medium_b", lookdev(400000, 100000))
 pine_c = tree("pine_sapling_medium", "pine_sapling_medium_c", lookdev(350000, 87500))
+
+# The forest can be GROWN instead of scanned: the style knob tree_source = "generated" (a world variant) swaps every tall fir, young fir
+# and pine for conifers made from knobs (tree_conifer: trunk, whorls of drooping branches, needle sprays drawn by the program), so
+# the shape language of the forest belongs to the style and not to a scan. Heights match the scans they replace; the placement,
+# the sizes (pscale) and the owner's decisions are the same.
+TREES = knob("tree_source", "scan")
+def grown(h, width, droop, lift, power, spacing, seed):
+    return tree_conifer(height=h, crown_width=width, droop=droop, lift=lift, crown_power=power, whorl_spacing=spacing, branches=8, sprays_per_m=lookdev(22.0, 15.0), detail=lookdev(1.0, 0.8), seed=seed)
+
+if TREES == "generated":
+    fir_a = grown(24.0, 0.27, 30.0, 18.0, 0.85, 0.46, 101)
+    fir_b = grown(22.0, 0.22, 36.0, 15.0, 0.90, 0.42, 102)
+    fir_c = grown(26.0, 0.30, 26.0, 22.0, 0.80, 0.50, 103)
+    young_a = grown(9.0, 0.30, 24.0, 20.0, 0.90, 0.34, 104)
+    young_b = grown(8.0, 0.26, 30.0, 18.0, 0.90, 0.32, 105)
+    young_c = grown(10.0, 0.32, 20.0, 22.0, 0.85, 0.36, 106)
+    pine_a = grown(11.0, 0.36, 12.0, 30.0, 0.60, 0.40, 107)
+    pine_b = grown(9.5, 0.40, 8.0, 34.0, 0.55, 0.38, 108)
+    pine_c = grown(12.0, 0.34, 14.0, 28.0, 0.65, 0.42, 109)
 seedling_a = scaled("fir_sapling", "fir_sapling_a", 1.6)
 seedling_b = scaled("fir_sapling", "fir_sapling_b", 1.6)
 seedling_c = scaled("pine_sapling_small", "pine_sapling_small_b", 1.0)
@@ -266,14 +285,14 @@ pine_pts = keep(spots(24000 * FOREST, 6.8, 23, 0.8, 1.45), "t3", "@w_ground_fore
 bush_pts = keep(spots(16000, 4.6, 28, 0.7, 1.3), "t4", "(@w_ground_forest > 0.2 || @w_ground_gravel > 0.25) && @slope_deg < 34.0 && @river_sd > 2.0")
 seedling_pts = keep(spots(22000, 3.2, 24, 0.7, 1.6), "t5", "@w_ground_forest > 0.3 && @slope_deg < 30.0 && @river_sd > 1.5")
 fern_pts = keep(spots(22000, 2.6, 25, 0.7, 1.3), "t6", "@w_ground_forest > 0.35 && @slope_deg < 28.0 && @river_sd > 1.0 && @hero < 0.6")
-meadow_pts = keep(spots(40000, 2.8, 26, 0.8, 1.3), "t7", "(@w_ground_flat > 0.3 || @w_ground_dirt > 0.3) && @slope_deg < 30.0 && @river_sd > 0.6 && @hero < 0.55")
+meadow_pts = keep(spots(lookdev(40000, 100000), lookdev(2.8, 1.7), 26, 0.8, 1.3), "t7", "(@w_ground_flat > 0.3 || @w_ground_dirt > 0.3) && @slope_deg < 30.0 && @river_sd > 0.6 && @hero < 0.55")
 flower_pts = keep(spots(12000, 3.0, 27, 0.7, 1.3), "t8", "@w_ground_flat > 0.55 && @slope_deg < 16.0 && @river_sd > 2.0")
 rock_pts = keep(spots(9000, 5.0, 31, 0.6, 1.7), "t9", "(@w_ground_gravel > 0.25 || (@w_ground_rock > 0.1 && @slope_deg < 44.0 && @w_ground_snow < 0.3)) && @slope_deg < 34.0 && (@water_y - @P.y) < 0.2 * @pscale")
 shore_rock_pts = keep(spots(9000, 3.4, 32, 0.6, 1.8), "ta", "@river_sd > -3.0 && @river_sd < 4.0 && @chan > 0.5 && @hero < 0.7 && @slope_deg < 30.0 && (@water_y - @P.y) < 0.16 * @pscale")
 deadwood_pts = keep(spots(3000 * LOGS, 13.0, 33, 0.8, 1.2), "tb", "@w_ground_forest > 0.45 && @slope_deg < 22.0 && @river_sd > 0.5")
 
 # the hero reach, dressed at the density an eye-level camera needs
-h_tile_pts = keep(close(6000, 2.1, 41, 0.85, 1.25), "h1", "@river_sd > 0.3 && @slope_deg < 42.0 && @w_ground_bed < 0.15 && @w_ground_bank < 0.6")
+h_tile_pts = keep(close(lookdev(6000, 16000), lookdev(2.1, 1.25), 41, 0.85, 1.25), "h1", "@river_sd > 0.3 && @slope_deg < 42.0 && @w_ground_bed < 0.15 && @w_ground_bank < 0.6")
 h_fern_pts = keep(close(5000, 1.5, 42, 0.7, 1.4), "h2", "(@w_ground_forest > 0.25 || @slope_deg > 18.0) && @river_sd > 1.6 && @slope_deg < 42.0")
 h_weed_pts = keep(close(5000, 1.4, 43, 0.7, 1.3), "h3", "@river_sd > 0.8 && @river_sd < 16.5 && @slope_deg < 42.0")
 h_cobble_pts = keep(close(26000, 0.42, 44, 0.35, 1.5), "h4", "@river_sd > -3.2 && @river_sd < 2.2 && (@w_ground_bank > 0.15 || @w_ground_bed > 0.3) && (@water_y - @P.y) < 0.04 * @pscale")
@@ -297,8 +316,8 @@ bush_pts = settle(bush_pts, 0.9, "0.6")
 fern_pts = settle(fern_pts, 0.5, "0.4")
 h_fern_pts = settle(h_fern_pts, 0.5, "0.4")
 h_weed_pts = settle(h_weed_pts, 0.35, "0.3")
-meadow_pts = settle(meadow_pts, 1.6, "0.9")
-h_tile_pts = settle(h_tile_pts, 1.6, "0.9")
+meadow_pts = settle(meadow_pts, 1.9, "0.8")
+h_tile_pts = settle(h_tile_pts, 2.1, "0.8")
 
 # the owner's decisions, by object id (edits/cascade.json; `pt pick` names an object's pid, `pt edit` records the decision)
 tall_pts = edited(tall_pts, "tall")
