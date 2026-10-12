@@ -60,6 +60,7 @@ pub fn schemas() -> Vec<NodeSchema> {
         sch("drop_to_surface", "Move input 0's points straight down/up onto the surface in input 1 (XZ lookup, highest hit wins). Writes the surface normal to `N`. Use it to place buildings, props or scatter points on terrain.", 2, D::None, G::Whole, vec![
             ps("offset", json!(0.0), "Lift above the surface (m)."),
             ps("set_normal", json!(1), "1 = write the surface normal into point attribute N."),
+            ps("footprint", json!(0.0), "If > 0, settle each point onto the LOWEST ground under a ring of this radius (metres, times the point's pscale), so an object placed there has no side hanging in the air on a slope or a bank. Writes point attribute `settle_drop` (how far it was lowered, m): reject points with a large drop."),
         ]),
         sch("point_jitter", "Random per-point displacement in [-amount, amount] per axis (scaled by `scale`).", 1, D::None, G::PerPoint, vec![
             ps("amount", json!(0.1), "Maximum displacement (m)."),
@@ -390,12 +391,9 @@ fn drop_to_surface(src: &Geometry, surf: &Geometry, p: &Params) -> Res {
             }
         }
     }
-    let off = p.f("offset");
-    let set_n = p.i("set_normal") != 0;
-    let mut g = src.clone();
-    let mut normals: Vec<[f32; 3]> = vec![[0.0, 1.0, 0.0]; g.n_points()];
-    for (pi, q) in g.p_mut().iter_mut().enumerate() {
-        let (c, r) = cell_of(q[0], q[2]);
+    // height and normal of the surface under (x, z); the highest hit wins
+    let hit = |x: f32, z: f32| -> Option<(f32, [f32; 3])> {
+        let (c, r) = cell_of(x, z);
         let mut best: Option<(f32, [f32; 3])> = None;
         for &ti in &grid[r * cells + c] {
             let t = tris[ti as usize];
@@ -405,8 +403,8 @@ fn drop_to_surface(src: &Geometry, surf: &Geometry, p: &Params) -> Res {
             if d.abs() < 1e-12 {
                 continue;
             }
-            let w0 = ((b[2] - cc[2]) * (q[0] - cc[0]) + (cc[0] - b[0]) * (q[2] - cc[2])) / d;
-            let w1 = ((cc[2] - a[2]) * (q[0] - cc[0]) + (a[0] - cc[0]) * (q[2] - cc[2])) / d;
+            let w0 = ((b[2] - cc[2]) * (x - cc[0]) + (cc[0] - b[0]) * (z - cc[2])) / d;
+            let w1 = ((cc[2] - a[2]) * (x - cc[0]) + (a[0] - cc[0]) * (z - cc[2])) / d;
             let w2 = 1.0 - w0 - w1;
             let eps = -1e-5;
             if w0 >= eps && w1 >= eps && w2 >= eps {
@@ -420,13 +418,40 @@ fn drop_to_surface(src: &Geometry, surf: &Geometry, p: &Params) -> Res {
                 }
             }
         }
-        if let Some((y, n)) = best {
-            q[1] = y + off;
+        best
+    };
+    let off = p.f("offset");
+    let set_n = p.i("set_normal") != 0;
+    let footprint = p.f("footprint").max(0.0);
+    let mut g = src.clone();
+    let pscale: Option<Vec<f32>> = g.point.get("pscale").and_then(pt_core::Column::as_f32).map(|s| s.to_vec());
+    let mut normals: Vec<[f32; 3]> = vec![[0.0, 1.0, 0.0]; g.n_points()];
+    let mut drops: Vec<f32> = vec![0.0; g.n_points()];
+    for (pi, q) in g.p_mut().iter_mut().enumerate() {
+        if let Some((y, n)) = hit(q[0], q[2]) {
+            let mut y_set = y;
+            if footprint > 0.0 {
+                // settle onto the lowest ground under the object's footprint (a ring of eight points at `footprint` x pscale metres), so
+                // no side of it hangs in the air on a slope or a bank; the high side is buried instead
+                let r = footprint * pscale.as_ref().and_then(|s| s.get(pi)).copied().unwrap_or(1.0);
+                for k in 0..8 {
+                    let a = k as f32 * std::f32::consts::FRAC_PI_4;
+                    let (sn, cs) = math::sin_cos(a);
+                    if let Some((yy, _)) = hit(q[0] + r * cs, q[2] + r * sn) {
+                        y_set = y_set.min(yy);
+                    }
+                }
+                drops[pi] = y - y_set;
+            }
+            q[1] = y_set + off;
             normals[pi] = n;
         }
     }
     if set_n {
         g.point.set("N", pt_core::Column::from_v3(normals));
+    }
+    if footprint > 0.0 {
+        g.point.set("settle_drop", pt_core::Column::from_f32(drops));
     }
     Ok(g)
 }

@@ -35,6 +35,7 @@ pub fn schemas() -> Vec<NodeSchema> {
             ps("size", json!(0.0), "If > 0 (and height is 0), scale uniformly so the LARGEST extent is this many metres (for lying logs, wide rocks)."),
             ps("scale", json!(1.0), "Extra uniform scale applied after `height`."),
             ps("ground", json!(1), "1 = lowest point to y=0 and centre on x/z; 0 = keep the file's origin."),
+            ps("sink", json!(0.0), "Fraction of the asset's height to bury below y=0 (0 to 0.5) after grounding, so a rock or a plant placed on a slope has no side hanging in the air."),
             ps("materials", json!(1), "1 = keep authored materials and UVs; 0 = geometry only."),
             ps("max_triangles", json!(0), "If > 0 and the asset has more triangles, reduce it to about this many: solid parts by edge collapse that respects UVs and normals, leaf and needle cards by keeping a share of them and enlarging the rest so the canopy stays as full. Scanned trees are millions of triangles each; a forest of them does not fit in memory otherwise. The reduced asset is cached on disk."),
         ],
@@ -116,9 +117,11 @@ fn import_asset(p: &Params) -> Res {
     };
     let s = fit * if p.f("scale") > 0.0 { p.f("scale") } else { 1.0 };
     let (cx, cz, base) = if p.i("ground") != 0 { ((lo[0] + hi[0]) * 0.5, (lo[2] + hi[2]) * 0.5, lo[1]) } else { (0.0, 0.0, 0.0) };
-    if s != 1.0 || cx != 0.0 || cz != 0.0 || base != 0.0 {
+    let sink = p.f("sink").clamp(0.0, 0.5);
+    let height_after = (hi[1] - lo[1]) * s;
+    if s != 1.0 || cx != 0.0 || cz != 0.0 || base != 0.0 || sink != 0.0 {
         for q in g.p_mut() {
-            *q = [(q[0] - cx) * s, (q[1] - base) * s, (q[2] - cz) * s];
+            *q = [(q[0] - cx) * s, (q[1] - base) * s - sink * height_after, (q[2] - cz) * s];
         }
     }
     Ok(g)

@@ -5,6 +5,7 @@ pub mod critique;
 pub mod critique_bench;
 pub mod demos;
 pub mod docs;
+pub mod grounding;
 pub mod gym;
 pub mod judge;
 pub mod judge_bench;

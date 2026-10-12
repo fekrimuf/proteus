@@ -60,6 +60,9 @@ pub struct Audit {
     pub heavy_with_lod: u64,
     pub assets: BTreeSet<String>,
     pub area_km2: f64,
+    /// (objects floating or hanging in a camera view, objects mostly under water in a camera view, cameras checked); `None` when the
+    /// scene has no standing cameras. From `pt ground-check`'s rules.
+    pub placement: Option<(u64, u64, u64)>,
 }
 
 /// Triangle and repeat statistics of a cooked world (base geometry plus lazy instances).
@@ -357,6 +360,10 @@ pub fn measures(audit: &Audit, render: &Value, godot: &Value, fps: &Value, valid
     // navmesh area by ALL slope-walkable ground, which is structurally below 100%: the mesh is inset by the agent radius along every
     // cliff edge. B13.1 asks for coverage of the INTENDED walkable area, so that is what is measured now.
     let nav = f(godot, "/navmesh/coverage_intended");
+    let hang = audit.placement.map(|(h, _, _)| h);
+    add("World function", "w_grounded", "Objects floating or hanging in the air inside a camera view (a stone over the bed, a bush over a bank)", hang.map(|h| h as f64), hang.map_or("no standing camera".into(), |h| format!("{h}")), "0", hang.map(|h| h == 0), "drop_to_surface with a footprint, and `pt ground-check --frames` to see them");
+    let shallow = audit.placement.map(|(_, s, _)| s);
+    add("World function", "w_shallow", "Stones mostly under water inside a camera view (they read as flat lids)", shallow.map(|s| s as f64), shallow.map_or("no standing camera".into(), |s| format!("{s}")), "at most 10", shallow.map(|s| s <= 10), "place stones out of the water unless they stand clear of it (water depth under 40% of the stone's height)");
     add("World function", "w_nav", "Intended walkable ground (slope under 25 degrees) the navigation mesh reaches", nav, nav.map_or("not measured".into(), |c| format!("{:.1}%", c * 100.0)), "at least 90%", nav.map(|c| c >= 0.90), "explorer bots for stuck points; obstacles (trunks, rocks) in the bake");
     // Performance
     let fps_v = f(fps, "/fps/fps");
@@ -482,6 +489,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let root = blender::repo_root();
     let lib: Value = std::fs::read_to_string(root.join("corpus/materials/library.json")).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or(json!({"materials": {}}));
     let mut a = audit(&geo);
+    a.placement = crate::grounding::view_counts(&geo, &scene, 45.0);
     let ledger = crate::corpus::Ledger::load(&root.join("corpus/LEDGER.csv"))?;
     let (traced_ok, traced_total, missing) = ledger_trace(&a, &scene, &lib, &geo, &ledger);
 

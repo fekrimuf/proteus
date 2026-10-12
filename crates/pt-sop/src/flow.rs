@@ -246,6 +246,9 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             if p.i("set_normal") != 0 {
                 e.point.insert("N".into(), Ty::Vec3);
             }
+            if p.f("footprint") > 0.0 {
+                e.point.insert("settle_drop".into(), Ty::Float);
+            }
             Ok(e)
         }
         "switch" => Ok(ins.get(p.i("index").clamp(0, 3) as usize).cloned().flatten().unwrap_or_default()),

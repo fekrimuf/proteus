@@ -153,8 +153,8 @@ water = set_material(normals(blast(water_cells, group="wet", keep_selected=1)), 
 
 # ---- assets: CC0 scans (Poly Haven) with their authored materials ----
 M = "polyhaven/models/"
-def scan(name, part, h, size):
-    return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, height=h, size=size)
+def scan(name, part, h, size, sink=0.0):
+    return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, height=h, size=size, sink=sink)
 
 def scaled(name, part, s):
     return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, scale=s)
@@ -176,29 +176,29 @@ pine_c = tree("pine_sapling_medium", "pine_sapling_medium_c", 350000)
 seedling_a = scaled("fir_sapling", "fir_sapling_a", 1.6)
 seedling_b = scaled("fir_sapling", "fir_sapling_b", 1.6)
 seedling_c = scaled("pine_sapling_small", "pine_sapling_small_b", 1.0)
-fern_a = scan("fern_02", "fern_02_a", 0.0, 1.3)
-fern_b = scan("fern_02", "fern_02_c", 0.0, 1.1)
-fern_c = scan("fern_02", "fern_02_d", 0.0, 1.2)
+fern_a = scan("fern_02", "fern_02_a", 0.0, 1.3, 0.08)
+fern_b = scan("fern_02", "fern_02_c", 0.0, 1.1, 0.08)
+fern_c = scan("fern_02", "fern_02_d", 0.0, 1.2, 0.08)
 bush_a = scan("searsia_lucida", "searsia_lucida_a", 0.0, 2.6)
 bush_b = scan("searsia_lucida", "searsia_lucida_d", 0.0, 2.2)
 bush_c = scan("othonna_cerarioides", "othonna_cerarioides_b", 0.0, 2.0)
-shrub = scan("shrub_04", "", 0.0, 1.0)
-weed_a = scan("weed_plant_02", "weed_plant_02_a", 0.0, 0.9)
+shrub = scan("shrub_04", "", 0.0, 1.0, 0.08)
+weed_a = scan("weed_plant_02", "weed_plant_02_a", 0.0, 0.9, 0.08)
 nettle_a = scan("nettle_plant", "nettle_plant_medium_a", 0.0, 0.7)
 flower_a = scan("flower_empodium", "flower_empodium_a", 0.0, 0.9)
 flower_b = scan("flower_empodium", "flower_empodium_d", 0.0, 0.8)
 dandelion = scan("dandelion_01", "", 0.0, 1.6)
-rock_a = scan("rock_moss_set_01", "rock_moss_set_01_rock01", 0.0, 2.2)
-rock_b = scan("rock_moss_set_01", "rock_moss_set_01_rock04", 0.0, 1.8)
-rock_c = scan("rock_moss_set_02", "rock_moss_set_02_rock09", 0.0, 2.4)
-rock_d = scan("rock_moss_set_01", "rock_moss_set_01_rock02", 0.0, 1.4)
-rock_e = scan("rock_moss_set_02", "rock_moss_set_02_rock12", 0.0, 1.1)
-rock_f = scan("rock_moss_set_01", "rock_moss_set_01_rock06", 0.0, 0.8)
+rock_a = scan("rock_moss_set_01", "rock_moss_set_01_rock01", 0.0, 2.2, 0.16)
+rock_b = scan("rock_moss_set_01", "rock_moss_set_01_rock04", 0.0, 1.8, 0.16)
+rock_c = scan("rock_moss_set_02", "rock_moss_set_02_rock09", 0.0, 2.4, 0.16)
+rock_d = scan("rock_moss_set_01", "rock_moss_set_01_rock02", 0.0, 1.4, 0.16)
+rock_e = scan("rock_moss_set_02", "rock_moss_set_02_rock12", 0.0, 1.1, 0.16)
+rock_f = scan("rock_moss_set_01", "rock_moss_set_01_rock06", 0.0, 0.8, 0.18)
 boulder = scan("boulder_01", "", 0.0, 2.6)
 boulder_b = scan("namaqualand_boulder_03", "", 0.0, 3.2)
-cobble_a = scan("rock_moss_set_01", "rock_moss_set_01_rock06", 0.0, 0.5)
-cobble_b = scan("rock_moss_set_02", "rock_moss_set_02_rock12", 0.0, 0.38)
-cobble_c = scan("rock_moss_set_01", "rock_moss_set_01_rock02", 0.0, 0.3)
+cobble_a = scan("rock_moss_set_01", "rock_moss_set_01_rock06", 0.0, 0.5, 0.25)
+cobble_b = scan("rock_moss_set_02", "rock_moss_set_02_rock12", 0.0, 0.38, 0.25)
+cobble_c = scan("rock_moss_set_01", "rock_moss_set_01_rock02", 0.0, 0.3, 0.25)
 log_a = scan("dead_tree_trunk", "", 0.0, 3.6)
 log_b = scan("dead_tree_trunk_02", "", 0.0, 4.6)
 stump_a = scan("tree_stump_01", "", 0.0, 1.2)
@@ -228,7 +228,7 @@ tile_c = grass_tile(73, 640, mid_a, tall_c, large_a)
 
 # ---- placement on the near level. Rules read the soft masks, the slope, the distance to the channel's edge (river_sd, metres,
 # negative in the water) and absolute elevation. `hero` is 1 around the hero reach and 0 far from it. ----
-ATTRS = "slope_deg elev river_sd chan hero w_ground_forest w_ground_flat w_ground_dirt w_ground_gravel w_ground_rock w_ground_snow w_ground_bed w_ground_bank"
+ATTRS = "slope_deg elev river_sd water_y chan hero w_ground_forest w_ground_flat w_ground_dirt w_ground_gravel w_ground_rock w_ground_snow w_ground_bed w_ground_bank"
 def spots_on(surface, count, min_dist, seed, smin, smax):
     p = scatter_poisson(surface, count=count, min_dist=min_dist, seed=seed, pscale_min=smin, pscale_max=smax)
     return attribute_transfer(p, surface, attribs=ATTRS)
@@ -257,17 +257,37 @@ seedling_pts = keep(spots(22000, 3.2, 24, 0.7, 1.6), "t5", "@w_ground_forest > 0
 fern_pts = keep(spots(22000, 2.6, 25, 0.7, 1.3), "t6", "@w_ground_forest > 0.35 && @slope_deg < 28.0 && @river_sd > 1.0 && @hero < 0.6")
 meadow_pts = keep(spots(40000, 2.8, 26, 0.8, 1.3), "t7", "(@w_ground_flat > 0.3 || @w_ground_dirt > 0.3) && @slope_deg < 30.0 && @river_sd > 0.6 && @hero < 0.55")
 flower_pts = keep(spots(12000, 3.0, 27, 0.7, 1.3), "t8", "@w_ground_flat > 0.55 && @slope_deg < 16.0 && @river_sd > 2.0")
-rock_pts = keep(spots(9000, 5.0, 31, 0.6, 1.7), "t9", "@w_ground_gravel > 0.25 || (@w_ground_rock > 0.1 && @slope_deg < 44.0 && @w_ground_snow < 0.3)")
-shore_rock_pts = keep(spots(9000, 3.4, 32, 0.6, 1.8), "ta", "@river_sd > -3.0 && @river_sd < 4.0 && @chan > 0.5 && @hero < 0.7")
+rock_pts = keep(spots(9000, 5.0, 31, 0.6, 1.7), "t9", "(@w_ground_gravel > 0.25 || (@w_ground_rock > 0.1 && @slope_deg < 44.0 && @w_ground_snow < 0.3)) && @slope_deg < 34.0 && (@water_y - @P.y) < 0.2 * @pscale")
+shore_rock_pts = keep(spots(9000, 3.4, 32, 0.6, 1.8), "ta", "@river_sd > -3.0 && @river_sd < 4.0 && @chan > 0.5 && @hero < 0.7 && @slope_deg < 30.0 && (@water_y - @P.y) < 0.16 * @pscale")
 deadwood_pts = keep(spots(3000, 13.0, 33, 0.8, 1.2), "tb", "@w_ground_forest > 0.45 && @slope_deg < 22.0 && @river_sd > 0.5")
 
 # the hero reach, dressed at the density an eye-level camera needs
 h_tile_pts = keep(close(6000, 2.1, 41, 0.85, 1.25), "h1", "@river_sd > 0.3 && @slope_deg < 42.0 && @w_ground_bed < 0.15 && @w_ground_bank < 0.6")
 h_fern_pts = keep(close(5000, 1.5, 42, 0.7, 1.4), "h2", "(@w_ground_forest > 0.25 || @slope_deg > 18.0) && @river_sd > 1.6 && @slope_deg < 42.0")
 h_weed_pts = keep(close(5000, 1.4, 43, 0.7, 1.3), "h3", "@river_sd > 0.8 && @river_sd < 16.5 && @slope_deg < 42.0")
-h_cobble_pts = keep(close(26000, 0.42, 44, 0.35, 1.5), "h4", "@river_sd > -3.2 && @river_sd < 2.2 && (@w_ground_bank > 0.15 || @w_ground_bed > 0.3)")
-h_rock_pts = keep(close(1500, 2.6, 45, 0.4, 1.1), "h5", "@river_sd > -4.5 && @river_sd < 5.0 && abs(@P.x - 72.0) > 9.0")
+h_cobble_pts = keep(close(26000, 0.42, 44, 0.35, 1.5), "h4", "@river_sd > -3.2 && @river_sd < 2.2 && (@w_ground_bank > 0.15 || @w_ground_bed > 0.3) && (@water_y - @P.y) < 0.04 * @pscale")
+h_rock_pts = keep(close(1500, 2.6, 45, 0.4, 1.1), "h5", "@river_sd > -4.5 && @river_sd < 5.0 && abs(@P.x - 72.0) > 9.0 && @slope_deg < 30.0 && (@water_y - @P.y) < 0.16 * @pscale")
 h_log_pts = keep(close(160, 9.0, 46, 0.8, 1.3), "h6", "@river_sd > -1.0 && @river_sd < 9.0")
+
+# Ground-aware placement: every object settles onto the LOWEST ground under its footprint (so no side of it hangs in the air on a
+# slope or a bank; the high side is buried instead), and points that would need burying deeper than the limit are dropped. The
+# footprint radius is about 0.45 of the object's width times its pscale. `pt ground-check` is the guard that proves it.
+def settle(points, footprint, limit):
+    s = drop_to_surface(points, land_near, footprint=footprint)
+    return keep(s, "stl", "@settle_drop < " + limit)
+
+rock_pts = settle(rock_pts, 1.0, "0.5")
+shore_rock_pts = settle(shore_rock_pts, 0.5, "0.45")
+h_rock_pts = settle(h_rock_pts, 0.5, "0.45")
+h_cobble_pts = settle(h_cobble_pts, 0.17, "0.15")
+deadwood_pts = settle(deadwood_pts, 1.4, "0.5")
+h_log_pts = settle(h_log_pts, 1.0, "0.5")
+bush_pts = settle(bush_pts, 0.9, "0.6")
+fern_pts = settle(fern_pts, 0.5, "0.4")
+h_fern_pts = settle(h_fern_pts, 0.5, "0.4")
+h_weed_pts = settle(h_weed_pts, 0.35, "0.3")
+meadow_pts = settle(meadow_pts, 1.6, "0.9")
+h_tile_pts = settle(h_tile_pts, 1.6, "0.9")
 
 tall = three(tall_pts, fir_a, young_a, pine_a, 51)
 young = three(young_pts, fir_b, young_b, pine_b, 52)
