@@ -629,17 +629,26 @@ impl Graph {
         };
         let Some(Column::I32(v)) = col else { return Err(format!("no provenance for domain '{domain}'")) };
         let tag = *v.get(index).ok_or_else(|| format!("index {index} out of range (0..{})", v.len()))?;
+        self.creator_json(tag, Some(node)).ok_or_else(|| "creator node no longer exists".to_string())
+    }
+
+    /// What stamped provenance `tag`: the node (or the node inside an asset), its kind and parameters, and, when `to` is given, the
+    /// path of nodes from it to `to`.
+    pub fn creator_json(&self, tag: i32, to: Option<&str>) -> Option<Value> {
         if let Some(creator) = self.nodes.keys().find(|n| tag_of(n) == tag).cloned() {
-            let path = self.path(&creator, node);
             let cn = &self.nodes[&creator];
-            return Ok(json!({"created_by": creator, "kind": cn.kind, "params": cn.params, "path_from_creator": path}));
+            let mut v = json!({"created_by": creator, "kind": cn.kind, "params": cn.params});
+            if let Some(to) = to {
+                v["path_from_creator"] = json!(self.path(&creator, to));
+            }
+            return Some(v);
         }
         for a in self.assets.values() {
             if let Some((n, node)) = a.nodes.iter().find(|(n, _)| tag_of(n) == tag) {
-                return Ok(json!({"created_by": format!("{}/{}", a.name, n), "kind": node.kind, "params": node.params, "inside_asset": a.name}));
+                return Some(json!({"created_by": format!("{}/{}", a.name, n), "kind": node.kind, "params": node.params, "inside_asset": a.name}));
             }
         }
-        Err("creator node no longer exists".into())
+        None
     }
 
     fn path(&self, from: &str, to: &str) -> Vec<String> {

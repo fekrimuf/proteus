@@ -239,7 +239,7 @@ fn in_view(c: &Camera, pos: [f32; 3], radius: f32) -> bool {
 }
 
 /// Paint one marker: a square outline of `half` pixels around (cx, cy).
-fn mark(img: &mut pt_render::Image, cx: f32, cy: f32, half: f32, rgb: [u8; 3]) {
+pub(crate) fn mark(img: &mut pt_render::Image, cx: f32, cy: f32, half: f32, rgb: [u8; 3]) {
     let (x0, x1, y0, y1) = ((cx - half) as i64, (cx + half) as i64, (cy - half) as i64, (cy + half) as i64);
     let mut put = |x: i64, y: i64| {
         for t in 0..3i64 {
@@ -403,20 +403,52 @@ pub fn review_tiles_cmd(args: &[String]) -> Result<(), String> {
     Ok(())
 }
 
+/// How far a far stand-in can matter to a frame: the world's skyline is about this far.
+const FAR_RANGE_M: f32 = 30000.0;
+
+/// Terrain cells (not the far level, which is the skyline and the shadows of the peaks) that no chosen camera can see are dropped
+/// from a look-development render: within `radius` metres of a camera, or inside the view cone at any distance, a cell stays.
+/// Returns (cells kept, cells before) of the terrain that was considered.
+fn crop_terrain(geo: &mut Geometry, cams: &[Camera], radius: f32) -> (usize, usize) {
+    let mats: Vec<bool> = geo.prim_materials().iter().map(|m| m.is_some_and(|m| m.starts_with("terrain") && !m.contains("far"))).collect();
+    let p = geo.p();
+    let near = |q: [f32; 3]| cams.iter().any(|c| ((q[0] - c.x).powi(2) + (q[2] - c.z).powi(2)).sqrt() <= radius || in_view(c, q, FAR_RANGE_M));
+    let keep: Vec<bool> = (0..geo.n_prims()).map(|i| !mats[i] || geo.prim_points(i).iter().any(|&q| near(p[q as usize]))).collect();
+    let (considered, kept) = (mats.iter().filter(|m| **m).count(), (0..mats.len()).filter(|&i| mats[i] && keep[i]).count());
+    if kept == considered {
+        return (kept, considered);
+    }
+    // a point stays when a kept primitive uses it, or when no primitive uses it at all (loose points belong to something else)
+    let mut used = vec![false; geo.n_points()];
+    let mut used_by_kept = vec![false; geo.n_points()];
+    for i in 0..geo.n_prims() {
+        for &q in geo.prim_points(i) {
+            used[q as usize] = true;
+            used_by_kept[q as usize] |= keep[i];
+        }
+    }
+    let point_keep: Vec<bool> = (0..geo.n_points()).map(|q| used_by_kept[q] || !used[q]).collect();
+    *geo = geo.filter(&point_keep, &keep);
+    (kept, considered)
+}
+
 /// Look development: drop every instance the chosen cameras cannot see, so a one-view render of a big world fits in the memory of
 /// a desktop. Kept: everything within `radius` metres of a camera (it can cast shadows into the view), everything inside the view
-/// cone out to four times that, and the far stand-ins (`lod_hint`, a few triangles each). Returns (kept, total).
+/// cone out to four times that, and the far stand-ins (`lod_hint`, a few triangles each) inside the view cone. Returns (kept, total).
 pub fn cull_to_view(geo: &mut Geometry, cams: &[Camera], radius: f32) -> (usize, usize) {
+    let (cells, before) = crop_terrain(geo, cams, radius);
+    eprintln!("  terrain cells in view: {cells} of {before}");
     let Some(inst) = geo.instances.as_ref() else { return (0, 0) };
     let total = inst.len();
     let far_standin: Vec<bool> = inst.protos.iter().map(|p| pt_core::lod::hinted_cull(p).is_some()).collect();
     let keep: Vec<u32> = (0..total as u32)
         .filter(|&k| {
             let k = k as usize;
-            if far_standin[inst.proto_id[k] as usize] {
-                return true;
-            }
             let pos = [inst.xf[k][3], inst.xf[k][7], inst.xf[k][11]];
+            if far_standin[inst.proto_id[k] as usize] {
+                // a far stand-in matters only where the camera looks, at any distance (200 000 of them are 4 million triangles)
+                return cams.iter().any(|c| in_view(c, pos, FAR_RANGE_M));
+            }
             cams.iter().any(|c| {
                 let d = ((pos[0] - c.x).powi(2) + (pos[2] - c.z).powi(2)).sqrt();
                 d <= radius || in_view(c, pos, radius * 4.0)

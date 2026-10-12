@@ -12,6 +12,7 @@ pub mod judge_bench;
 pub mod lowload;
 pub mod matchcmd;
 pub mod mcp;
+pub mod pick;
 pub mod top;
 pub mod ui;
 pub mod recipes;

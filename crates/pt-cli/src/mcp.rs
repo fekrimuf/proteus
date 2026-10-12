@@ -48,6 +48,7 @@ fn tool_defs() -> Value {
         t("cook", "Cook a node; returns geometry stats (counts, bounds, attribute min/max/mean, instances) and cache stats.", json!({"node": str_()}), json!(["node"])),
         t("validate", "Cook a node and check it: NaNs, bad indices, degenerate faces, non-manifold edges, scale sanity, instances. Each issue has a fix hint.", json!({"node": str_()}), json!(["node"])),
         t("explain", "Which node created point/primitive/instance #index of a node's output, and the path to it (needs provenance on).", json!({"node": str_(), "domain": str_(), "index": {"type": "integer"}}), json!(["node", "domain", "index"])),
+        t("pick", "What is at pixel (x, y) of a frame from a standing scene camera, and what made it? Casts the camera ray into the cooked world (CPU, no render): returns the prototype and instance number under the pixel, the node and parameters that placed it (provenance), its height above the ground, and what ground-check flags. radius > 0 also counts the classes of object within that many pixels (so 'that patch of moss' names its node, not one stone). frame_size = [w, h] of the picture the pixel refers to (default 1920 x 1080).", json!({"node": str_(), "scene": {"description": "scene object or path of a scene .json with `cameras`"}, "camera": str_(), "x": {"type": "number"}, "y": {"type": "number"}, "radius": {"type": "number"}, "frame_size": {"type": "array", "items": {"type": "integer"}}}), json!(["node", "scene", "camera", "x", "y"])),
         t("render_preview", "Render a PNG preview you can look at. mode: shaded|wire|height|<attribute name>; sheet=true gives 4 views. Large instance sets are subsampled (reported).", json!({"node": str_(), "mode": str_(), "azimuth": {"type": "number"}, "elevation": {"type": "number"}, "width": {"type": "integer"}, "height": {"type": "integer"}, "sheet": {"type": "boolean"}, "path": str_()}), json!(["node"])),
         t("export", "Cook a node and write it to disk. format: obj | gltf | glb | usda (USD with native PointInstancer) | ptgeo. Material names from set_material are kept (glTF materials, USD GeomSubset bindings, OBJ usemtl); instances stay instances.", json!({"node": str_(), "path": str_(), "format": str_()}), json!(["node", "path"])),
         t("run_hcs", "Run an hcs program (Python syntax; see get_guide). Replaces the scene unless replace=false; a failed run changes nothing. Returns outputs' stats, flow diagnostics, spec results.", json!({"code": str_(), "replace": {"type": "boolean"}}), json!(["code"])),
@@ -329,6 +330,21 @@ impl Session {
                 let idx = a.get("index").and_then(Value::as_u64).ok_or("missing 'index'")? as usize;
                 j(self.graph.explain(s(a, "node")?, s(a, "domain")?, idx)?)
             }
+            "pick" => {
+                // what is at this pixel of a frame, and what made it: a camera ray cast on the cooked world (no render)
+                let node = s(a, "node")?;
+                let scene = scene_arg(a)?;
+                let size = match a.get("frame_size").and_then(Value::as_array) {
+                    Some(v) if v.len() == 2 => (v[0].as_u64().unwrap_or(1920) as usize, v[1].as_u64().unwrap_or(1080) as usize),
+                    _ => (1920, 1080),
+                };
+                let num = |k: &str| a.get(k).and_then(Value::as_f64).ok_or_else(|| format!("missing '{k}'"));
+                let opts = crate::pick::PickOpts { camera: s(a, "camera")?, x: num("x")? as f32, y: num("y")? as f32, size, radius_px: a.get("radius").and_then(Value::as_f64).unwrap_or(0.0) as f32 };
+                if !self.graph.provenance {
+                    self.graph.provenance = true;
+                }
+                j(crate::pick::pick(&mut self.graph, node, &scene, &opts)?)
+            }
             "render_preview" => {
                 let g = self.graph.cook(s(a, "node")?)?;
                 let mode = match a.get("mode").and_then(Value::as_str).unwrap_or("shaded") {
@@ -390,12 +406,7 @@ impl Session {
             "render_scene" => {
                 let node = s(a, "node")?;
                 let geo = self.graph.cook(node)?;
-                let scene = match a.get("scene") {
-                    None | Some(Value::Null) => json!({}),
-                    Some(Value::String(p)) => serde_json::from_str(std::fs::read_to_string(p).map_err(|e| format!("{p}: {e}"))?.trim_start_matches('\u{feff}')).map_err(|e| format!("{p}: {e}"))?,
-                    Some(v) if v.is_object() => v.clone(),
-                    Some(_) => return Err("scene must be an object or a path to a .json file".into()),
-                };
+                let scene = scene_arg(a)?;
                 let out = std::path::PathBuf::from(a.get("path").and_then(Value::as_str).map_or_else(|| format!("out/render/mcp_{node}.png"), String::from));
                 let opts = crate::blender::Opts { quick: a.get("quick").and_then(Value::as_bool).unwrap_or(false), samples: a.get("samples").and_then(Value::as_u64).map(|n| n as u32), keep: None, lod: a.get("lod").and_then(Value::as_bool).unwrap_or(false), only: None };
                 let report = crate::blender::render_geometry(&geo, &format!("mcp_{node}"), scene, &out, &opts)?;
@@ -716,6 +727,16 @@ const RECIPES: &[(&str, &str)] = &[
     ("25_carved_boulder", include_str!("../../../recipes/25_carved_boulder.hcs")),
     ("26_clearing_planted_by_asking", include_str!("../../../recipes/26_clearing_planted_by_asking.hcs")),
 ];
+
+/// The `scene` argument of a tool: an object, or the path of a scene `.json` file (none = an empty scene).
+fn scene_arg(a: &Value) -> Result<Value, String> {
+    match a.get("scene") {
+        None | Some(Value::Null) => Ok(json!({})),
+        Some(Value::String(p)) => serde_json::from_str(std::fs::read_to_string(p).map_err(|e| format!("{p}: {e}"))?.trim_start_matches('\u{feff}')).map_err(|e| format!("{p}: {e}")),
+        Some(v) if v.is_object() => Ok(v.clone()),
+        Some(_) => Err("scene must be an object or a path to a .json file".into()),
+    }
+}
 
 fn parse_space(a: &Value) -> Result<Vec<pt_opt::ParamRef>, String> {
     let list = a.get("params").and_then(Value::as_array).ok_or("missing 'params' array")?;

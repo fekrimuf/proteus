@@ -98,6 +98,27 @@ spaced = wrangle(kept, kept, code="@pscale *= 1.0 - 0.07 * clamp(near_count(@P, 
 * **Stand on the ground with a ray, not a guess**: `ray_pos(@P + {0.0, 100.0, 0.0}, {0.0, -1.0, 0.0})` is the surface height under a
   point on any mesh (`drop_to_surface` is the same idea for heightfields and also settles a footprint).
 
+## What is at this pixel? (`pick`)
+
+When the owner (or you) points at a frame ("that moss floats", "this rock is orange"), do not hunt for the object: ask.
+`pick` casts the camera's ray through the pixel into the cooked world on the CPU (no render, no GPU) and answers in one call:
+
+```
+pt pick scenes/cascade.hcs scenes/cascade.scene.json east 1210 640 --frame out/lookdev/east.png [--radius 40] [--annotate pick.png]
+MCP:   pick(node, scene, camera, x, y, radius?, frame_size?)
+```
+
+* The result names the **prototype** (materials, triangles, far stand-in or not), the **instance number**, the **node that placed it with its
+  parameters** (provenance: for scattered things this is the scatter node, so the fix goes to the rule, not the object), the node that made
+  the prototype, its attributes (`pscale`, `N`, `settle_drop`...), its origin's height above the terrain, and what `ground-check` says
+  about it (`float`, `overhang`, `shallow`, `buried`). A pixel on terrain or water names the material, slope and the node that built it.
+  The first output line is one plain sentence.
+* `--radius PX` also lists the **classes of object** within that many pixels with their share, nearest example and flags: "that patch" is
+  one node and one prototype, so fix the class (a rule or an engine node plus a check), never one instance.
+* Pixel coordinates refer to the frame's own size: pass `--frame` (the PNG you were looking at; its size is read) or `--size WxH`; quick
+  renders are half size. A camera must be a standing one (`eye` in the scene file). Hits use the geometry of the cooked world, so an
+  alpha-cut leaf card counts as a hit where its texture is clear.
+
 ## Technique notes
 
 * **Scale**: model in real meters (door 2.0, person 1.8, stair rise 0.18). Add a `height` spec.

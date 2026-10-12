@@ -152,6 +152,7 @@ fn main() {
         Some("status") => pt_cli::docs::status_cmd(&args[2..]),
         Some("ground-check") => pt_cli::grounding::ground_check_cmd(&args[2..]),
         Some("review-tiles") => pt_cli::grounding::review_tiles_cmd(&args[2..]),
+        Some("pick") => pt_cli::pick::pick_cmd(&args[2..]),
         Some("docs-check") => pt_cli::docs::check_cmd(&args[2..]),
         Some("trace") => trace_cmd(&args[2..]),
         Some("sparse-bench") => sparse_bench_cmd(),

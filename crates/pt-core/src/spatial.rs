@@ -133,8 +133,8 @@ impl PointTree {
 // Surface: a triangle BVH with closest-point and ray queries
 // ---------------------------------------------------------------------------------------------
 
-/// A point on a surface: where, how far, the face normal (turned toward the asker), and the triangle's three point ids with the
-/// barycentric weights of the hit (so a point attribute can be interpolated there).
+/// A point on a surface: where, how far, the face normal (turned toward the asker), the triangle's three point ids with the
+/// barycentric weights of the hit (so a point attribute can be interpolated there), and the primitive the triangle came from.
 #[derive(Clone, Copy, Debug)]
 pub struct SurfHit {
     pub dist: f32,
@@ -142,6 +142,7 @@ pub struct SurfHit {
     pub n: V3,
     pub pts: [u32; 3],
     pub bary: [f32; 3],
+    pub prim: u32,
 }
 
 struct Node {
@@ -155,6 +156,7 @@ struct Node {
 
 pub struct SurfaceTree {
     ids: Vec<[u32; 3]>,
+    prim: Vec<u32>,
     v: Vec<[V3; 3]>,
     nodes: Vec<Node>,
 }
@@ -222,12 +224,22 @@ impl SurfaceTree {
     /// `None` when there is no triangle with an area.
     pub fn new(g: &Geometry) -> Option<SurfaceTree> {
         let p = g.p();
-        let mut ids: Vec<[u32; 3]> = g.triangles().into_iter().filter(|t| t.iter().all(|&i| (i as usize) < p.len())).collect();
-        ids.retain(|t| {
-            let (a, b, c) = (p[t[0] as usize], p[t[1] as usize], p[t[2] as usize]);
-            let n = cross(sub(b, a), sub(c, a));
-            dot(n, n) > 1e-24
-        });
+        let (mut ids, mut prim_of): (Vec<[u32; 3]>, Vec<u32>) = (Vec::new(), Vec::new());
+        for i in 0..g.n_prims() {
+            let pr = g.prim_points(i);
+            for k in 1..pr.len().saturating_sub(1) {
+                let t = [pr[0], pr[k], pr[k + 1]];
+                if t.iter().any(|&q| q as usize >= p.len()) {
+                    continue;
+                }
+                let (a, b, c) = (p[t[0] as usize], p[t[1] as usize], p[t[2] as usize]);
+                let n = cross(sub(b, a), sub(c, a));
+                if dot(n, n) > 1e-24 {
+                    ids.push(t);
+                    prim_of.push(i as u32);
+                }
+            }
+        }
         if ids.is_empty() {
             return None;
         }
@@ -241,9 +253,10 @@ impl SurfaceTree {
         let mut order: Vec<u32> = (0..ids.len() as u32).collect();
         let mut nodes = Vec::with_capacity(ids.len() / 2 + 2);
         Self::build(p, &ids, &cent, &mut order, 0, &mut nodes);
+        let prim: Vec<u32> = order.iter().map(|&i| prim_of[i as usize]).collect();
         let ids: Vec<[u32; 3]> = order.iter().map(|&i| ids[i as usize]).collect();
         let v = ids.iter().map(|t| [p[t[0] as usize], p[t[1] as usize], p[t[2] as usize]]).collect();
-        Some(SurfaceTree { ids, v, nodes })
+        Some(SurfaceTree { ids, prim, v, nodes })
     }
 
     fn build(p: &[V3], ids: &[[u32; 3]], cent: &[V3], order: &mut [u32], base: usize, nodes: &mut Vec<Node>) -> u32 {
@@ -336,7 +349,7 @@ impl SurfaceTree {
         if dot(n, sub(q, pos)) < 0.0 {
             n = [-n[0], -n[1], -n[2]];
         }
-        SurfHit { dist: dd.sqrt(), pos, n, pts: self.ids[t], bary: bary_of(pos, a, b, c) }
+        SurfHit { dist: dd.sqrt(), pos, n, pts: self.ids[t], bary: bary_of(pos, a, b, c), prim: self.prim[t] }
     }
 
     /// The first surface met by the ray from `o` along `d` (any length; zero gives `None`), either side of a triangle. The
@@ -354,7 +367,7 @@ impl SurfaceTree {
         while sp > 0 {
             sp -= 1;
             let n = &self.nodes[stack[sp] as usize];
-            if !slab(&n.lo, &n.hi, o, d, best.0) {
+            if slab(&n.lo, &n.hi, o, d, best.0).is_none() {
                 continue;
             }
             if n.count > 0 {
@@ -379,17 +392,17 @@ impl SurfaceTree {
         if dot(nrm, d) > 0.0 {
             nrm = [-nrm[0], -nrm[1], -nrm[2]];
         }
-        Some(SurfHit { dist: t, pos: [o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t], n: nrm, pts: self.ids[i], bary: [1.0 - u - v, u, v] })
+        Some(SurfHit { dist: t, pos: [o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t], n: nrm, pts: self.ids[i], bary: [1.0 - u - v, u, v], prim: self.prim[i] })
     }
 }
 
-/// Does the ray (unit direction) cross the box before `tmax`?
-fn slab(lo: &V3, hi: &V3, o: V3, d: V3, tmax: f32) -> bool {
+/// Where the ray (unit direction) enters the box, if it does so before `tmax` (0 when it starts inside).
+fn slab(lo: &V3, hi: &V3, o: V3, d: V3, tmax: f32) -> Option<f32> {
     let (mut t0, mut t1) = (0.0f32, tmax);
     for a in 0..3 {
         if d[a].abs() < 1e-12 {
             if o[a] < lo[a] || o[a] > hi[a] {
-                return false;
+                return None;
             }
             continue;
         }
@@ -401,10 +414,117 @@ fn slab(lo: &V3, hi: &V3, o: V3, d: V3, tmax: f32) -> bool {
         t0 = t0.max(ta);
         t1 = t1.min(tb);
         if t0 > t1 {
-            return false;
+            return None;
         }
     }
-    true
+    Some(t0)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Boxes: a BVH over axis-aligned boxes (the bounds of instances), visited nearest first by a ray
+// ---------------------------------------------------------------------------------------------
+
+pub struct BoxTree {
+    /// The boxes in tree order, and the index each had in the list given to `new`.
+    boxes: Vec<(V3, V3)>,
+    order: Vec<u32>,
+    nodes: Vec<Node>,
+}
+
+impl BoxTree {
+    pub fn new(boxes: &[(V3, V3)]) -> BoxTree {
+        let mut order: Vec<u32> = (0..boxes.len() as u32).collect();
+        let cent: Vec<V3> = boxes.iter().map(|(lo, hi)| [(lo[0] + hi[0]) * 0.5, (lo[1] + hi[1]) * 0.5, (lo[2] + hi[2]) * 0.5]).collect();
+        let mut nodes = Vec::with_capacity(boxes.len() / 2 + 2);
+        if !boxes.is_empty() {
+            Self::build(boxes, &cent, &mut order, 0, &mut nodes);
+        }
+        let ordered = order.iter().map(|&i| boxes[i as usize]).collect();
+        BoxTree { boxes: ordered, order, nodes }
+    }
+
+    fn build(boxes: &[(V3, V3)], cent: &[V3], order: &mut [u32], base: usize, nodes: &mut Vec<Node>) -> u32 {
+        let (mut lo, mut hi) = ([f32::INFINITY; 3], [f32::NEG_INFINITY; 3]);
+        let (mut clo, mut chi) = ([f32::INFINITY; 3], [f32::NEG_INFINITY; 3]);
+        for &i in order.iter() {
+            let (bl, bh) = boxes[i as usize];
+            for a in 0..3 {
+                lo[a] = lo[a].min(bl[a]);
+                hi[a] = hi[a].max(bh[a]);
+                clo[a] = clo[a].min(cent[i as usize][a]);
+                chi[a] = chi[a].max(cent[i as usize][a]);
+            }
+        }
+        let me = nodes.len() as u32;
+        if order.len() <= 4 {
+            nodes.push(Node { lo, hi, left: base as u32, right: 0, count: order.len() as u32 });
+            return me;
+        }
+        nodes.push(Node { lo, hi, left: 0, right: 0, count: 0 });
+        let ext = [chi[0] - clo[0], chi[1] - clo[1], chi[2] - clo[2]];
+        let axis = if ext[0] >= ext[1] && ext[0] >= ext[2] { 0 } else if ext[1] >= ext[2] { 1 } else { 2 };
+        let mid = order.len() / 2;
+        order.select_nth_unstable_by(mid, |&a, &b| cent[a as usize][axis].total_cmp(&cent[b as usize][axis]).then(a.cmp(&b)));
+        let (l, r) = order.split_at_mut(mid);
+        let left = Self::build(boxes, cent, l, base, nodes);
+        let right = Self::build(boxes, cent, r, base + mid, nodes);
+        nodes[me as usize].left = left;
+        nodes[me as usize].right = right;
+        me
+    }
+
+    pub fn len(&self) -> usize {
+        self.boxes.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.boxes.is_empty()
+    }
+
+    /// Walks the boxes a ray (unit direction) enters, nearest first. `f(index, enter)` tests what is inside box `index` and
+    /// returns the distance along the ray where it is hit, if it is; the walk stops once no unvisited box can be nearer. Returns
+    /// the nearest (index, distance).
+    pub fn ray(&self, o: V3, d: V3, tmax: f32, f: &mut dyn FnMut(u32, f32) -> Option<f32>) -> Option<(u32, f32)> {
+        if self.nodes.is_empty() {
+            return None;
+        }
+        let mut best: Option<(u32, f32)> = None;
+        let mut limit = tmax;
+        let mut stack: Vec<(u32, f32)> = vec![(0, 0.0)];
+        while let Some((ni, enter)) = stack.pop() {
+            if enter > limit {
+                continue;
+            }
+            let n = &self.nodes[ni as usize];
+            if n.count > 0 {
+                for i in n.left..n.left + n.count {
+                    let (lo, hi) = self.boxes[i as usize];
+                    let Some(e) = slab(&lo, &hi, o, d, limit) else { continue };
+                    if let Some(t) = f(self.order[i as usize], e) {
+                        if best.is_none_or(|b| t < b.1) {
+                            limit = limit.min(t);
+                            best = Some((self.order[i as usize], t));
+                        }
+                    }
+                }
+            } else {
+                let (l, r) = (&self.nodes[n.left as usize], &self.nodes[n.right as usize]);
+                let (el, er) = (slab(&l.lo, &l.hi, o, d, limit), slab(&r.lo, &r.hi, o, d, limit));
+                // push the farther child first so the nearer one is popped next
+                match (el, er) {
+                    (Some(a), Some(b)) => {
+                        let (far, near) = if a <= b { ((n.right, b), (n.left, a)) } else { ((n.left, a), (n.right, b)) };
+                        stack.push(far);
+                        stack.push(near);
+                    }
+                    (Some(a), None) => stack.push((n.left, a)),
+                    (None, Some(b)) => stack.push((n.right, b)),
+                    (None, None) => {}
+                }
+            }
+        }
+        best
+    }
 }
 
 /// Moller-Trumbore, either side. Returns (distance, u, v). A hair of tolerance on the edges so a ray through a shared edge of a
@@ -500,6 +620,38 @@ mod tests {
             let back = [0, 1, 2].map(|c| (0..3).map(|k| p[h.pts[k] as usize][c] * h.bary[k]).sum::<f32>());
             assert!(d2(back, h.pos) < 1e-8, "barycentric weights rebuild the point");
         }
+    }
+
+    #[test]
+    fn surface_hits_name_their_primitive() {
+        let g = bumpy_grid();
+        let tree = SurfaceTree::new(&g).unwrap();
+        // the quad at column x, row z is primitive z * 24 + x; a ray above (3.3, 4.1) lands in column 6, row 8
+        let h = tree.ray([3.3, 50.0, 4.1], [0.0, -1.0, 0.0]).unwrap();
+        assert_eq!(h.prim, 8 * 24 + 6);
+        assert_eq!(tree.closest([h.pos[0], h.pos[1] + 0.01, h.pos[2]]).prim, 8 * 24 + 6);
+    }
+
+    #[test]
+    fn box_tree_returns_the_nearest_hit_and_stops_early() {
+        // a row of unit boxes along x; each hides a sphere of radius 0.3 at its centre
+        let boxes: Vec<(V3, V3)> = (0..40).map(|i| ([i as f32 * 2.0, -0.5, -0.5], [i as f32 * 2.0 + 1.0, 0.5, 0.5])).collect();
+        let tree = BoxTree::new(&boxes);
+        let mut visited = Vec::new();
+        let mut inside = |i: u32, _enter: f32| {
+            visited.push(i);
+            // the ray runs along +x at y = 0: it meets the sphere of box i at its centre minus the radius
+            Some(i as f32 * 2.0 + 0.5 - 0.3)
+        };
+        let hit = tree.ray([-5.0, 0.0, 0.0], [1.0, 0.0, 0.0], f32::INFINITY, &mut inside).unwrap();
+        assert_eq!(hit.0, 0);
+        assert!((hit.1 - 0.2).abs() < 1e-5);
+        assert!(visited.len() <= 8, "the walk must stop near the first hit, visited {}", visited.len());
+        // a ray that misses every box
+        assert!(tree.ray([-5.0, 3.0, 0.0], [1.0, 0.0, 0.0], f32::INFINITY, &mut |_, _| Some(0.0)).is_none());
+        // a test that rejects the first boxes lets the walk continue to the next
+        let hit = tree.ray([-5.0, 0.0, 0.0], [1.0, 0.0, 0.0], f32::INFINITY, &mut |i, _| (i >= 5).then_some(i as f32 * 2.0 + 0.2)).unwrap();
+        assert_eq!(hit.0, 5);
     }
 
     #[test]
