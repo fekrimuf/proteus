@@ -379,10 +379,13 @@ pub fn pick_cmd(args: &[String]) -> Result<(), String> {
     let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
     let node = rep.outputs.first().ok_or("recipe has no out()")?.clone();
     let mut all = Vec::new();
-    for &(px, py) in &points {
-        let r = pick(&mut g, &node, &scene, &PickOpts { camera, x: px, y: py, size, radius_px: radius })?;
-        println!("{}", r["summary"].as_str().unwrap_or(""));
-        all.push(r);
+    // `camera` may be a comma-separated list: the same pixels asked of several cameras in one cook (to compare candidate viewpoints)
+    for cam in camera.split(',') {
+        for &(px, py) in &points {
+            let r = pick(&mut g, &node, &scene, &PickOpts { camera: cam, x: px, y: py, size, radius_px: radius })?;
+            println!("{}", r["summary"].as_str().unwrap_or(""));
+            all.push(r);
+        }
     }
     let shown = if all.len() == 1 { all[0].clone() } else { Value::Array(all) };
     println!("{}", serde_json::to_string_pretty(&shown).map_err(|e| e.to_string())?);

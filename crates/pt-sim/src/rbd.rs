@@ -125,11 +125,13 @@ pub struct SettleParams {
     pub friction: f32,
     pub restitution: f32,
     pub density: f32,
+    /// Angular damping: resistance to rolling. 0 lets a log roll down any slope; dressing wants them to stay.
+    pub rolling: f32,
 }
 
 impl Default for SettleParams {
     fn default() -> Self {
-        SettleParams { frames: 240, fps: 60.0, substeps: 2, gravity: [0.0, -9.81, 0.0], friction: 0.8, restitution: 0.05, density: 1500.0 }
+        SettleParams { frames: 300, fps: 60.0, substeps: 2, gravity: [0.0, -9.81, 0.0], friction: 0.8, restitution: 0.05, density: 1500.0, rolling: 6.0 }
     }
 }
 
@@ -167,7 +169,7 @@ pub fn settle(bodies: &[Body], ground_pts: &[[f32; 3]], ground_tris: &[[u32; 3]]
     for b in bodies {
         let local: Vec<Vector> = b.hull.iter().map(|p| Vector::new(p[0], p[1], p[2])).collect();
         let body = set.insert(
-            RigidBodyBuilder::dynamic().translation(Vector::new(b.origin[0], b.origin[1], b.origin[2])).linear_damping(0.4).angular_damping(1.5).ccd_enabled(true),
+            RigidBodyBuilder::dynamic().translation(Vector::new(b.origin[0], b.origin[1], b.origin[2])).linear_damping(0.5).angular_damping(prm.rolling.max(0.0)).ccd_enabled(true),
         );
         let shape = ColliderBuilder::convex_hull(&local).unwrap_or_else(|| {
             let (mut lo, mut hi) = ([f32::INFINITY; 3], [f32::NEG_INFINITY; 3]);

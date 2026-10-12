@@ -1,8 +1,8 @@
 {
   "mean": {
-    "null_agent": 0.4366190476190474,
+    "null_agent": 0.4349069767441858,
     "oracle": 1.0,
-    "perturbed": 0.7309761904761903
+    "perturbed": 0.7323023255813952
   },
   "tasks": [
     {
@@ -251,6 +251,14 @@
       "oracle": 1.0,
       "perturbed_best_of_3": 0.788,
       "task": "26_clearing_planted_by_asking",
+      "tier": "T3"
+    },
+    {
+      "kind": "build",
+      "null_agent": 0.363,
+      "oracle": 1.0,
+      "perturbed_best_of_3": 0.788,
+      "task": "27_woodpile_and_stones",
       "tier": "T3"
     },
     {

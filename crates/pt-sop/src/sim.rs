@@ -86,6 +86,17 @@ pub fn schemas() -> Vec<NodeSchema> {
             ps("voxel", json!(0.06), "Voxel size (m); smaller = finer fracture surfaces."),
             ps("padding", json!(0.1), "Margin around the mesh (m)."),
         ]),
+        sch("rbd_settle", "SET DRESSING: lets the instances of input 0 (copy_to_points, array...) fall onto the surface of input 1 (the terrain, a floor, a table: any mesh) and come to rest, so piles of logs, stones, barrels and crates lie the way real things lie, on slopes, against each other, never floating. Each instance becomes a rigid body (convex hull of its prototype) dropped from where it is (at least `gap` metres above the ground under it: raise instances above the ground to drop a pile from heights); the result keeps the instances, with new positions AND turns, plus instance attributes `settle_move` (metres its origin moved) and `settled` (1 = at rest). Not simulated per frame: it returns the resting poses, deterministic. Only the ground near the bodies is used as the collider.", 2, D::None, G::Whole, vec![
+            ps("gap", json!(0.12), "Metres above the ground under each body that it starts from (it falls this far)."),
+            ps("frames", json!(300), "Longest simulation (frames at 60 per second); it stops earlier when everything sleeps."),
+            ps("rolling", json!(6.0), "Resistance to rolling: 0 lets a log roll down any slope like a real one; 6 keeps dressing where it landed."),
+            ps("friction", json!(0.8), "Friction of bodies and ground."),
+            ps("restitution", json!(0.05), "Bounciness."),
+            ps("density", json!(1500.0), "Density (kg/m^3): only matters between bodies that touch."),
+            ps("hull_points", json!(160), "Points per prototype hull (the prototype's points are sampled; more = rounder, slower)."),
+            ps("margin", json!(4.0), "Ground triangles within this many metres of a body are the collider."),
+            ps("drop_lost", json!(1), "1 = remove bodies that did not come to rest or have no ground under them."),
+        ]),
         sch("rbd_sim", "Rigid-body simulation of the disconnected pieces of input 0 (convex hulls, ground plane, optional radial impact).", 1, D::None, G::Whole, vec![
             start(),
             ps("fps", json!(24.0), "Frames per second."),
@@ -115,6 +126,7 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Option<Res> {
         "volume_to_sdf" => inp(0).and_then(|g| volume_to_sdf(g, p)),
         "rbd_shatter" => inp(0).and_then(|g| shatter(g, p)),
         "rbd_sim" => inp(0).and_then(|g| rbd_sim(g, p)),
+        "rbd_settle" => inp(0).and_then(|g| inp(1).and_then(|ground| rbd_settle(g, ground, p))),
         _ => return None,
     })
 }
@@ -382,6 +394,166 @@ fn shatter(src: &Geometry, p: &Params) -> Res {
     Ok(out)
 }
 
+/// The convex shape of a prototype for the physics: its points sampled evenly (and always the extreme ones on every axis, so the
+/// hull keeps its size), at most `n`.
+fn hull_sample(proto: &Geometry, n: usize) -> Vec<[f32; 3]> {
+    let p = proto.p();
+    if p.len() <= n {
+        return p.to_vec();
+    }
+    let mut keep: Vec<usize> = (0..n).map(|i| i * p.len() / n).collect();
+    for a in 0..3 {
+        let (mut lo, mut hi) = (0usize, 0usize);
+        for (i, q) in p.iter().enumerate() {
+            if q[a] < p[lo][a] {
+                lo = i;
+            }
+            if q[a] > p[hi][a] {
+                hi = i;
+            }
+        }
+        keep.push(lo);
+        keep.push(hi);
+    }
+    keep.sort_unstable();
+    keep.dedup();
+    keep.into_iter().map(|i| p[i]).collect()
+}
+
+fn rbd_settle(src: &Geometry, ground: &Geometry, p: &Params) -> Res {
+    use pt_core::spatial::SurfaceTree;
+    const MAX_BODIES: usize = 6000;
+    let inst = src.instances.as_ref().ok_or("rbd_settle: input 0 has no instances (put copy_to_points or array upstream, or realize the objects you want settled into instances)")?;
+    let n = inst.len();
+    if n == 0 {
+        return Ok(src.clone());
+    }
+    if n > MAX_BODIES {
+        return Err(format!("rbd_settle: {n} bodies exceeds the limit of {MAX_BODIES}; settle the hero piles (a group or a region) and scatter the rest"));
+    }
+    let tree = SurfaceTree::new(ground).ok_or("rbd_settle: input 1 has no surface to land on")?;
+    let (gap, margin) = (p.f("gap").max(0.0), p.f("margin").max(0.5));
+    let top = ground.base_bounds().map_or(1000.0, |(_, hi)| hi[1] + 10.0);
+    let hulls: Vec<Vec<[f32; 3]>> = inst.protos.iter().map(|g| hull_sample(g, p.i("hull_points").clamp(8, 1000) as usize)).collect();
+
+    // each body: the hull as it stands (scale and turn of the instance applied), and its origin lifted to `gap` above the ground
+    let lin = |m: &math::Mat34, v: [f32; 3]| [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[4] * v[0] + m[5] * v[1] + m[6] * v[2], m[8] * v[0] + m[9] * v[1] + m[10] * v[2]];
+    let mut bodies = Vec::with_capacity(n);
+    let mut has_ground = vec![true; n];
+    for k in 0..n {
+        let xf = inst.xf[k];
+        let hull: Vec<[f32; 3]> = hulls[inst.proto_id[k] as usize].iter().map(|v| lin(&xf, *v)).collect();
+        let o = [xf[3], xf[7], xf[11]];
+        // the highest ground under the footprint (centre and a ring at half the extent), so no side starts inside a slope
+        let (mut lo_y, mut hx, mut hz) = (f32::INFINITY, 0.0f32, 0.0f32);
+        for h in &hull {
+            lo_y = lo_y.min(h[1]);
+            hx = hx.max(h[0].abs());
+            hz = hz.max(h[2].abs());
+        }
+        let mut gy = f32::NEG_INFINITY;
+        for (sx, sz) in [(0.0, 0.0), (0.5, 0.0), (-0.5, 0.0), (0.0, 0.5), (0.0, -0.5), (0.35, 0.35), (-0.35, 0.35), (0.35, -0.35), (-0.35, -0.35)] {
+            if let Some(h) = tree.ray([o[0] + sx * hx, top, o[2] + sz * hz], [0.0, -1.0, 0.0]) {
+                gy = gy.max(h.pos[1]);
+            } else if sx == 0.0 && sz == 0.0 {
+                break;
+            }
+        }
+        // never lower than where it was put (a pile is dropped from heights), never inside the ground: `gap` above it at least
+        let origin = if gy.is_finite() {
+            [o[0], (gy + gap - lo_y).max(o[1]), o[2]]
+        } else {
+            has_ground[k] = false;
+            o
+        };
+        bodies.push(rbd::Body { hull, origin });
+    }
+
+    // the collider: the ground triangles near the bodies (cells of `margin` metres around every body's origin)
+    let gp = ground.p();
+    let cell = margin.max(2.0);
+    let key = |x: f32, z: f32| ((x / cell).floor() as i32, (z / cell).floor() as i32);
+    let mut wanted: std::collections::HashSet<(i32, i32)> = std::collections::HashSet::new();
+    for b in bodies.iter() {
+        let reach = (b.hull.iter().fold(0.0f32, |m, h| m.max(h[0].abs()).max(h[2].abs())) + margin).max(margin);
+        let (c0, c1) = (key(b.origin[0] - reach, b.origin[2] - reach), key(b.origin[0] + reach, b.origin[2] + reach));
+        for cx in c0.0..=c1.0 {
+            for cz in c0.1..=c1.1 {
+                wanted.insert((cx, cz));
+            }
+        }
+    }
+    let mut remap = vec![u32::MAX; gp.len()];
+    let (mut pts, mut tris) = (Vec::new(), Vec::new());
+    for t in ground.triangles() {
+        let hit = t.iter().any(|&i| wanted.contains(&key(gp[i as usize][0], gp[i as usize][2])));
+        if !hit {
+            continue;
+        }
+        let mut idx = [0u32; 3];
+        for (j, &i) in t.iter().enumerate() {
+            if remap[i as usize] == u32::MAX {
+                remap[i as usize] = pts.len() as u32;
+                pts.push(gp[i as usize]);
+            }
+            idx[j] = remap[i as usize];
+        }
+        tris.push(idx);
+    }
+    if tris.is_empty() {
+        return Err("rbd_settle: no ground near the bodies".into());
+    }
+    let prm = rbd::SettleParams {
+        frames: p.i("frames").clamp(1, 1200) as usize,
+        friction: p.f("friction").clamp(0.0, 2.0),
+        restitution: p.f("restitution").clamp(0.0, 1.0),
+        density: p.f("density").max(1.0),
+        rolling: p.f("rolling"),
+        ..Default::default()
+    };
+    let poses = rbd::settle(&bodies, &pts, &tris, &prm)?;
+
+    // the new transform of instance k: the settled turn applied to the instance's own scale and turn, at the settled position
+    let mut xf = (*inst.xf).clone();
+    let (mut moved, mut rest) = (Vec::with_capacity(n), Vec::with_capacity(n));
+    let top_y = ground.base_bounds().map_or(f32::INFINITY, |(_, hi)| hi[1]);
+    let low_y = ground.base_bounds().map_or(f32::NEG_INFINITY, |(lo, _)| lo[1]);
+    for k in 0..n {
+        let (m, pose) = (xf[k], poses[k]);
+        let l = [[m[0], m[1], m[2]], [m[4], m[5], m[6]], [m[8], m[9], m[10]]];
+        let r = pose.rot;
+        let mut nm = [0.0f32; 12];
+        for i in 0..3 {
+            for j in 0..3 {
+                nm[i * 4 + j] = r[i][0] * l[0][j] + r[i][1] * l[1][j] + r[i][2] * l[2][j];
+            }
+        }
+        nm[3] = pose.pos[0];
+        nm[7] = pose.pos[1];
+        nm[11] = pose.pos[2];
+        let d = [pose.pos[0] - m[3], pose.pos[1] - m[7], pose.pos[2] - m[11]];
+        moved.push((d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt());
+        let ok = has_ground[k] && pose.rest && pose.pos[1] > low_y - 5.0 && pose.pos[1] < top_y + 50.0 && nm.iter().all(|v| v.is_finite());
+        rest.push(if ok { 1.0f32 } else { 0.0 });
+        if has_ground[k] && ok {
+            xf[k] = nm;
+        }
+    }
+    let mut ni = inst.clone();
+    ni.xf = Arc::new(xf);
+    ni.attrs.set("settle_move", Column::from_f32(moved));
+    ni.attrs.set("settled", Column::from_f32(rest.clone()));
+    if p.i("drop_lost") != 0 && rest.iter().any(|r| *r == 0.0) {
+        let keep: Vec<u32> = (0..n as u32).filter(|&k| rest[k as usize] == 1.0).collect();
+        ni.attrs = ni.attrs.gather(&keep);
+        ni.proto_id = Arc::new(keep.iter().map(|&k| inst.proto_id[k as usize]).collect());
+        ni.xf = Arc::new(keep.iter().map(|&k| ni.xf[k as usize]).collect());
+    }
+    let mut g = src.clone();
+    g.instances = Some(ni);
+    Ok(g)
+}
+
 fn rbd_sim(src: &Geometry, p: &Params) -> Res {
     if src.n_prims() == 0 {
         return Err("rbd_sim: input has no polygons".into());
@@ -551,5 +723,52 @@ mod tests {
         assert!(before_min > 1.0 && after_min > -0.05 && after_min < 0.5, "min y {before_min} -> {after_min}");
         assert_eq!(after.n_prims(), pieces.n_prims());
         assert!(after.p().iter().all(|q| q.iter().all(|c| c.is_finite())));
+    }
+
+    /// A bumpy hill with logs scattered over it: after settling, every body lies on the ground (its lowest point touches the
+    /// surface, none is inside it), and a tilted body is turned, not just dropped.
+    #[test]
+    fn rbd_settle_lays_logs_on_a_hill_and_is_deterministic() {
+        let flat = make("grid", &[("size", json!([30.0, 30.0])), ("rows", json!(60)), ("cols", json!(60))]);
+        let hill = run("wrangle", &[("class", json!("point")), ("code", json!("@P.y = 3.0 * exp(-(@P.x * @P.x + @P.z * @P.z) / 60.0) + 0.3 * sin(@P.x * 1.7) * cos(@P.z * 1.3);"))], &[&flat]);
+        let spots = run("scatter_poisson", &[("count", json!(40)), ("min_dist", json!(1.6)), ("seed", json!(4))], &[&make("grid", &[("size", json!([16.0, 16.0]))])]);
+        let spots = run("wrangle", &[("class", json!("point")), ("code", json!("@P.y = 4.0 + @P.x * 0.1;"))], &[&spots]);
+        let log = make("tube", &[("radius", json!(0.18)), ("height", json!(1.8)), ("rows", json!(9)), ("cols", json!(10))]);
+        let log = run("transform", &[("r", json!([0.0, 0.0, 90.0]))], &[&log]);
+        let logs = run("copy_to_points", &[("rot_y_random", json!(360.0)), ("seed", json!(2))], &[&log, &spots]);
+        let all = run("rbd_settle", &[("drop_lost", json!(0))], &[&logs, &hill]);
+        let flags = all.instances.as_ref().unwrap().attrs.get("settled").unwrap().as_f32().unwrap().to_vec();
+        let at_rest = flags.iter().filter(|f| **f == 1.0).count();
+        eprintln!("{} bodies, {} at rest, moves {:?}", flags.len(), at_rest, all.instances.as_ref().unwrap().attrs.get("settle_move").unwrap().as_f32().unwrap().iter().map(|m| (m * 10.0).round() / 10.0).collect::<Vec<_>>());
+        let settled = run("rbd_settle", &[], &[&logs, &hill]);
+        let inst = settled.instances.as_ref().unwrap();
+        assert!(inst.len() >= 30, "most logs come to rest ({at_rest} of {}): {}", flags.len(), inst.len());
+        let ground = pt_core::spatial::SurfaceTree::new(&hill).unwrap();
+        let proto = &inst.protos[0];
+        let mut tilted = 0;
+        for (k, m) in inst.xf.iter().enumerate() {
+            let world: Vec<[f32; 3]> = proto.p().iter().map(|q| math::xform_point(m, *q)).collect();
+            // distance of every point above the ground right under it: nothing deeper than a hair, the lowest touching
+            let gaps: Vec<f32> = world.iter().filter_map(|q| ground.ray([q[0], 50.0, q[2]], [0.0, -1.0, 0.0]).map(|h| q[1] - h.pos[1])).collect();
+            let lowest = gaps.iter().cloned().fold(f32::INFINITY, f32::min);
+            assert!(lowest > -0.06, "log {k} sinks {} into the hill", -lowest);
+            assert!(lowest < 0.12, "log {k} hovers {lowest} above the hill");
+            // the log's axis (its local x) leans with the slope: not everything stays level
+            if m[4].abs() > 0.05 {
+                tilted += 1;
+            }
+            let at = settled.instances.as_ref().unwrap().attrs.get("settled").and_then(|c| c.as_f32().map(|v| v[k]));
+            assert_eq!(at, Some(1.0));
+        }
+        assert!(tilted > 3, "settling turns bodies to lie on the slope ({tilted} tilted)");
+        let again = run("rbd_settle", &[], &[&logs, &hill]);
+        assert_eq!(settled.content_hash(), again.content_hash(), "the same logs settle the same way");
+        // it explains itself when it cannot work
+        let mut p = Params::new();
+        for s in crate::schema("rbd_settle").unwrap().params {
+            p.insert(s.name.into(), s.default);
+        }
+        let err = crate::cook("rbd_settle", &p, &[Some(Arc::new(hill.clone())), Some(Arc::new(hill))]).unwrap_err();
+        assert!(err.contains("no instances"), "{err}");
     }
 }

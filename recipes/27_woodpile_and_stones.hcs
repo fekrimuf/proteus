@@ -1,0 +1,35 @@
+# Logs and stones dropped onto a hillside, resting the way real things rest.
+# Technique: `rbd_settle` is set dressing by physics. The objects are instances (copy_to_points); each becomes a rigid body (the convex
+# hull of its prototype) that falls from where it was put (at least a hand above the ground under it), lands on the second input (the
+# terrain: any mesh), slides, tips and comes to rest on the slope or against its neighbours. The result keeps the instances with new
+# positions AND turns, so a woodpile is dropped from heights and a stone lies in the hollow it fell into, never floating.
+hill = wrangle(grid(size=[30, 30], rows=60, cols=60), code="""
+@P.y = 3.0 * exp(-(@P.x * @P.x + @P.z * @P.z) / 60.0) + 0.3 * sin(@P.x * 1.7) * cos(@P.z * 1.3);
+@Cd = mix(vec3(0.3, 0.45, 0.2), vec3(0.5, 0.45, 0.35), smoothstep(0.0, 3.0, @P.y));
+""")
+ground = normals(hill)
+
+# two woodpiles and a scatter of stones: clusters of points, each point a body, raised so the pile falls from heights
+cluster = scatter_poisson(grid(size=[1.8, 1.8]), count=16, min_dist=0.42, seed=5)
+pile_a = transform(cluster, t=[-6.0, 0.0, 3.0])
+pile_b = transform(cluster, t=[3.0, 0.0, -4.0], r=[0.0, 90.0, 0.0])
+pile_points = merge(pile_a, pile_b)
+raised = wrangle(pile_points, code="@P.y = 4.5 + 0.55 * floor(@ptnum / 5.0);")
+
+log = wrangle(transform(tube(radius=0.16, height=1.6, cols=10), r=[0.0, 0.0, 90.0]), code="@Cd = vec3(0.45, 0.3, 0.18);")
+logs = copy_to_points(log, raised, rot_y_random=360.0, seed=2)
+
+stone_points = scatter_poisson(grid(size=[22, 22]), count=40, min_dist=2.2, seed=9, pscale_min=0.7, pscale_max=1.5)
+stone_up = wrangle(stone_points, code="@P.y = 6.0;")
+stone = wrangle(fit_size(sphere(), size=[0.55, 0.38, 0.45], uniform=0), code="@Cd = vec3(0.5, 0.5, 0.52);")
+stones = copy_to_points(stone, stone_up, rot_y_random=360.0, seed=3)
+
+settled_logs = rbd_settle(logs, ground)
+settled_stones = rbd_settle(stones, ground)
+scene = merge(wrangle(ground, code="@Cd = @Cd;"), settled_logs, settled_stones)
+
+spec(scene, "width", min=29.0, max=31.0)
+spec(scene, "instances", min=40)
+spec(scene, "attribute", name="Cd")
+spec(scene, "finite")
+out(scene)

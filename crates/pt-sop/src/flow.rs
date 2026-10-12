@@ -186,6 +186,21 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             }
             Ok(e)
         }
+        "rbd_settle" => {
+            let mut e = in0();
+            let ground = ins.get(1).cloned().flatten().unwrap_or_default();
+            if !ground.has_surface {
+                return Err(vec![fd("rbd_settle needs a surface to land on (polygons) on input 1", "connect the terrain or floor the objects should rest on")]);
+            }
+            match &mut e.inst {
+                Some(i) => {
+                    i.insert("settle_move".into(), Ty::Float);
+                    i.insert("settled".into(), Ty::Float);
+                }
+                None => return Err(vec![fd("rbd_settle needs instances on input 0", "put copy_to_points or array upstream of it")]),
+            }
+            Ok(e)
+        }
         "sdf_shape" => Ok(GeoEnv { volumes: ["sdf".to_string()].into(), ..Default::default() }),
         "sdf_from_mesh" => {
             let e = in0();
