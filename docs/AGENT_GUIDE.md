@@ -175,6 +175,28 @@ tall_pts = keep(spots(24000 * FOREST, 6.8, 21, 0.8, 1.45), ...)
 * The cooked-world cache of `render-scene` is keyed by the knobs and by everything under `edits/`, so a changed decision or variant is
   never rendered from a stale world.
 
+## Trees made from knobs (`tree_conifer`, `pt gen-texture`)
+
+A forest of scans repeats and carries the shape of someone else's trees. `tree_conifer` grows a conifer from nine proportions, so a spruce,
+a fir, a wind-bent pine and a tree that never grew on Earth are points in one knob space (DECISIONS B16a), and a style can move them.
+
+```python
+fir = tree_conifer(height=24.0, crown_width=0.27, droop=30.0, lift=18.0, crown_power=0.85, whorl_spacing=0.46, branches=8, seed=101)
+pine = tree_conifer(height=11.0, crown_width=0.38, droop=8.0, lift=34.0, crown_power=0.6, seed=107)
+```
+
+* Knobs: `height`, `crown_base` (clear trunk below the first branches, share of height), `crown_width` (longest branch, share of height:
+  spruce 0.2, pine 0.4), `crown_power` (1 = cone, less = fuller), `whorl_spacing`, `branches`, `droop` and `lift` (branch angle at the foot and at the
+  top of the crown), `curl`, `asymmetry`, `gaps`, `lean`, `wobble`, `spray_width/length`, `sprays_per_m`, `detail` (0.4 = a distant tree, 1.5 = hero),
+  `seed` (every tree of the same knobs differs). About 45 000 triangles at detail 1; materials are the roles `bark` and `conifer_needles`.
+* The needle cards carry a picture drawn by the program: `pt gen-texture needles corpus/generated/needles_a.png --seed 3` (RGBA, no scan).
+  The library entry `conifer_needles` has `"kind": "foliage"` (an alpha cut-out card material, double sided, translucent against the sun);
+  LOD treats it as foliage by its name.
+* The creek recipe swaps scans for grown trees with the style knob `tree_source = "generated"` (the world variant `grown`:
+  `pt world worlds/cascade.world.json render OUT.png --variant grown --only east --lookdev`): placement, sizes and the owner's decisions
+  are identical, only the prototypes change.
+* Look in a lab world before a creek-sized render: a few trees, a ground, the sun in front and behind (`out/lookdev/lab/tree.hcs` is the pattern).
+
 ## What is at this pixel? (`pick`)
 
 When the owner (or you) points at a frame ("that moss floats", "this rock is orange"), do not hunt for the object: ask.
