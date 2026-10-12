@@ -1,6 +1,6 @@
 # Project status and handoff (read this first)
 
-Updated: 2026-10-12 (rewritten at every wrap-up, never appended; history goes to [LOG.md](LOG.md))
+Updated: 2026-10-12 (rewritten at every wrap-up, never appended; history goes to [LOG.md](LOG.md)). Roadmap and dates: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) B12.6.
 
 Codename **Proteus**: a free, agent-native, Houdini-class procedural 3D tool in Rust whose north star is an autonomous system that makes a finished AAA world from a short brief, in a style matched or invented and unique to each studio. Index of all documents: [README.md](README.md).
 

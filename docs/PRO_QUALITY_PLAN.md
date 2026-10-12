@@ -441,12 +441,23 @@ right to me". Match distributions, not copies.
 | W3 Second biome | repeat W1 for a different biome (desert, farmland, alpine) with no new human-written rules beyond parameters | passes W1 with parameter changes only | the systems are over-fitted; generalise the rules |
 | W4 Settlement | a small town: street network fitted to public-domain statistics, buildings from the Level 1 generators | owner's blind pair test as W1 | back to Level 1 building generators |
 
-### B12.6 Sizing and the order of proof
+### B12.6 Roadmap and timeline (set 2026-10-12)
 
-Level 1 is weeks of focused work to a first verdict. Levels 2 and 3 are a multi-month program; I cannot give a responsible
-date, which is why every step has a gate and an early probe. The first realistic-looking demo (W1) mostly composes things
-that already exist (terrain erosion nodes, scatter, `drop_to_surface`, CC0 assets, Blender), so it should arrive well before
-the fitted-material and settlement work.
+Dates are plan targets from the measured pace: the project started on 2026-10-09 and has delivered about one gated step per working day (Phase 0, Checkpoint 1, steel thread, engine delivery, vision judges, real elevation, two worlds). Each stage ends in a gate; a gate that misses changes the approach for that stage and moves its dates, not the north star.
+
+| # | Stage (rung) | What it delivers | Gate | Target |
+|---|---|---|---|---|
+| 1 | **Creek world to the owner's picture** (A1) | full creek scorecard, rock colour fix, camera on the lit side, far ring smoothed, engine look closer to the render, terrain statistics row | W1: owner picks our world over a hand-built baseline in 5 of 10 blind pairs; judge brief fit 7 of 10 | 2026-10-20 |
+| 2 | **Generators and style system** (A1) | tree, ground-cover, rock and building-kit families on morphology knobs; style files (extract, blend, mutate, apply, score); Phase 1 mining on 150 more assets and a fresh 50 | two-brief gate (a "sci-fi village" gets no Earth trees); style distinctness gate; repetition under the bar; CC0 share falling | 2026-11-10 |
+| 3 | **Appearance depth** (A1, parallel to 2) | procedural materials fitted to scans, wear, procedural sky, photo-distance judge (FD_DINOv2) | W2: photo distance falls over 3 rounds and beats the flat baseline | 2026-11-20 |
+| 4 | **Systems** (A2 groundwork) | terrain fitted to real statistics (no real tile shipped), mask operators, hierarchical scatter, biome rules, road and river carving, ecology, settlements | W3 second biome by parameters only; W4 small town passes the blind pairs | 2026-12-22 |
+| 5 | **Autonomous director** (A2) | art bible compiler, world planner (blockout and navmesh), playtest bots, closed repair loop, scene composer | C6: one square kilometre from a brief and an approved art bible; scorecard all green; blind comparison with a hand-made slice | 2027-01-31 |
+| 6 | **World scale** (A3) | several slices joined, streaming and HLOD, seam and coherence tests, engine bridge (Godot now, Unreal when licence terms are confirmed) | a 10 km world from one brief, walkable end to end, scorecard green | 2027-03-31 |
+| 7 | **One paragraph in, finished world out** (A4) | learned proposer trained locally ($0) on the generators' data, hero landmarks, remaining modules (animation, audio, story) behind the same brief | A4 trial: three unseen briefs in three styles, owner vetoes at most 1 in 3 | 2027-06-30 |
+
+Critical path: 1, 2, 4, 5, 6, 7. Stage 3 runs beside stage 2 and feeds stage 5's art bible. Accelerators already queued: a look-development render under a minute (cuts every loop), a timeout on the engine referee, and the tiled exporter.
+
+Needed from the owner: the 10 blind pairs by 2026-10-20 (about 10 minutes); 30 taste taps a month from November; a CC-BY yes or no by 2026-11-01 (default until then: CC0 only); the product name before any public release.
 
 ## B13. Track C: the autonomous world compiler and the AAA Readiness Scorecard
 
