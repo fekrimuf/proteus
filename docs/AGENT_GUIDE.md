@@ -98,6 +98,31 @@ spaced = wrangle(kept, kept, code="@pscale *= 1.0 - 0.07 * clamp(near_count(@P, 
 * **Stand on the ground with a ray, not a guess**: `ray_pos(@P + {0.0, 100.0, 0.0}, {0.0, -1.0, 0.0})` is the surface height under a
   point on any mesh (`drop_to_surface` is the same idea for heightfields and also settles a footprint).
 
+## Set dressing by physics (`rbd_settle`, draped cloth, hanging rope)
+
+Real things rest where they fell. Do not place a log pile by hand or by slope rules: drop it.
+
+```python
+logs = copy_to_points(log, raised_points, rot_y_random=360.0)    # instances; origins raised so a pile falls from heights
+lying = rbd_settle(logs, ground)                                 # rigid bodies onto ANY mesh: resting poses (position and turn)
+```
+
+`recipes/27_woodpile_and_stones.hcs` is the worked example (two woodpiles and stones on a hill). Each instance becomes a body (the convex
+hull of its prototype, sampled to `hull_points`), falls from where it was put (never lower than `gap` above the ground under it), lands on
+input 1, slides, tips and rests on the slope or against its neighbours. The output keeps the instances with new positions **and turns**
+and adds instance attributes `settle_move` and `settled`; bodies that never came to rest, or have no ground under them, are removed
+(`drop_lost=0` keeps them for inspection). It returns resting poses, not frames: the result is the same at every frame and
+deterministic. Only the ground within `margin` metres of a body is the collider, so a whole terrain is fine. Limits that shape its use:
+at most 6000 bodies per node (settle the hero piles, scatter the rest), convex hulls (a barrel is a barrel, a bowl is a puck),
+`rolling` 6 keeps logs from rolling off (0 lets them roll like real ones).
+
+* **Cloth draped over something** (a tarp on a cart, a cloth on a table): `cloth_sim(sheet, sdf_from_mesh(thing, voxel=0.04, padding=0.4))`
+  at a later frame (`frame(100)`); the sheet falls onto the collider and stays on it. Pin points with `pin_group` for banners.
+* **A rope between two posts**: bend a resampled curve with a wrangle, `@P.y = y0 - sag * (1.0 - u * u)` with `u` running from -1 to 1
+  along it (`sag` of 3 to 8 percent of the span), then `sweep` it into a pipe. (`cloth_sim` needs polygons: use a thin ribbon grid for a
+  pinned strap, not a polyline.)
+* A settled body that lies on terrain passes `pt ground-check` by construction: it touches the ground and does not float.
+
 ## What is at this pixel? (`pick`)
 
 When the owner (or you) points at a frame ("that moss floats", "this rock is orange"), do not hunt for the object: ask.
