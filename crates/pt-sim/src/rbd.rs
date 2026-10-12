@@ -109,6 +109,98 @@ pub fn simulate(pieces: &[Vec<[f32; 3]>], prm: &RbdParams) -> Vec<Mat34> {
         .collect()
 }
 
+/// A body to settle: the convex shape of one object (points relative to its origin, already scaled and turned the way the object
+/// stands) and where its origin starts.
+pub struct Body {
+    pub hull: Vec<[f32; 3]>,
+    pub origin: [f32; 3],
+}
+
+#[derive(Clone, Debug)]
+pub struct SettleParams {
+    pub frames: usize,
+    pub fps: f32,
+    pub substeps: usize,
+    pub gravity: [f32; 3],
+    pub friction: f32,
+    pub restitution: f32,
+    pub density: f32,
+}
+
+impl Default for SettleParams {
+    fn default() -> Self {
+        SettleParams { frames: 240, fps: 60.0, substeps: 2, gravity: [0.0, -9.81, 0.0], friction: 0.8, restitution: 0.05, density: 1500.0 }
+    }
+}
+
+/// Where a settled body ended: the turn and the position of its origin, and whether it came to rest.
+#[derive(Clone, Copy, Debug)]
+pub struct Pose {
+    pub rot: [[f32; 3]; 3],
+    pub pos: [f32; 3],
+    pub rest: bool,
+}
+
+/// Lets `bodies` fall onto a fixed triangle mesh (`ground_pts`, `ground_tris`) and returns where each came to rest. Runs until every
+/// body sleeps or `frames` are used up. Deterministic (single-threaded, enhanced determinism).
+pub fn settle(bodies: &[Body], ground_pts: &[[f32; 3]], ground_tris: &[[u32; 3]], prm: &SettleParams) -> Result<Vec<Pose>, String> {
+    let mut set = RigidBodySet::new();
+    let mut colliders = ColliderSet::new();
+    let mut impulse_joints = ImpulseJointSet::new();
+    let mut multibody_joints = MultibodyJointSet::new();
+    let mut soft_bodies = SoftBodySet::new();
+    let mut pipeline = PhysicsPipeline::new();
+    let mut bf = BroadPhaseBvh::new();
+    let mut nf = NarrowPhase::new();
+    let mut islands = IslandManager::new();
+    let mut ccd = CCDSolver::new();
+    let substeps = prm.substeps.max(1);
+    let mut params = IntegrationParameters::default();
+    params.dt = 1.0 / (prm.fps.max(1.0) * substeps as f32);
+
+    let ground = set.insert(RigidBodyBuilder::fixed());
+    let verts: Vec<Vector> = ground_pts.iter().map(|p| Vector::new(p[0], p[1], p[2])).collect();
+    let tri = ColliderBuilder::trimesh(verts, ground_tris.to_vec()).map_err(|e| format!("the ground mesh cannot be a collider: {e:?}"))?;
+    colliders.insert_with_parent(tri.friction(prm.friction).restitution(prm.restitution), ground, &mut set);
+
+    let mut handles = Vec::with_capacity(bodies.len());
+    for b in bodies {
+        let local: Vec<Vector> = b.hull.iter().map(|p| Vector::new(p[0], p[1], p[2])).collect();
+        let body = set.insert(
+            RigidBodyBuilder::dynamic().translation(Vector::new(b.origin[0], b.origin[1], b.origin[2])).linear_damping(0.4).angular_damping(1.5).ccd_enabled(true),
+        );
+        let shape = ColliderBuilder::convex_hull(&local).unwrap_or_else(|| {
+            let (mut lo, mut hi) = ([f32::INFINITY; 3], [f32::NEG_INFINITY; 3]);
+            for p in &local {
+                lo = [lo[0].min(p.x), lo[1].min(p.y), lo[2].min(p.z)];
+                hi = [hi[0].max(p.x), hi[1].max(p.y), hi[2].max(p.z)];
+            }
+            ColliderBuilder::cuboid(((hi[0] - lo[0]) * 0.5).max(0.01), ((hi[1] - lo[1]) * 0.5).max(0.01), ((hi[2] - lo[2]) * 0.5).max(0.01))
+        });
+        colliders.insert_with_parent(shape.density(prm.density).friction(prm.friction).restitution(prm.restitution), body, &mut set);
+        handles.push(body);
+    }
+
+    let gravity = Vector::new(prm.gravity[0], prm.gravity[1], prm.gravity[2]);
+    let check_every = 10 * substeps;
+    for step in 0..prm.frames * substeps {
+        pipeline.step(gravity, &params, &mut islands, &mut bf, &mut nf, &mut set, &mut colliders, &mut impulse_joints, &mut multibody_joints, &mut soft_bodies, &mut ccd, &(), &());
+        if step % check_every == check_every - 1 && handles.iter().all(|h| set[*h].is_sleeping()) {
+            break;
+        }
+    }
+    Ok(handles
+        .iter()
+        .map(|h| {
+            let b = &set[*h];
+            let (t, q) = (b.translation(), b.rotation());
+            let (v, w) = (b.linvel(), b.angvel());
+            let moving = v.length() > 0.05 || w.length() > 0.2;
+            Pose { rot: quat_to_rot([q.x, q.y, q.z, q.w]), pos: [t.x, t.y, t.z], rest: b.is_sleeping() || !moving }
+        })
+        .collect())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -138,6 +230,32 @@ mod tests {
             };
             assert!((d0(w[0], w[7]) - d0(p[0], p[7])).abs() < 1e-3, "piece deformed");
         }
+    }
+
+    #[test]
+    fn bodies_settle_on_a_tilted_mesh_and_do_not_sink_through_it() {
+        // a ground tilted 20 degrees about z (rises with x), 40 m square
+        let (c, s) = (20.0f32.to_radians().cos(), 20.0f32.to_radians().sin());
+        let g = |x: f32, z: f32| [x * c, x * s, z];
+        let pts = vec![g(-20.0, -20.0), g(20.0, -20.0), g(20.0, 20.0), g(-20.0, 20.0)];
+        let tris = vec![[0, 1, 2], [0, 2, 3]];
+        let height_at = |x: f32| x * s / c; // ground height under a point at world x
+        let hull = |h: f32| cube([0.0, 0.0, 0.0], h);
+        let bodies: Vec<Body> = [(2.0f32, 0.3f32), (5.0, 0.25), (-4.0, 0.4), (8.0, 0.2)].iter().enumerate().map(|(i, (x, h))| Body { hull: hull(*h), origin: [*x, height_at(*x) + 0.8, i as f32 - 1.0] }).collect();
+        let prm = SettleParams::default();
+        let a = settle(&bodies, &pts, &tris, &prm).unwrap();
+        for (b, p) in bodies.iter().zip(&a) {
+            assert!(p.rest, "a body must come to rest");
+            let world: Vec<[f32; 3]> = b.hull.iter().map(|q| [0, 1, 2].map(|r| p.rot[r][0] * q[0] + p.rot[r][1] * q[1] + p.rot[r][2] * q[2] + p.pos[r])).collect();
+            // every corner is on or above the ground plane (distance along its normal), and the lowest one touches it
+            let n = [-s, c, 0.0f32];
+            let d: Vec<f32> = world.iter().map(|q| (q[0] - pts[0][0]) * n[0] + (q[1] - pts[0][1]) * n[1] + (q[2] - pts[0][2]) * n[2]).collect();
+            let lowest = d.iter().cloned().fold(f32::INFINITY, f32::min);
+            assert!(lowest > -0.03, "a corner is below the ground by {}", -lowest);
+            assert!(lowest < 0.03, "the body hovers {lowest} above the ground");
+        }
+        let b = settle(&bodies, &pts, &tris, &prm).unwrap();
+        assert!(a.iter().zip(&b).all(|(x, y)| x.pos == y.pos && x.rot == y.rot), "settling is deterministic");
     }
 
     #[test]

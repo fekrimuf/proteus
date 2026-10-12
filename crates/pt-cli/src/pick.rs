@@ -356,12 +356,20 @@ fn frame_size(scene: &Value, frame: Option<&str>, size: Option<&str>) -> Result<
     })
 }
 
-/// `pt pick <recipe.hcs> <scene.json> <camera> <x> <y> [--radius PX] [--frame FRAME.png] [--size WxH] [--annotate OUT.png]`
+/// `pt pick <recipe.hcs> <scene.json> <camera> <x> <y> [--also X,Y]... [--radius PX] [--frame FRAME.png] [--size WxH] [--annotate OUT.png]`
 pub fn pick_cmd(args: &[String]) -> Result<(), String> {
-    const USAGE: &str = "usage: pt pick <recipe.hcs> <scene.json> <camera> <x> <y> [--radius PX] [--frame FRAME.png] [--size WxH] [--annotate OUT.png]";
+    const USAGE: &str = "usage: pt pick <recipe.hcs> <scene.json> <camera> <x> <y> [--also X,Y]... [--radius PX] [--frame FRAME.png] [--size WxH] [--annotate OUT.png]";
     let [recipe, scene_path, camera, x, y, rest @ ..] = args else { return Err(USAGE.into()) };
     let flag = |name: &str| rest.iter().position(|a| a == name).and_then(|i| rest.get(i + 1)).cloned();
     let (x, y): (f32, f32) = (x.parse().map_err(|_| USAGE.to_string())?, y.parse().map_err(|_| USAGE.to_string())?);
+    // more pixels of the same frame (`--also X,Y`, repeatable): the world is cooked once for all of them
+    let mut points = vec![(x, y)];
+    for (i, a) in rest.iter().enumerate() {
+        if a == "--also" {
+            let (px, py) = rest.get(i + 1).and_then(|s| s.split_once(',')).ok_or("--also takes X,Y")?;
+            points.push((px.parse().map_err(|_| "--also X,Y")?, py.parse().map_err(|_| "--also X,Y")?));
+        }
+    }
     let radius: f32 = flag("--radius").and_then(|s| s.parse().ok()).unwrap_or(0.0);
     let code = std::fs::read_to_string(recipe).map_err(|e| format!("{recipe}: {e}"))?;
     let scene: Value = serde_json::from_str(std::fs::read_to_string(scene_path).map_err(|e| format!("{scene_path}: {e}"))?.trim_start_matches('\u{feff}')).map_err(|e| format!("{scene_path}: {e}"))?;
@@ -370,14 +378,21 @@ pub fn pick_cmd(args: &[String]) -> Result<(), String> {
     g.provenance = true;
     let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
     let node = rep.outputs.first().ok_or("recipe has no out()")?.clone();
-    let r = pick(&mut g, &node, &scene, &PickOpts { camera, x, y, size, radius_px: radius })?;
-    println!("{}", r["summary"].as_str().unwrap_or(""));
-    println!("{}", serde_json::to_string_pretty(&r).map_err(|e| e.to_string())?);
+    let mut all = Vec::new();
+    for &(px, py) in &points {
+        let r = pick(&mut g, &node, &scene, &PickOpts { camera, x: px, y: py, size, radius_px: radius })?;
+        println!("{}", r["summary"].as_str().unwrap_or(""));
+        all.push(r);
+    }
+    let shown = if all.len() == 1 { all[0].clone() } else { Value::Array(all) };
+    println!("{}", serde_json::to_string_pretty(&shown).map_err(|e| e.to_string())?);
     if let (Some(frame), Some(out)) = (flag("--frame"), flag("--annotate")) {
         let mut img = pt_render::decode_png(&std::fs::read(&frame).map_err(|e| format!("{frame}: {e}"))?)?;
-        mark(&mut img, x, y, 10.0, [0, 255, 255]);
-        if radius > 0.0 {
-            mark(&mut img, x, y, radius, [255, 255, 255]);
+        for &(px, py) in &points {
+            mark(&mut img, px, py, 10.0, [0, 255, 255]);
+            if radius > 0.0 {
+                mark(&mut img, px, py, radius, [255, 255, 255]);
+            }
         }
         std::fs::write(&out, pt_render::encode_png(&img)?).map_err(|e| e.to_string())?;
         eprintln!("wrote {out}");

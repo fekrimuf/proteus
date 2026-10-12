@@ -784,6 +784,33 @@ def tune_authored(m, spec):
     return True
 
 
+def key_black_background(m):
+    """Some scanned plants keep their cut-out in the black background of a JPEG colour picture (a JPEG has no alpha channel, yet
+    the asset says alpha-blended): everything between the blades renders as solid black cards (the seed heads of
+    `grass_medium_01`). Where the Alpha comes from the alpha output of a JPEG, it becomes the picture's brightness instead,
+    black = empty. Returns True if the material was changed."""
+    nt = m.node_tree
+    bsdf = next((n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"), None)
+    if bsdf is None or not bsdf.inputs["Alpha"].is_linked or any(n.name == "pt_key" for n in nt.nodes):
+        return False
+    link = bsdf.inputs["Alpha"].links[0]
+    img = getattr(link.from_node, "image", None) if link.from_node.type == "TEX_IMAGE" else None
+    if img is None or link.from_socket.name != "Alpha":
+        return False
+    if img.file_format != "JPEG" and not (img.filepath or img.name).lower().endswith((".jpg", ".jpeg")):
+        return False
+    lum = nt.nodes.new("ShaderNodeRGBToBW")
+    nt.links.new(link.from_node.outputs["Color"], lum.inputs["Color"])
+    key = nt.nodes.new("ShaderNodeMapRange")
+    key.name = "pt_key"
+    key.clamp = True
+    key.inputs["From Min"].default_value = 0.02
+    key.inputs["From Max"].default_value = 0.07
+    nt.links.new(lum.outputs["Val"], key.inputs["Value"])
+    nt.links.new(key.outputs["Result"], bsdf.inputs["Alpha"])
+    return True
+
+
 def add_translucency(m, amount):
     """Leaves, needles and grass let light through; a scanned plant's material does not say so, and against the sun it renders as
     black card. For an authored material that is alpha-cut (its Alpha comes from a texture), part of the surface becomes a
@@ -840,6 +867,8 @@ def bind_materials(objs):
                 st = mats.stats.setdefault(name, {"resolved": True, "textured": True, "authored": True, "triangles": 0})
                 if tune_authored(cur, SCENE.get("materials", {}).get(name)):
                     st["tuned"] = True
+                if key_black_background(cur):
+                    st["keyed_black_background"] = True
                 if translucency > 0.0 and add_translucency(cur, translucency):
                     st["translucent"] = True
                 continue
