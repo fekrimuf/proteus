@@ -359,6 +359,40 @@ out(c1)
     }
 
     #[test]
+    fn knobs_and_the_tier_come_from_the_caller_and_default_otherwise() {
+        let code = "w = knob(\"width\", 1.0)\nh = lookdev(2.0, 0.5)\nb = box(size=[w, h, 1.0])\nout(b)";
+        let size = |g: &mut Graph| {
+            let r = run(code, g, true).unwrap_or_else(|e| panic!("{}", e[0]));
+            let (lo, hi) = g.cook(&r.outputs[0]).unwrap().base_bounds().unwrap();
+            [hi[0] - lo[0], hi[1] - lo[1]]
+        };
+        let mut g = Graph::new();
+        assert_eq!(size(&mut g), [1.0, 2.0], "defaults: no knob given, final tier");
+        g.knobs.insert("width".into(), json!(3.5));
+        g.lookdev = true;
+        assert_eq!(size(&mut g), [3.5, 0.5], "the style's knob and the look-development value");
+        // a knob of the wrong kind says what to do
+        g.knobs.insert("width".into(), json!("wide"));
+        let e = run(code, &mut g, true).unwrap_err();
+        assert!(e[0].msg.contains("knob \"width\"") && e[0].fix.contains("same kind"), "{}", e[0]);
+    }
+
+    #[test]
+    fn edits_of_reads_the_scope_or_gives_an_empty_list() {
+        let dir = std::env::temp_dir().join(format!("pt_hcs_edits_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("e.json");
+        std::fs::write(&file, r#"{"rocks": [{"id": 5, "op": "remove"}]}"#).unwrap();
+        let p = file.to_string_lossy().replace('\\', "/");
+        let mut g = Graph::new();
+        let code = format!("n = len(edits_of(\"{p}\", \"rocks\"))\nm = len(edits_of(\"{p}\", \"trees\"))\nk = len(edits_of(\"nowhere.json\", \"rocks\"))\nout(box(size=[n + 1, m + 1, k + 1]))");
+        let r = run(&code, &mut g, true).unwrap_or_else(|e| panic!("{}", e[0]));
+        let (lo, hi) = g.cook(&r.outputs[0]).unwrap().base_bounds().unwrap();
+        assert_eq!([hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]], [2.0, 1.0, 1.0]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn spec_failures_are_reported() {
         let mut g = Graph::new();
         let r = run("b = box(size=[1, 5, 1])\nspec(b, \"height\", min=1, max=2)\nspec(b, \"watertight\")\nspec(b, \"nonsense\")", &mut g, true).unwrap();

@@ -1,0 +1,11 @@
+{
+  "name": "cascade",
+  "note": "The calm reach of Cascade Creek: one recipe, two looks. The overcast variant is a different style (grey light, stronger mist) with its own knobs (thicker forest, more fallen wood); both read the owner's decisions from edits/cascade.json unless a variant names another file.",
+  "recipe": "scenes/cascade.hcs",
+  "scene": "scenes/cascade.scene.json",
+  "default_variant": "evening",
+  "variants": {
+    "evening": {"style": "styles/cascade_evening.json"},
+    "overcast": {"style": "styles/cascade_overcast.json"}
+  }
+}

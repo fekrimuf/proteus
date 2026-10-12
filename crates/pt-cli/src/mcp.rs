@@ -727,6 +727,7 @@ const RECIPES: &[(&str, &str)] = &[
     ("25_carved_boulder", include_str!("../../../recipes/25_carved_boulder.hcs")),
     ("26_clearing_planted_by_asking", include_str!("../../../recipes/26_clearing_planted_by_asking.hcs")),
     ("27_woodpile_and_stones", include_str!("../../../recipes/27_woodpile_and_stones.hcs")),
+    ("28_stable_orchard", include_str!("../../../recipes/28_stable_orchard.hcs")),
 ];
 
 /// The `scene` argument of a tool: an object, or the path of a scene `.json` file (none = an empty scene).

@@ -1,18 +1,43 @@
-//! The second input of a wrangle, indexed so a program can ask it questions (`near_dist`, `surf_dist`, `ray_dist`, ...).
+//! The second input of a wrangle, indexed so a program can ask it questions (`near_dist`, `surf_dist`, `ray_dist`, ...), and the
+//! shared cache of surface indices (a world cooks many nodes against the same terrain, and a tree over a million triangles takes
+//! seconds to build).
 
 use pt_core::spatial::{PointTree, SurfHit, SurfaceTree};
 use pt_core::Geometry;
 use pt_vex::{QueryUse, RefGeo};
+use std::sync::{Arc, Mutex, OnceLock};
+
+type Cache = Mutex<Vec<([u8; 32], Arc<SurfaceTree>)>>;
+static TREES: OnceLock<Cache> = OnceLock::new();
+
+/// The triangle tree of `g`'s base surface, built once per distinct geometry (by content) and kept for the next few nodes.
+pub(crate) fn surface_of(g: &Geometry) -> Option<Arc<SurfaceTree>> {
+    if g.n_prims() == 0 {
+        return None;
+    }
+    let key = g.content_hash();
+    let cache = TREES.get_or_init(|| Mutex::new(Vec::new()));
+    if let Some((_, t)) = cache.lock().ok()?.iter().find(|(k, _)| *k == key) {
+        return Some(t.clone());
+    }
+    let tree = Arc::new(SurfaceTree::new(g)?);
+    let mut c = cache.lock().ok()?;
+    c.push((key, tree.clone()));
+    if c.len() > 3 {
+        c.remove(0);
+    }
+    Some(tree)
+}
 
 pub(crate) struct RefIndex {
     near: Option<PointTree>,
-    surf: Option<SurfaceTree>,
+    surf: Option<Arc<SurfaceTree>>,
 }
 
 impl RefIndex {
     /// Builds only the index the program uses: a point tree over `near_pts`, a triangle tree over the base surface of `geo`.
     pub fn build(uses: QueryUse, near_pts: &[[f32; 3]], geo: &Geometry) -> RefIndex {
-        RefIndex { near: uses.near.then(|| PointTree::new(near_pts)), surf: if uses.surf { SurfaceTree::new(geo) } else { None } }
+        RefIndex { near: uses.near.then(|| PointTree::new(near_pts)), surf: if uses.surf { surface_of(geo) } else { None } }
     }
 }
 

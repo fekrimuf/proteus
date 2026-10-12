@@ -475,6 +475,11 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let code = std::fs::read_to_string(recipe).map_err(|e| format!("{recipe}: {e}"))?;
     let t = Instant::now();
     let mut g = Graph::new();
+    g.knobs = {
+        let text = std::fs::read_to_string(scene_path.as_str()).map_err(|e| format!("{scene_path}: {e}"))?;
+        let v: Value = serde_json::from_str(text.trim_start_matches('\u{feff}')).map_err(|e| format!("{scene_path}: {e}"))?;
+        blender::knobs_of(&v)?
+    };
     let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
     let geo = g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?;
     let cook_s = t.elapsed().as_secs_f64();

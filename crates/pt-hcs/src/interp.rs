@@ -37,7 +37,7 @@ enum Flow {
 
 const MAX_STEPS: u64 = 5_000_000;
 const MAX_NODES: usize = 200_000;
-const BUILTINS: &[&str] = &["frame", "range", "len", "min", "max", "abs", "sum", "round", "int", "float", "sin", "cos", "sqrt", "floor", "ceil", "radians", "degrees", "lerp", "out", "spec", "print", "asset", "str", "pow", "lookdev"];
+const BUILTINS: &[&str] = &["frame", "range", "len", "min", "max", "abs", "sum", "round", "int", "float", "sin", "cos", "sqrt", "floor", "ceil", "radians", "degrees", "lerp", "out", "spec", "print", "asset", "str", "pow", "lookdev", "edits_of", "knob"];
 
 pub struct Interp<'g> {
     pub g: &'g mut Graph,
@@ -76,6 +76,30 @@ fn truthy(v: &V) -> bool {
         V::Dict(l) => !l.is_empty(),
         _ => true,
     }
+}
+
+/// A JSON value as a language value (lists, dicts, numbers, strings, booleans; null becomes None).
+fn from_json(v: &Value) -> V {
+    match v {
+        Value::Null => V::None,
+        Value::Bool(b) => V::Bool(*b),
+        Value::Number(n) => V::Num(n.as_f64().unwrap_or(0.0)),
+        Value::String(s) => V::Str(s.clone()),
+        Value::Array(a) => V::List(a.iter().map(from_json).collect()),
+        Value::Object(o) => V::Dict(o.iter().map(|(k, x)| (k.clone(), from_json(x))).collect()),
+    }
+}
+
+/// The edits file of a world: `{"scope": [ {id, op, ...}, ... ], ...}`. Looked for as given, then under `PT_ROOT`, then in the
+/// repository this program was built from. A missing file or scope is an empty list (nothing decided yet).
+fn read_edits(path: &str, scope: &str) -> V {
+    let candidates = [std::path::PathBuf::from(path), std::env::var("PT_ROOT").map(|r| std::path::Path::new(&r).join(path)).unwrap_or_default(), std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").join(path)];
+    for c in candidates.iter().filter(|c| c.is_file()) {
+        if let Some(v) = std::fs::read_to_string(c).ok().and_then(|t| serde_json::from_str::<Value>(t.trim_start_matches('\u{feff}')).ok()) {
+            return v.get(scope).map_or(V::List(vec![]), from_json);
+        }
+    }
+    V::List(vec![])
 }
 
 pub fn to_json(v: &V, pos: Pos) -> R<Value> {
@@ -558,6 +582,27 @@ impl<'g> Interp<'g> {
                 self.g.frame = v as f32;
                 V::None
             }
+            "knob" => {
+                if a.len() != 2 {
+                    return Err(d(pos, "knob() takes 2 arguments", "knob(\"tree_density\", 1.0): the value the active style gives this knob, else the default"));
+                }
+                let V::Str(name) = &a[0] else { return Err(d(pos, "knob() takes the knob's name as a string first", "knob(\"tree_density\", 1.0)")) };
+                match self.g.knobs.get(name) {
+                    Some(v) => {
+                        let got = from_json(v);
+                        let same_kind = matches!((&got, &a[1]), (V::Num(_), V::Num(_)) | (V::Str(_), V::Str(_)) | (V::List(_), V::List(_)) | (V::Bool(_), V::Bool(_)) | (V::Dict(_), V::Dict(_)));
+                        if !same_kind {
+                            return Err(d(pos, format!("the style gives knob \"{name}\" a {} but the recipe's default is a {}", type_name(&got), type_name(&a[1])), "make the style's value the same kind as the default"));
+                        }
+                        got
+                    }
+                    None => a[1].clone(),
+                }
+            }
+            "edits_of" => match (a.first(), a.get(1)) {
+                (Some(V::Str(path)), Some(V::Str(scope))) if a.len() == 2 => read_edits(path, scope),
+                _ => return Err(d(pos, "edits_of() takes a file path and a scope name", "edits_of(\"edits/world.json\", \"rocks\"): the list of decisions the owner recorded for that class of object")),
+            },
             "lookdev" => {
                 if a.len() != 2 {
                     return Err(d(pos, "lookdev() takes 2 arguments", "lookdev(full, light): the value for a final render, the cheaper one for look development"));

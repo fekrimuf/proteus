@@ -290,7 +290,7 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             }
             Ok(out)
         }
-        "scatter" | "scatter_poisson" => {
+        "scatter" | "scatter_poisson" | "scatter_stable" => {
             let e = in0();
             if !e.has_surface {
                 return Err(vec![fd(format!("{kind} needs a polygon surface but its input has none"), "scatter onto a grid/box/sphere, or put `realize` before it if the input is instances")]);

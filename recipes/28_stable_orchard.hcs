@@ -1,0 +1,30 @@
+# An orchard whose trees keep their identity.
+# Technique: `scatter_stable` decides a point by the cell of the world it stands in and the seed, never by a count or an order, so
+# changing the terrain's height, a mask or the density leaves every tree that survives exactly where it was, with the same `pid`.
+# The copy nodes key their randomness (turn, variant) on that `pid`, so the look of a tree belongs to the tree. `apply_edits`
+# replays decisions about single trees by id (remove, move, scale, add); here one tree is added by hand. In a world the decisions
+# live in a file that `pt edit` writes after `pt pick` named the tree: edits_of("edits/world.json", "orchard").
+hill = wrangle(grid(size=[40, 40], rows=80, cols=80), code="""
+@P.y = 2.5 * exp(-(@P.x * @P.x + @P.z * @P.z) / 150.0) + 0.25 * sin(@P.x * 0.6) * cos(@P.z * 0.5);
+@Cd = mix(vec3(0.3, 0.45, 0.2), vec3(0.55, 0.5, 0.4), smoothstep(0.0, 2.5, @P.y));
+""")
+ground = normals(hill)
+
+at = scatter_stable(ground, min_dist=3.2, seed=11, density=0.8, pscale_min=0.8, pscale_max=1.35)
+dry = group_by_expression(at, name="dry", expression="@P.y > 0.35")
+kept = blast(dry, group="dry", keep_selected=1)
+decided = apply_edits(kept, ground, edits=[{"op": "add", "id": 1, "at": [0.0, 0.0, 0.0], "pscale": 1.8}])
+
+trunk = wrangle(tube(radius=0.18, height=1.4, cols=7, center=[0, 0.7, 0]), code="@Cd = vec3(0.35, 0.24, 0.14);")
+crown_a = wrangle(sphere(radius=1.0, rows=8, cols=12, center=[0, 2.0, 0]), code="@Cd = vec3(0.2, 0.5, 0.22);")
+crown_b = wrangle(taper(tube(radius=1.0, height=2.2, cols=8, center=[0, 2.0, 0]), scale_start=1.0, scale_end=0.15), code="@Cd = vec3(0.12, 0.38, 0.2);")
+tree_a = merge(trunk, crown_a)
+tree_b = merge(trunk, crown_b)
+trees = copy_variants(decided, tree_a, tree_b, weights=[1.0, 1.0, 0.0], rot_y_random=360.0, orient_to_normal=0, seed=5)
+
+orchard = merge(ground, trees)
+spec(orchard, "width", min=39.0, max=41.0)
+spec(orchard, "instances", min=40)
+spec(orchard, "attribute", name="Cd")
+spec(orchard, "finite")
+out(orchard)

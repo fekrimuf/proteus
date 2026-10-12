@@ -188,6 +188,9 @@ impl Ctx<'_> {
                         Column::V3(v) if (k as usize) < v.len() => {
                             attrs.insert(name.clone(), r3(v[k as usize]));
                         }
+                        Column::I32(v) if (k as usize) < v.len() => {
+                            attrs.insert(name.clone(), json!(v[k as usize]));
+                        }
                         _ => {}
                     }
                 }
@@ -318,8 +321,9 @@ fn summary(v: &Value) -> String {
     match r["kind"].as_str() {
         Some("instance") => {
             let flags: Vec<String> = r["ground_check"].as_array().map(|a| a.iter().map(|f| format!("{} {} m", f["kind"].as_str().unwrap_or("?"), f["amount_m"])).collect()).unwrap_or_default();
+            let pid = r["attributes"]["pid"].as_i64().map_or(String::new(), |p| format!(", pid {p}"));
             format!(
-                "{at}: {} (instance {}), placed by node `{}` ({}), {} m from the camera, origin {} m above the ground{}",
+                "{at}: {} (instance {}{pid}), placed by node `{}` ({}), {} m from the camera, origin {} m above the ground{}",
                 r["prototype"]["name"].as_str().unwrap_or("?"),
                 r["instance"],
                 r["created_by"]["created_by"].as_str().unwrap_or("?"),
@@ -376,6 +380,7 @@ pub fn pick_cmd(args: &[String]) -> Result<(), String> {
     let size = frame_size(&scene, flag("--frame").as_deref(), flag("--size").as_deref())?;
     let mut g = Graph::new();
     g.provenance = true;
+    g.knobs = crate::blender::knobs_of(&scene)?;
     let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
     let node = rep.outputs.first().ok_or("recipe has no out()")?.clone();
     let mut all = Vec::new();

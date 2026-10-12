@@ -65,7 +65,7 @@ fn range(o: &Value, key: &str, lo: f64, hi: f64, section: &str, out: &mut Vec<St
 pub fn check_scene(s: &Value) -> Vec<String> {
     let mut e = Vec::new();
     let Some(top) = s.as_object() else { return vec!["scene file must be a JSON object".into()] };
-    unknown_keys(top, &["version", "render", "lighting", "camera", "cameras", "ground", "materials", "default_material", "style", "style_name", "note", "brief", "foils", "playable"], "scene", &mut e);
+    unknown_keys(top, &["version", "render", "lighting", "camera", "cameras", "ground", "materials", "default_material", "style", "style_name", "note", "brief", "foils", "playable", "knobs"], "scene", &mut e);
     if let Some(r) = s.get("render") {
         if let Some(o) = r.as_object() {
             unknown_keys(o, &["samples", "resolution", "device", "seed", "denoise", "noise_threshold", "clamp_indirect", "bounces", "transparent_bounces", "volume_bounces", "view_transform", "look", "exposure", "white_balance", "glare", "glare_threshold", "glare_size", "foliage_translucency", "smooth_angle"], "render", &mut e);
@@ -139,6 +139,15 @@ pub fn check_scene(s: &Value) -> Vec<String> {
         }
     }
     e
+}
+
+/// The knobs a scene gives its recipe: the style's `knobs`, overridden key by key by the scene's own. A recipe reads them with
+/// `knob(name, default)`; every command that cooks a scene (render, ground-check, pick, scorecard) sets them on the graph first,
+/// so all of them see the same world.
+pub fn knobs_of(scene: &Value) -> Result<BTreeMap<String, Value>, String> {
+    let mut s = scene.clone();
+    resolve_style(&mut s)?;
+    Ok(s.get("knobs").and_then(Value::as_object).map(|m| m.iter().map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default())
 }
 
 /// Layered materials (`blend_materials`): material name -> its layer roles, from the geometry and its instance prototypes.
@@ -243,6 +252,16 @@ fn world_key(code: &str, scene: &Value, o: &Opts, cull: Option<f32>) -> String {
     }
     h.update(&[o.lookdev as u8, o.lod as u8]);
     h.update(format!("{cull:?}|{:?}", o.only).as_bytes());
+    h.update(serde_json::to_string(&knobs_of(scene).unwrap_or_default()).unwrap_or_default().as_bytes());
+    // the owner's decisions are part of the world (recipes read them with `edits_of`): a recorded edit must show up in the next render
+    let mut edit_files: Vec<PathBuf> = std::fs::read_dir(repo_root().join("edits")).into_iter().flatten().flatten().map(|f| f.path()).filter(|p| p.extension().is_some_and(|x| x == "json")).collect();
+    edit_files.sort();
+    for f in edit_files {
+        if let Ok(t) = std::fs::read(&f) {
+            h.update(f.file_name().map_or(&[][..], |n| n.as_encoded_bytes()));
+            h.update(&t);
+        }
+    }
     if let (Some(_), Some(only)) = (cull, o.only.as_deref()) {
         let names: Vec<&str> = only.split(',').map(str::trim).collect();
         for c in scene.get("cameras").and_then(Value::as_array).into_iter().flatten().filter(|c| c.get("name").and_then(Value::as_str).is_some_and(|n| names.contains(&n))) {
@@ -291,14 +310,14 @@ pub fn resolve_style(scene: &mut Value) -> Result<(), String> {
         _ => return Err("scene.style must be an object or a path to a style .json file".into()),
     };
     let sobj = style.as_object().ok_or("the style file must be a JSON object")?;
-    let known = ["name", "version", "note", "lighting", "render", "ground", "materials", "default_material"];
+    let known = ["name", "version", "note", "lighting", "render", "ground", "materials", "default_material", "knobs"];
     let mut problems: Vec<String> = Vec::new();
     unknown_keys(sobj, &known, "style", &mut problems);
     if !problems.is_empty() {
         return Err(problems.join("\n  "));
     }
     let obj = scene.as_object_mut().ok_or("scene must be an object")?;
-    for key in ["lighting", "render", "default_material", "materials"] {
+    for key in ["lighting", "render", "default_material", "materials", "knobs"] {
         if let Some(Value::Object(from_style)) = sobj.get(key) {
             let mut merged = from_style.clone();
             if let Some(Value::Object(mine)) = obj.get(key) {
@@ -388,6 +407,7 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
     let (glb, scene, unknown) = {
         let mut g = Graph::new();
         g.lookdev = o.lookdev;
+        g.knobs = knobs_of(&scene)?;
         let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
         let mut geo = (*g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?).clone();
         if let (Some(r), Some(only)) = (cull, o.only.as_deref()) {

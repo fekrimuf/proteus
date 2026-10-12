@@ -15,6 +15,7 @@ mod refindex;
 mod sdf;
 pub mod sparse;
 mod sim;
+mod stable;
 mod terrain;
 mod topo;
 
@@ -109,6 +110,7 @@ pub fn schemas() -> Vec<NodeSchema> {
     v.extend(hfield::schemas());
     v.extend(attrs::schemas());
     v.extend(topo::schemas());
+    v.extend(stable::schemas());
     v.extend(terrain::schemas());
     v.extend(sdf::schemas());
     v.extend(sparse::schemas());
@@ -208,6 +210,9 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Res {
         return r;
     }
     if let Some(r) = sim::cook(kind, p, inputs) {
+        return r;
+    }
+    if let Some(r) = stable::cook(kind, p, inputs) {
         return r;
     }
     if let Some(r) = sparse::cook(kind, p, inputs) {
@@ -349,12 +354,13 @@ fn instance_xforms(targets: &Geometry, p: &Params) -> Vec<Mat34> {
     let ps = targets.point.get("pscale").and_then(Column::as_f32);
     let nrm = targets.point.get("N").and_then(Column::as_v3);
     let tp = targets.p();
+    let keys = stable_keys(targets);
     (0..tp.len())
         .into_par_iter()
         .with_min_len(4096)
         .map(|k| {
             let s = ps.map_or(1.0, |a| a[k]);
-            let r = rand4(seed, 1, k as u64);
+            let r = rand4(seed, 1, keys.as_ref().map_or(k as u64, |v| v[k]));
             let (sn, cs) = math::sin_cos(r[0] * rot);
             let ry: Mat34 = [cs, 0.0, sn, 0.0, 0.0, 1.0, 0.0, 0.0, -sn, 0.0, cs, 0.0];
             let mut m = ry;
@@ -374,6 +380,15 @@ fn instance_xforms(targets: &Geometry, p: &Params) -> Vec<Mat34> {
             m
         })
         .collect()
+}
+
+/// What a point's randomness is keyed on: its stable `pid` when it has one (so a rotation or a variant belongs to the object and
+/// survives edits of other objects), else nothing (the point's index).
+fn stable_keys(targets: &Geometry) -> Option<Vec<u64>> {
+    match targets.point.get(stable::ID) {
+        Some(Column::I32(v)) => Some(v.iter().map(|&i| i as u32 as u64).collect()),
+        _ => None,
+    }
 }
 
 fn instance_attrs(targets: &Geometry) -> pt_core::AttrSet {
@@ -406,9 +421,10 @@ fn copy_variants(inputs: Inputs, p: &Params) -> Res {
     // a prototype with weight 0 is never picked, so it is not carried at all (smaller exports, honest statistics)
     let (protos, w): (Vec<Arc<Geometry>>, Vec<f32>) = protos.into_iter().zip(w).filter(|(_, wi)| *wi > 0.0).unzip();
     let seed = p.i("seed");
+    let keys = stable_keys(targets);
     let proto_id: Vec<u32> = (0..targets.n_points())
         .map(|k| {
-            let t = rand4(seed, 7, k as u64)[0] * total;
+            let t = rand4(seed, 7, keys.as_ref().map_or(k as u64, |v| v[k]))[0] * total;
             let (mut acc, mut pick) = (0.0f32, protos.len() - 1);
             for (i, wi) in w.iter().enumerate() {
                 acc += wi;

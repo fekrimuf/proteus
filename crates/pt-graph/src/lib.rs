@@ -110,6 +110,10 @@ pub struct Graph {
     /// Quality tier for look development: recipes read it with `lookdev(full, light)` and choose lighter assets and fewer clumps.
     #[serde(skip)]
     pub lookdev: bool,
+    /// Knobs of the active style (and of the world file's variant): a recipe reads them with `knob(name, default)`, so one recipe
+    /// serves many looks and many studios. Numbers, strings and lists.
+    #[serde(skip)]
+    pub knobs: BTreeMap<String, Value>,
     /// Fuse chains of pointwise nodes into one pass (on by default; off only for tests).
     #[serde(skip)]
     pub no_fusion: bool,
@@ -133,6 +137,7 @@ impl Default for Graph {
             frame: one(),
             provenance: false,
             lookdev: false,
+            knobs: BTreeMap::new(),
             no_fusion: false,
             cache: HashMap::new(),
             cache_dir: None,
@@ -158,6 +163,8 @@ fn type_matches(default: &Value, v: &Value) -> bool {
         (Value::Number(_), Value::String(s)) | (Value::Array(_), Value::String(s)) => s.starts_with('='),
         // A default made of arrays is a variable-length list of vectors (e.g. curve points): any length, each item shaped like the first.
         (Value::Array(a), Value::Array(b)) if a.first().is_some_and(Value::is_array) => b.iter().all(|y| type_matches(&a[0], y)),
+        // An empty default is a list of anything (a list of edit objects, for one).
+        (Value::Array(a), Value::Array(_)) if a.is_empty() => true,
         (Value::Array(a), Value::Array(b)) => a.len() == b.len() && a.iter().zip(b).all(|(x, y)| type_matches(x, y)),
         (Value::String(_), Value::String(_)) => true,
         (Value::Bool(_), Value::Bool(_)) => true,

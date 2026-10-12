@@ -421,7 +421,6 @@ fn hull_sample(proto: &Geometry, n: usize) -> Vec<[f32; 3]> {
 }
 
 fn rbd_settle(src: &Geometry, ground: &Geometry, p: &Params) -> Res {
-    use pt_core::spatial::SurfaceTree;
     const MAX_BODIES: usize = 6000;
     let inst = src.instances.as_ref().ok_or("rbd_settle: input 0 has no instances (put copy_to_points or array upstream, or realize the objects you want settled into instances)")?;
     let n = inst.len();
@@ -431,7 +430,7 @@ fn rbd_settle(src: &Geometry, ground: &Geometry, p: &Params) -> Res {
     if n > MAX_BODIES {
         return Err(format!("rbd_settle: {n} bodies exceeds the limit of {MAX_BODIES}; settle the hero piles (a group or a region) and scatter the rest"));
     }
-    let tree = SurfaceTree::new(ground).ok_or("rbd_settle: input 1 has no surface to land on")?;
+    let tree = crate::refindex::surface_of(ground).ok_or("rbd_settle: input 1 has no surface to land on")?;
     let (gap, margin) = (p.f("gap").max(0.0), p.f("margin").max(0.5));
     let top = ground.base_bounds().map_or(1000.0, |(_, hi)| hi[1] + 10.0);
     let hulls: Vec<Vec<[f32; 3]>> = inst.protos.iter().map(|g| hull_sample(g, p.i("hull_points").clamp(8, 1000) as usize)).collect();
