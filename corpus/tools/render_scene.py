@@ -77,6 +77,18 @@ def setup_render(sc):
     sc.cycles.denoiser = "OPENIMAGEDENOISE"
     sc.cycles.sample_clamp_indirect = float(r.get("clamp_indirect", 10.0))
     sc.cycles.max_bounces = int(r.get("bounces", 6))
+    # A ray through a forest crosses many alpha-cut leaf cards, and a shadow ray to the sun crosses every haze slab: both count as
+    # transparent hits, and a ray that runs out of them turns black.
+    sc.cycles.transparent_max_bounces = int(r.get("transparent_bounces", 64))
+    sc.cycles.volume_bounces = int(r.get("volume_bounces", 1))
+    wb = r.get("white_balance")
+    if wb:
+        try:
+            sc.view_settings.use_white_balance = True
+            sc.view_settings.white_balance_temperature = float(wb[0])
+            sc.view_settings.white_balance_tint = float(wb[1]) if len(wb) > 1 else 10.0
+        except AttributeError:
+            warn("this Blender has no white balance setting; render.white_balance ignored")
     sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = int(w), int(h), 100
     sc.view_settings.view_transform = r.get("view_transform", "AgX")
     try:
@@ -137,48 +149,118 @@ def setup_world(sc):
     REPORT["sky"] = kind
 
 
-def add_fog(objs):
-    """Haze whose density falls off exponentially with height (`fog_height` is the height over which it drops to 1/e), inside
-    a big box with a volume-only material. A WORLD volume is infinite, so every shadow ray to the sun or sky is absorbed and the
-    frame goes black; a box keeps the sky clear. The box is several scale heights tall, so its top is never seen as an edge."""
-    L = SCENE.get("lighting", {})
-    density = float(L.get("fog_density", 0.0))
-    if density <= 0.0:
-        return
-    lo, _ = world_bounds(objs)
-    scale_h, extent = max(1.0, float(L.get("fog_height", 300.0))), float(L.get("fog_extent", 6000.0))
-    box_h = max(8.0 * scale_h, 800.0)
-    base = lo.z - 5.0
-    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, base + box_h / 2))
+def fog_slabs(haze, haze_h, top, avoid=()):
+    """Split an exponential haze into nested slabs of constant density. Returns [(height above the base, added density)]:
+    slab k reaches from below the base up to its height, and the densities of all slabs that cover a point add up, so the sum at
+    height z follows haze * exp(-z / haze_h) in steps (each step holds the true mean over its range). A camera that sits right
+    at a slab's lid looks along it for kilometres and sees the step as a line, so lids keep clear of the heights in `avoid`."""
+    def mean(a, b):
+        return haze * haze_h * (math.exp(-a / haze_h) - math.exp(-b / haze_h)) / (b - a)
+
+    edges = [0.0]
+    z = max(1.5, haze_h / 3.0)
+    while z < top and len(edges) < 24:
+        for a in avoid:
+            if a > 0.0 and abs(z - a) < 0.2 * a:
+                z = a * 1.3
+        edges.append(z)
+        z *= 1.55
+    edges.append(max(top, edges[-1] * 1.2))
+    rho = [mean(a, b) for a, b in zip(edges, edges[1:])]
+    return [(edges[k + 1], rho[k] - (rho[k + 1] if k + 1 < len(rho) else 0.0)) for k in range(len(rho))]
+
+
+def volume_box(name, center, size, build):
+    """A box that holds only a volume shader; `build(node_tree)` returns the volume socket."""
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=center)
     c = bpy.context.active_object
-    c.name = "fog_layer"
-    c.scale = (extent, extent, box_h)
-    m = bpy.data.materials.new("fog")
+    c.name = name
+    c.scale = size
+    m = bpy.data.materials.new(name)
     m.use_nodes = True
     t = m.node_tree
     for n in list(t.nodes):
         if n.type == "BSDF_PRINCIPLED":
             t.nodes.remove(n)
-    # density = fog_density * exp(-(z - base) / scale_height)
-    pos = t.nodes.new("ShaderNodeNewGeometry")
-    sep = t.nodes.new("ShaderNodeSeparateXYZ")
-    t.links.new(pos.outputs["Position"], sep.inputs["Vector"])
-    rel = t.nodes.new("ShaderNodeMath"); rel.operation = "SUBTRACT"; rel.inputs[1].default_value = base
-    t.links.new(sep.outputs["Z"], rel.inputs[0])
-    neg = t.nodes.new("ShaderNodeMath"); neg.operation = "MULTIPLY"; neg.inputs[1].default_value = -1.0 / scale_h
-    t.links.new(rel.outputs["Value"], neg.inputs[0])
-    ex = t.nodes.new("ShaderNodeMath"); ex.operation = "EXPONENT"
-    t.links.new(neg.outputs["Value"], ex.inputs[0])
-    dens = t.nodes.new("ShaderNodeMath"); dens.operation = "MULTIPLY"; dens.inputs[1].default_value = density
-    t.links.new(ex.outputs["Value"], dens.inputs[0])
-    vs = t.nodes.new("ShaderNodeVolumeScatter")
-    t.links.new(dens.outputs["Value"], vs.inputs["Density"])
-    vs.inputs["Anisotropy"].default_value = float(L.get("fog_anisotropy", 0.3))
-    col = L.get("fog_color", [0.8, 0.85, 0.95])
-    vs.inputs["Color"].default_value = (col[0], col[1], col[2], 1.0)
-    t.links.new(vs.outputs["Volume"], t.nodes["Material Output"].inputs["Volume"])
+    t.links.new(build(t), t.nodes["Material Output"].inputs["Volume"])
     c.data.materials.append(m)
-    c.visible_shadow = False
+    c.visible_shadow = False  # the air does not shade the ground; trees and ridges still cast their shafts into it
+    return c, m
+
+
+def add_fog(objs, cams):
+    """Atmosphere in two parts, both falling off exponentially with height above `fog_base` (default: the lowest point of the model).
+
+    HAZE (`fog_density`, `fog_height`): thin, kilometres deep, what turns far ridges pale and blue. Built from nested boxes of
+    CONSTANT density, which Cycles integrates exactly; one box with a height-dependent density would be marched in steps of a
+    tenth of the box (tens of kilometres here), which is both wrong and noisy.
+    MIST (`mist_density`, `mist_height`): dense, tens of metres deep, lying on the valley floor around the cameras; this is what
+    separates one line of trees from the next and carries the light shafts. It changes too fast with height for slabs (their
+    lids show as lines), so it is one box with the true density, marched in steps of `mist_step` metres.
+
+    A WORLD volume would be infinite and absorb every ray to the sun; boxes keep the sky clear."""
+    L = SCENE.get("lighting", {})
+    haze, mist = float(L.get("fog_density", 0.0)), float(L.get("mist_density", 0.0))
+    if haze <= 0.0 and mist <= 0.0:
+        return
+    lo, hi = world_bounds(objs)
+    haze_h, mist_h = max(1.0, float(L.get("fog_height", 300.0))), max(1.0, float(L.get("mist_height", 30.0)))
+    extent = float(L.get("fog_extent", 6000.0))
+    base = float(L["fog_base"]) if "fog_base" in L else lo.z
+    col = L.get("fog_color", [0.8, 0.85, 0.95])
+    aniso = float(L.get("fog_anisotropy", 0.3))
+    sc = bpy.context.scene
+    REPORT["fog"] = {"base": round(base, 2)}
+
+    def scatter(t, density):
+        vs = t.nodes.new("ShaderNodeVolumeScatter")
+        if isinstance(density, float):
+            vs.inputs["Density"].default_value = density
+        else:
+            t.links.new(density, vs.inputs["Density"])
+        vs.inputs["Anisotropy"].default_value = aniso
+        vs.inputs["Color"].default_value = (col[0], col[1], col[2], 1.0)
+        return vs.outputs["Volume"]
+
+    if haze > 0.0:
+        top = max(6.0 * haze_h, min(hi.z - base, 12.0 * haze_h))
+        floor = min(lo.z, base) - 20.0
+        slabs = [(h, d) for h, d in fog_slabs(haze, haze_h, top, [c.location.z - base for _n, c in cams]) if d > 0.0]
+        for k, (h, d) in enumerate(slabs):
+            # every box a little wider and deeper than the last, so no two faces coincide
+            z0, z1 = floor - k, base + h
+            e = extent * (1.0 + 0.002 * k)
+            _c, m = volume_box("haze_%02d" % k, (0, 0, (z0 + z1) / 2), (e, e, z1 - z0), lambda t, d=d: scatter(t, d))
+            try:
+                m.cycles.homogeneous_volume = True
+            except AttributeError:
+                pass  # newer Cycles finds out by itself that the density is constant
+        REPORT["fog"].update({"haze_slabs": len(slabs), "haze_at_base": round(sum(d for _h, d in slabs), 7)})
+    if mist > 0.0:
+        ext = float(L.get("mist_extent", 5000.0))
+        cx = sum(c.location.x for _n, c in cams) / len(cams)
+        cy = sum(c.location.y for _n, c in cams) / len(cams)
+        z0, z1 = base - 3.0 * mist_h, base + 7.0 * mist_h
+        step = max(0.5, float(L.get("mist_step", mist_h / 3.0)))
+
+        def density(t):
+            # mist * exp(-max(z - base, 0) / mist_height): full strength in any hollow under the base
+            pos = t.nodes.new("ShaderNodeNewGeometry")
+            sep = t.nodes.new("ShaderNodeSeparateXYZ")
+            t.links.new(pos.outputs["Position"], sep.inputs["Vector"])
+            up = math_node(t, "MAXIMUM", math_node(t, "SUBTRACT", sep.outputs["Z"], base), 0.0)
+            return scatter(t, math_node(t, "MULTIPLY", math_node(t, "EXPONENT", math_node(t, "MULTIPLY", up, -1.0 / mist_h)), mist))
+
+        _c, m = volume_box("mist", (cx, cy, (z0 + z1) / 2), (ext, ext, z1 - z0), density)
+        # Cycles marches a procedural volume in steps of a tenth of its box (average side) times the material's step rate
+        rate = step / (0.1 * (ext + ext + (z1 - z0)) / 3.0)
+        try:
+            m.cycles.volume_step_rate = max(0.001, rate)
+            sc.cycles.volume_step_rate = 1.0
+            sc.cycles.volume_max_steps = int(min(4096, max(1024, 1.5 * ext / step)))
+        except AttributeError:
+            warn("this Cycles has no volume step settings; the mist may be coarse")
+        REPORT["fog"].update({"mist_step_m": round(step, 2), "mist_box_m": [round(ext), round(z1 - z0)]})
 
 
 # ---------------------------------------------------------------- materials
@@ -187,17 +269,35 @@ def tex_path(pid, kind):
     return os.path.join(CORPUS, "polyhaven", "materials", pid, "%s_%s_1k.jpg" % (pid, kind))
 
 
-def flat_material(name, color, roughness=0.8, metallic=0.0, use_vertex_color=False):
+def flat_material(name, color, roughness=0.8, metallic=0.0, use_vertex_color=False, spec=None):
+    """One colour. `variation` (0..1) with `variation_m` (metres) in the spec lets the brightness wander over the surface, so a
+    merged mesh of many small things (a distant forest) is not one flat tone; `specular` overrides the default sheen."""
     m = bpy.data.materials.new(name)
     m.use_nodes = True
-    b = m.node_tree.nodes["Principled BSDF"]
+    nt = m.node_tree
+    b = nt.nodes["Principled BSDF"]
+    spec = spec or {}
+    var = float(spec.get("variation", 0.0))
     if use_vertex_color:
-        vc = m.node_tree.nodes.new("ShaderNodeVertexColor")
-        m.node_tree.links.new(vc.outputs["Color"], b.inputs["Base Color"])
+        vc = nt.nodes.new("ShaderNodeVertexColor")
+        nt.links.new(vc.outputs["Color"], b.inputs["Base Color"])
+    elif var > 0.0:
+        pos = nt.nodes.new("ShaderNodeNewGeometry").outputs["Position"]
+        vm = float(spec.get("variation_m", 40.0))
+        n = math_node(nt, "ADD", math_node(nt, "MULTIPLY", noise_field(nt, pos, vm, detail=2.0), 0.6), math_node(nt, "MULTIPLY", noise_field(nt, pos, vm / 6.0, detail=1.0, offset=(5.0, 3.0, 8.0)), 0.4))
+        rgb = nt.nodes.new("ShaderNodeRGB")
+        rgb.outputs[0].default_value = (color[0], color[1], color[2], 1.0)
+        sc = nt.nodes.new("ShaderNodeVectorMath")
+        sc.operation = "SCALE"
+        nt.links.new(rgb.outputs[0], sc.inputs[0])
+        nt.links.new(math_node(nt, "MULTIPLY_ADD", n, 2.0 * var, 1.0 - var), sc.inputs["Scale"])
+        nt.links.new(sc.outputs["Vector"], b.inputs["Base Color"])
     else:
         b.inputs["Base Color"].default_value = (color[0], color[1], color[2], 1.0)
     b.inputs["Roughness"].default_value = roughness
     b.inputs["Metallic"].default_value = metallic
+    if "specular" in spec:
+        b.inputs["Specular IOR Level"].default_value = float(spec["specular"])
     return m
 
 
@@ -269,8 +369,15 @@ def pbr_layer(nt, spec, src):
 
     color_out = tex("diff", "sRGB")
     var = float(spec.get("variation", 0.08))
+    sat = float(spec.get("saturation", 1.0))  # under 1 greys a scan whose hue does not suit the place (a red soil in a granite canyon)
+    if sat != 1.0 and var <= 0:
+        hsv = nt.nodes.new("ShaderNodeHueSaturation")
+        hsv.inputs["Saturation"].default_value = sat
+        nt.links.new(color_out, hsv.inputs["Color"])
+        color_out = hsv.outputs["Color"]
     if var > 0:
         hsv = nt.nodes.new("ShaderNodeHueSaturation")
+        hsv.inputs["Saturation"].default_value = sat
         sub = nt.nodes.new("ShaderNodeMath"); sub.operation = "SUBTRACT"; sub.inputs[1].default_value = 0.5
         mul = nt.nodes.new("ShaderNodeMath"); mul.operation = "MULTIPLY"; mul.inputs[1].default_value = 2.0 * var
         add = nt.nodes.new("ShaderNodeMath"); add.operation = "ADD"; add.inputs[1].default_value = 1.0
@@ -340,9 +447,58 @@ def first_channel(nt, sock):
     return sp.outputs["Red"]
 
 
-def layered_material(name, role_specs):
+def math_node(nt, op, a, b=None, c=None, clamp=False):
+    """One Math node; each of a, b, c is a socket or a number. Returns its output socket."""
+    n = nt.nodes.new("ShaderNodeMath")
+    n.operation = op
+    n.use_clamp = clamp
+    for i, v in enumerate((a, b, c)):
+        if v is None:
+            continue
+        if isinstance(v, (int, float)):
+            n.inputs[i].default_value = float(v)
+        else:
+            nt.links.new(v, n.inputs[i])
+    return n.outputs["Value"]
+
+
+def noise_field(nt, src, metres, detail=2.0, offset=(0.0, 0.0, 0.0), kind="FBM", roughness=0.5, stretch=(1.0, 1.0, 1.0), lo=0.3, hi=0.7):
+    """A noise value spread over 0..1, with features about `metres` across in the coordinate `src` (which is in metres).
+    `stretch` scales the axes (Blender axes: Z is up), so (0.2, 0.2, 3) gives level bands like rock strata."""
+    mp = nt.nodes.new("ShaderNodeMapping")
+    s = 1.0 / max(1e-4, metres)
+    mp.inputs["Scale"].default_value = (s * stretch[0], s * stretch[1], s * stretch[2])
+    mp.inputs["Location"].default_value = offset
+    nt.links.new(src, mp.inputs["Vector"])
+    n = nt.nodes.new("ShaderNodeTexNoise")
+    n.inputs["Scale"].default_value = 1.0
+    n.inputs["Detail"].default_value = detail
+    n.inputs["Roughness"].default_value = roughness
+    try:
+        n.noise_type = kind
+        n.normalize = True
+    except (AttributeError, TypeError):
+        pass  # older Blender: plain fBm only
+    nt.links.new(mp.outputs["Vector"], n.inputs["Vector"])
+    r = nt.nodes.new("ShaderNodeMapRange")
+    r.inputs["From Min"].default_value, r.inputs["From Max"].default_value = lo, hi
+    nt.links.new(n.outputs["Fac"], r.inputs["Value"])
+    return r.outputs["Result"]
+
+
+def layered_material(name, role_specs, mspec=None):
     """One material that mixes several library materials by per-vertex weights (`_WEIGHTS_0`, `_WEIGHTS_1`, written by
-    blend_materials). Colour, roughness, metal and height are blended with the weights; one Principled BSDF shades the result."""
+    blend_materials). Colour, roughness, metal and height are blended with the weights; one Principled BSDF shades the result.
+
+    Vertex weights are as coarse as the mesh (25 m cells on a far ring), so on their own they give soft watercolour blends and
+    smooth, plaster-like slopes. Detail finer than the mesh is made here, per pixel, and each piece is switched on per ROLE:
+      breakup, breakup_m   push the weight through a noise threshold, so a soft gradient becomes a crisp patchwork (snow patches,
+                           tongues of grass in scree); breakup_by="relief" uses the rock relief, so snow lies in the gullies
+      macro                slow brightness change over `macro_m` metres (material key), so a slope is not one flat colour
+      relief               metres of ridged rock relief added to the bump height, `relief_m` across (material key)
+      strata               level banding in colour, like bedded rock
+    Heights are in metres (map value x bump_distance x bump), so a 90 m aerial scan and a 2 m close-up scan bump correctly side by side."""
+    mspec = mspec or {}
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
@@ -358,7 +514,55 @@ def layered_material(name, role_specs):
         nt.links.new(a.outputs["Color"], sep.inputs["Color"])
         socks = [sep.outputs["Red"], sep.outputs["Green"], sep.outputs["Blue"], a.outputs["Alpha"]]
         wsock.extend(socks[:count])
-    acc = {"color": None, "rough": None, "metal": None, "height": None}
+
+    # shared fields of the material (built only when a role asks for them)
+    world = nt.nodes.new("ShaderNodeTexCoord").outputs["Object"]
+    fields = {}
+
+    def field(kind, metres=None):
+        """A slow field over the surface, 0..1; one node group per (kind, size), shared by the roles that ask for it."""
+        metres = float(metres if metres is not None else mspec.get(kind + "_m", {"macro": 160.0, "relief": 60.0, "strata": 14.0}[kind]))
+        key = (kind, metres)
+        if key not in fields:
+            if kind == "macro":
+                a = noise_field(nt, world, metres, detail=3.0, offset=(11.0, 5.0, 2.0))
+                b = noise_field(nt, world, metres / 7.0, detail=2.0, offset=(3.0, 17.0, 9.0))
+                fields[key] = math_node(nt, "ADD", math_node(nt, "MULTIPLY", a, 0.65), math_node(nt, "MULTIPLY", b, 0.35))
+            elif kind == "relief":
+                a = noise_field(nt, world, metres, detail=5.0, roughness=0.55, kind="RIDGED_MULTIFRACTAL", offset=(4.0, 8.0, 1.0), lo=0.15, hi=0.85)
+                b = noise_field(nt, world, metres / 9.0, detail=3.0, offset=(9.0, 2.0, 6.0))
+                fields[key] = math_node(nt, "ADD", math_node(nt, "MULTIPLY", a, 0.75), math_node(nt, "MULTIPLY", b, 0.25))
+            else:
+                fields[key] = noise_field(nt, world, metres, detail=3.0, stretch=(0.12, 0.12, 1.0), offset=(1.0, 6.0, 3.0))
+        return fields[key]
+
+    # crisp patchwork: each weight goes through a noise threshold, then the weights are brought back to a sum of one
+    if any(float(s.get("breakup", 0.0)) > 0.0 for s in role_specs):
+        mixed = []
+        for i, spec in enumerate(role_specs):
+            amount = float(spec.get("breakup", 0.0))
+            if amount <= 0.0:
+                mixed.append(wsock[i])
+                continue
+            soft = max(0.02, float(spec.get("breakup_soft", 0.18)))
+            if spec.get("breakup_by") == "relief":
+                n = field("relief", spec.get("breakup_m"))
+            else:
+                n = noise_field(nt, world, float(spec.get("breakup_m", 30.0)), detail=3.0, offset=(17.0 * i + 3.0, 5.0 * i + 1.0, 29.0 * i))
+            # threshold kept inside [soft/2, 1 - soft/2], so a weight of 0 stays 0 and a weight of 1 stays 1
+            thr = nt.nodes.new("ShaderNodeMapRange")
+            thr.inputs["To Min"].default_value, thr.inputs["To Max"].default_value = soft / 2.0, 1.0 - soft / 2.0
+            nt.links.new(n, thr.inputs["Value"])
+            cut = math_node(nt, "MULTIPLY_ADD", math_node(nt, "SUBTRACT", wsock[i], thr.outputs["Result"]), 1.0 / soft, 0.5, clamp=True)
+            mixed.append(math_node(nt, "ADD", math_node(nt, "MULTIPLY", wsock[i], 1.0 - amount), math_node(nt, "MULTIPLY", cut, amount)))
+        total = None
+        kept = []
+        for i, w in enumerate(mixed):
+            w = math_node(nt, "ADD", w, math_node(nt, "MULTIPLY", wsock[i], 0.02))  # where every layer was cut away, the soft blend shows
+            kept.append(w)
+            total = w if total is None else math_node(nt, "ADD", total, w)
+        wsock = [math_node(nt, "DIVIDE", w, math_node(nt, "MAXIMUM", total, 1e-4)) for w in kept]
+    acc = {"color": None, "rough": None, "metal": None, "height": None, "spec": None}
 
     def accumulate(key, sock, w, vector):
         if sock is None:
@@ -383,14 +587,14 @@ def layered_material(name, role_specs):
             nt.links.new(term, add.inputs[1])
             acc[key] = add.outputs["Vector" if vector else "Value"]
 
-    bump_spec = {"bump": 0.0, "bump_distance": 0.02}
     for i, spec in enumerate(role_specs):
         if textured(spec):
             color, rough, metal, height = pbr_layer(nt, spec, coordinate_source(nt, spec))
-            bump_spec["bump"] = max(bump_spec["bump"], float(spec.get("bump", 0.5)))
             rough = first_channel(nt, rough)
             metal = first_channel(nt, metal)
             height = first_channel(nt, height)
+            if height is not None:  # map value 0..1 -> metres
+                height = math_node(nt, "MULTIPLY", height, float(spec.get("bump_distance", 0.02)) * float(spec.get("bump", 0.5)))
         else:
             if spec.get("polyhaven"):
                 warn("layer files for %s are not on disk; flat colour used" % spec["polyhaven"])
@@ -398,15 +602,86 @@ def layered_material(name, role_specs):
             rgb = nt.nodes.new("ShaderNodeRGB")
             rgb.outputs[0].default_value = (c[0], c[1], c[2], 1.0)
             color, rough, metal, height = rgb.outputs[0], None, None, None
+        gain = None  # brightness factor from the slow fields
+        for key, kind in (("macro", "macro"), ("strata", "strata")):
+            amp = float(spec.get(key, 0.0))
+            if amp > 0.0:
+                g = math_node(nt, "MULTIPLY_ADD", field(kind), 2.0 * amp, 1.0 - amp)  # 1 - amp .. 1 + amp
+                gain = g if gain is None else math_node(nt, "MULTIPLY", gain, g)
+        relief = float(spec.get("relief", 0.0))
+        if relief > 0.0:
+            rf = field("relief", spec.get("relief_m"))
+            r = math_node(nt, "MULTIPLY", rf, relief)
+            height = r if height is None else math_node(nt, "ADD", height, r)
+            # ribs catch the light and gullies hold shade and dirt: a little of the relief goes into the colour too
+            shade = float(spec.get("relief_shade", 0.35))
+            g = math_node(nt, "MULTIPLY_ADD", rf, shade, 1.0 - 0.5 * shade)
+            gain = g if gain is None else math_node(nt, "MULTIPLY", gain, g)
+        if gain is not None:
+            sc = nt.nodes.new("ShaderNodeVectorMath")
+            sc.operation = "SCALE"
+            nt.links.new(color, sc.inputs[0])
+            nt.links.new(gain, sc.inputs["Scale"])
+            color = sc.outputs["Vector"]
         if rough is None:
             rn = nt.nodes.new("ShaderNodeValue")
             rn.outputs[0].default_value = float(spec.get("roughness", 0.85))
             rough = rn.outputs[0]
+        # Ground and canopy are matte: a dark surface seen at a grazing angle would otherwise reflect enough bright sky to turn teal at
+        # a distance. Only a glossy layer (water: roughness under 0.2) keeps a strong specular; a role may set "specular" itself.
+        sv = nt.nodes.new("ShaderNodeValue")
+        sv.outputs[0].default_value = float(spec.get("specular", 0.6 if float(spec.get("roughness", 0.85)) < 0.2 else 0.08))
+        accumulate("spec", sv.outputs[0], wsock[i], False)
         accumulate("color", color, wsock[i], True)
         accumulate("rough", rough, wsock[i], False)
         accumulate("metal", metal, wsock[i], False)
         accumulate("height", height, wsock[i], False)
-    finish_bsdf(nt, bsdf, acc["color"], acc["rough"], acc["metal"], acc["height"], bump_spec)
+    # heights are already in metres, so the bump node works at a distance of one
+    finish_bsdf(nt, bsdf, acc["color"], acc["rough"], acc["metal"], acc["height"], {"bump": float(mspec.get("bump", 1.0)), "bump_distance": 1.0})
+    if acc["spec"] is not None:
+        nt.links.new(acc["spec"], bsdf.inputs["Specular IOR Level"])
+    return m
+
+
+def water_material(name, spec):
+    """Clear water for a surface that lies over a bed: it refracts (you see the stones under it close by), mirrors the sky at a
+    grazing angle (Fresnel), carries small ripples as a bump, and tints with depth. Cycles has no caustics here, so a refracting
+    surface would leave its bed in black shadow; shadow rays therefore pass straight through, tinted."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    bsdf = nt.nodes["Principled BSDF"]
+    tint = spec.get("tint", [0.78, 0.90, 0.86])
+    bsdf.inputs["Base Color"].default_value = (tint[0], tint[1], tint[2], 1.0)
+    bsdf.inputs["Roughness"].default_value = float(spec.get("roughness", 0.02))
+    bsdf.inputs["IOR"].default_value = 1.333
+    bsdf.inputs["Transmission Weight"].default_value = 1.0
+    pos = nt.nodes.new("ShaderNodeNewGeometry").outputs["Position"]
+    rm = max(0.02, float(spec.get("ripple_m", 0.9)))
+    small = noise_field(nt, pos, rm, detail=3.0, offset=(2.0, 7.0, 0.0), lo=0.0, hi=1.0)
+    swell = noise_field(nt, pos, rm * 6.0, detail=2.0, offset=(9.0, 1.0, 0.0), lo=0.0, hi=1.0)
+    h = math_node(nt, "ADD", math_node(nt, "MULTIPLY", small, 0.02), math_node(nt, "MULTIPLY", swell, 0.06))
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = float(spec.get("ripple", 0.25))
+    bump.inputs["Distance"].default_value = 1.0
+    nt.links.new(h, bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    out = nt.nodes["Material Output"]
+    through = nt.nodes.new("ShaderNodeBsdfTransparent")
+    through.inputs["Color"].default_value = (tint[0], tint[1], tint[2], 1.0)
+    lp = nt.nodes.new("ShaderNodeLightPath")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(lp.outputs["Is Shadow Ray"], mix.inputs["Fac"])
+    nt.links.new(bsdf.outputs["BSDF"], mix.inputs[1])
+    nt.links.new(through.outputs["BSDF"], mix.inputs[2])
+    nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
+    depth = float(spec.get("absorb", 0.35))
+    if depth > 0.0:
+        ab = nt.nodes.new("ShaderNodeVolumeAbsorption")
+        dc = spec.get("deep", [0.45, 0.72, 0.66])
+        ab.inputs["Color"].default_value = (dc[0], dc[1], dc[2], 1.0)
+        ab.inputs["Density"].default_value = depth
+        nt.links.new(ab.outputs["Volume"], out.inputs["Volume"])
     return m
 
 
@@ -459,15 +734,18 @@ class Materials:
                         warn("layer '%s' of '%s' is not in the library or the scene file; grey used" % (role, name))
                         rs = {"color": self.default_color}
                     role_specs.append(rs)
-                m = layered_material(name, role_specs)
+                m = layered_material(name, role_specs, spec)
                 self.layered.add(name)
                 self.stats.setdefault(name, {"resolved": all(material_spec(r) is not None for r in spec["layers"]), "textured": all(textured(r) for r in role_specs), "layered": spec["layers"], "triangles": 0})
+            elif spec.get("kind") == "water":
+                m = water_material(name, spec)
+                self.stats.setdefault(name, {"resolved": True, "textured": True, "kind": "water", "triangles": 0})
             elif "polyhaven" in spec:
                 m, textured_ok = pbr_material(name, spec)
                 self.stats.setdefault(name, {"resolved": True, "textured": textured_ok, "triangles": 0})
             else:
                 c = spec.get("color", spec.get("fallback", self.default_color))
-                m = flat_material(name, c, spec.get("roughness", 0.8), spec.get("metallic", 0.0))
+                m = flat_material(name, c, spec.get("roughness", 0.8), spec.get("metallic", 0.0), spec=spec)
                 self.stats.setdefault(name, {"resolved": True, "textured": False, "triangles": 0})
         self.cache[key] = m
         return m
@@ -477,12 +755,70 @@ def has_image_texture(m):
     return bool(m.use_nodes and m.node_tree and any(n.type == "TEX_IMAGE" for n in m.node_tree.nodes))
 
 
+def tune_authored(m, spec):
+    """A scanned asset keeps its own material, but a style may still say `saturation` and `tint` for it (keyed by the material's
+    name as the report lists it, `rock_moss_set_01__rock_moss_set_01`): a rock scanned on red soil in another country is too warm
+    for a grey granite canyon, and the scan cannot know that. Returns True if the material was changed."""
+    if not spec or not ("saturation" in spec or "tint" in spec) or any(n.name == "pt_tune" for n in m.node_tree.nodes):
+        return False
+    nt = m.node_tree
+    bsdf = next((n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"), None)
+    if bsdf is None or not bsdf.inputs["Base Color"].is_linked:
+        return False
+    src = bsdf.inputs["Base Color"].links[0].from_socket
+    hsv = nt.nodes.new("ShaderNodeHueSaturation")
+    hsv.name = "pt_tune"
+    hsv.inputs["Saturation"].default_value = float(spec.get("saturation", 1.0))
+    nt.links.new(src, hsv.inputs["Color"])
+    out = hsv.outputs["Color"]
+    if spec.get("tint"):
+        t = spec["tint"]
+        mix = nt.nodes.new("ShaderNodeMix")
+        mix.data_type = "RGBA"
+        mix.blend_type = "MULTIPLY"
+        mix.inputs[0].default_value = 1.0
+        mix.inputs[7].default_value = (t[0], t[1], t[2], 1.0)
+        nt.links.new(out, mix.inputs[6])
+        out = mix.outputs[2]
+    nt.links.new(out, bsdf.inputs["Base Color"])
+    return True
+
+
+def add_translucency(m, amount):
+    """Leaves, needles and grass let light through; a scanned plant's material does not say so, and against the sun it renders as
+    black card. For an authored material that is alpha-cut (its Alpha comes from a texture), part of the surface becomes a
+    translucent layer in the leaf's own colour, cut by the same alpha. Returns True if the material was changed."""
+    nt = m.node_tree
+    bsdf = next((n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"), None)
+    out = next((n for n in nt.nodes if n.type == "OUTPUT_MATERIAL" and n.is_active_output), None)
+    if bsdf is None or out is None or not bsdf.inputs["Alpha"].is_linked or any(n.type == "BSDF_TRANSLUCENT" for n in nt.nodes):
+        return False
+    alpha = bsdf.inputs["Alpha"].links[0].from_socket
+    tr = nt.nodes.new("ShaderNodeBsdfTranslucent")
+    if bsdf.inputs["Base Color"].is_linked:
+        nt.links.new(bsdf.inputs["Base Color"].links[0].from_socket, tr.inputs["Color"])
+    else:
+        tr.inputs["Color"].default_value = bsdf.inputs["Base Color"].default_value
+    clear = nt.nodes.new("ShaderNodeBsdfTransparent")
+    cut = nt.nodes.new("ShaderNodeMixShader")  # alpha 0 -> see through, alpha 1 -> translucent leaf
+    nt.links.new(alpha, cut.inputs["Fac"])
+    nt.links.new(clear.outputs["BSDF"], cut.inputs[1])
+    nt.links.new(tr.outputs["BSDF"], cut.inputs[2])
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    mix.inputs["Fac"].default_value = amount
+    nt.links.new(bsdf.outputs["BSDF"], mix.inputs[1])
+    nt.links.new(cut.outputs["Shader"], mix.inputs[2])
+    nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
+    return True
+
+
 def base_name(n):
     return re.sub(r"\.\d{3}$", "", n)
 
 
 def bind_materials(objs):
     mats = Materials()
+    translucency = float(SCENE.get("render", {}).get("foliage_translucency", 0.0))
     tris_by_mesh = {}
     users = {}
     for o in objs:
@@ -501,7 +837,11 @@ def bind_materials(objs):
             name = base_name(cur.name) if cur is not None else None
             if cur is not None and has_image_texture(cur):
                 # authored in the source asset (textures, alpha mode, double-sided as imported): keep it
-                mats.stats.setdefault(name, {"resolved": True, "textured": True, "authored": True, "triangles": 0})
+                st = mats.stats.setdefault(name, {"resolved": True, "textured": True, "authored": True, "triangles": 0})
+                if tune_authored(cur, SCENE.get("materials", {}).get(name)):
+                    st["tuned"] = True
+                if translucency > 0.0 and add_translucency(cur, translucency):
+                    st["translucent"] = True
                 continue
             me.materials[i] = mats.get(name, has_vc)
             if name in mats.layered and "_WEIGHTS_0" not in me.attributes:
@@ -656,9 +996,35 @@ def make_camera(sc, spec, objs, name):
     return cam
 
 
+def setup_glare(sc):
+    """`render.glare` (0 = off): a soft glow around very bright areas (sky between branches, sun on water), as a lens gives.
+    Done in the compositor on the linear image, before the view transform."""
+    amount = float(SCENE.get("render", {}).get("glare", 0.0))
+    if amount <= 0.0:
+        return
+    try:
+        sc.use_nodes = True
+        t = sc.node_tree
+        for n in list(t.nodes):
+            t.nodes.remove(n)
+        rl = t.nodes.new("CompositorNodeRLayers")
+        g = t.nodes.new("CompositorNodeGlare")
+        comp = t.nodes.new("CompositorNodeComposite")
+        g.glare_type = "BLOOM" if "BLOOM" in [e.identifier for e in g.bl_rna.properties["glare_type"].enum_items] else "FOG_GLOW"
+        for key, val in (("Threshold", float(SCENE["render"].get("glare_threshold", 2.0))), ("Strength", amount), ("Size", float(SCENE["render"].get("glare_size", 0.6)))):
+            if key in g.inputs:
+                g.inputs[key].default_value = val
+        t.links.new(rl.outputs["Image"], g.inputs["Image"])
+        t.links.new(g.outputs["Image"], comp.inputs["Image"])
+        REPORT["glare"] = g.glare_type
+    except Exception as e:  # the compositor's interface changes between Blender versions; a missing glow must not lose the frame
+        warn("glare not applied: %s" % e)
+        sc.use_nodes = False
+
+
 def bake_layered(objs, mats):
     """Bake every layered material (terrain blends) into an albedo and a tangent-space normal texture through the model's UVs,
-    so an engine that cannot run our layered shader still gets the real look. Writes PNGs and fills REPORT['baked']."""
+    so an engine that cannot run our layered shader still gets the real look. Writes JPEGs and fills REPORT['baked']."""
     sc = bpy.context.scene
     res = int(args.get("bake_res", "4096"))
     out_dir = args["bake_dir"]
@@ -692,6 +1058,23 @@ def bake_layered(objs, mats):
                 n.select = False
             tex.select = True
             nodes.active = tex
+            # Blender bakes every material slot of the object into that material's ACTIVE image node. The other slots (other
+            # terrain levels, water, buildings) must not receive this bake in one of their real textures, and a slot with no image
+            # node at all stops the bake with an error: each gets a throwaway target for the duration.
+            scratch = bpy.data.images.new("bake_scratch", 8, 8, alpha=False)
+            parked = []
+            for slot in o.material_slots:
+                other = slot.material
+                if other is None or other == mat or not other.use_nodes:
+                    continue
+                on = other.node_tree.nodes
+                dummy = on.new("ShaderNodeTexImage")
+                dummy.image = scratch
+                parked.append((on, dummy, on.active))
+                for n in on:
+                    n.select = False
+                dummy.select = True
+                on.active = dummy
             bpy.ops.object.select_all(action="DESELECT")
             o.select_set(True)
             bpy.context.view_layer.objects.active = o
@@ -700,23 +1083,57 @@ def bake_layered(objs, mats):
                 bpy.ops.object.bake(type=btype, pass_filter={"COLOR"}, margin=8)
             else:
                 bpy.ops.object.bake(type=btype, normal_space="TANGENT", margin=8)
-            path = os.path.join(out_dir, "%s_%s.png" % (name, kind))
+            # JPEG: four 4096 x 4096 PNG pairs made the engine file hundreds of megabytes larger, which is what a validator and an
+            # engine importer then have to hold in memory
+            path = os.path.join(out_dir, "%s_%s.jpg" % (name, kind))
             img.filepath_raw = path
-            img.file_format = "PNG"
-            img.save()
+            img.file_format = "JPEG"
+            img.save(quality=92 if kind == "albedo" else 96)
             nodes.remove(tex)
+            for on, dummy, was in parked:
+                on.remove(dummy)
+                try:
+                    on.active = was
+                except ReferenceError:
+                    pass
+            bpy.data.images.remove(scratch)
             paths[kind] = path
             paths[kind + "_seconds"] = round(time.time() - t1, 2)
         paths["resolution"] = res
         REPORT["baked"][name] = paths
 
 
+def load_model():
+    """The model's meshes, from the import cache when there is one. Importing a large world takes minutes (tens of thousands of
+    objects, millions of triangles); the caller names a .blend after the model's content hash (`blend_cache=`), the first run
+    saves the imported scene there, and later runs with the same model open it in seconds. Materials, sky, haze and cameras are
+    never cached: they are rebuilt from the scene file on every run."""
+    cache = args.get("blend_cache", "")
+    if cache and os.path.exists(cache):
+        t = time.time()
+        bpy.ops.wm.open_mainfile(filepath=cache)
+        objs = [o for o in bpy.data.objects if o.type == "MESH"]
+        REPORT.update({"objects": len(objs), "unique_meshes": len({o.data.name for o in objs}), "lod_nodes_dropped": 0, "import": "cache", "import_seconds": round(time.time() - t, 2)})
+        return objs
+    t = time.time()
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    objs = import_model(args["model"])
+    REPORT["import"] = "gltf"
+    if cache and objs:
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(cache)), exist_ok=True)
+            bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(cache), compress=False, check_existing=False)
+        except Exception as e:  # a full disk must not lose the frame
+            warn("could not save the import cache: %s" % e)
+    REPORT["import_seconds"] = round(time.time() - t, 2)
+    return objs
+
+
 def main():
     t0 = time.time()
-    bpy.ops.wm.read_factory_settings(use_empty=True)
+    objs = load_model()
     sc = bpy.context.scene
     setup_render(sc)
-    objs = import_model(args["model"])
     if not objs:
         raise SystemExit("the model has no meshes")
     mats = bind_materials(objs)
@@ -733,11 +1150,15 @@ def main():
     out = os.path.abspath(args["out"])  # Blender resolves relative render paths against something else, so never pass one
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     REPORT["frames"] = []
+    only = [n for n in args.get("only", "").split(",") if n]  # only=hero,eye renders those cameras (look development)
+    if only:
+        shots = [s for s in shots if s.get("name") in only] or shots
     cams = [(spec.get("name", "shot%d" % i), make_camera(sc, spec, objs, spec.get("name", "shot%d" % i))) for i, spec in enumerate(shots)]
-    add_fog(objs)  # after the cameras: the fog box must not be seen by the eye-height ground lookup
+    add_fog(objs, cams)  # after the cameras: the fog boxes must not be seen by the eye-height ground lookup
+    setup_glare(sc)
     for name, cam in cams:
         sc.camera = cam
-        path = out if len(cams) == 1 else re.sub(r"(\.png)?$", "_%s.png" % name, out, count=1)
+        path = out if len(cams) == 1 and not only else re.sub(r"(\.png)?$", "_%s.png" % name, out, count=1)
         sc.render.filepath = path
         t1 = time.time()
         bpy.ops.render.render(write_still=True)

@@ -87,6 +87,7 @@ pub fn prepare(dir: &Path) -> Result<(), String> {
         }
         let mut imgs = Vec::new();
         let mut slots = serde_json::Map::new();
+        let mut files = serde_json::Map::new();
         for (slot, &ci) in order.iter().enumerate() {
             let c = &cands[ci];
             let geo = cook_code(&c.code).ok_or("candidate stopped building")?;
@@ -94,6 +95,10 @@ pub fn prepare(dir: &Path) -> Result<(), String> {
             let generic = critique_json(&geo, &Opts { width: 480, height: 360, ..Opts::default() }, None)["score"].as_f64().unwrap_or(0.0);
             let ssim = pt_render::metrics::compare(&img, &oracle_img).ssim;
             slots.insert(SLOTS[slot].into(), json!({"kind": c.kind, "reward": c.reward, "generic_critique": generic, "ssim_to_oracle": ssim}));
+            // one file per candidate, for judges that take images one at a time (`pt judge critique`)
+            let one = dir.join(format!("cand_{name}_{}.png", SLOTS[slot]));
+            std::fs::write(&one, pt_render::encode_png(&img)?).map_err(|e| e.to_string())?;
+            files.insert(SLOTS[slot].into(), json!(one.display().to_string()));
             imgs.push(img);
         }
         while imgs.len() < 4 {
@@ -101,7 +106,7 @@ pub fn prepare(dir: &Path) -> Result<(), String> {
         }
         let png = dir.join(format!("sheet_{name}.png"));
         std::fs::write(&png, pt_render::encode_png(&pt_render::grid(&imgs, 2, 4))?).map_err(|e| e.to_string())?;
-        blind.push(json!({"task": name, "sheet": png.display().to_string(), "layout": "A B / C D (top row A B, bottom row C D)", "brief": t.brief}));
+        blind.push(json!({"task": name, "sheet": png.display().to_string(), "layout": "A B / C D (top row A B, bottom row C D)", "brief": t.brief, "images": Value::Object(files)}));
         key.insert(name.into(), Value::Object(slots));
     }
     std::fs::write(dir.join("blind.json"), serde_json::to_string_pretty(&blind).unwrap()).map_err(|e| e.to_string())?;
@@ -166,6 +171,11 @@ pub fn pairwise_accuracy(groups: &[(Vec<f64>, Vec<f64>)]) -> f64 {
 }
 
 pub fn score(judgments: &Path, dir: &Path) -> Result<(), String> {
+    score_to(judgments, dir, Path::new("gym/critique_experiment.json"))
+}
+
+/// As `score`, recording the result in `out_path` (one file per judge, so results can be compared side by side).
+pub fn score_to(judgments: &Path, dir: &Path, out_path: &Path) -> Result<(), String> {
     let key: Value = serde_json::from_str(&std::fs::read_to_string(dir.join("key.json")).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     let j: Value = serde_json::from_str(&std::fs::read_to_string(judgments).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     let judge_name = j["judge"].as_str().unwrap_or("unnamed judge").to_string();
@@ -214,9 +224,11 @@ pub fn score(judgments: &Path, dir: &Path) -> Result<(), String> {
         report.insert((*kind).into(), json!({"spearman": rho, "pairwise_accuracy": acc, "picks_best": best}));
     }
     let out = json!({"judge": judge_name, "tasks": n_tasks, "candidates_per_task": 4, "results": report});
-    std::fs::create_dir_all("gym").ok();
-    std::fs::write("gym/critique_experiment.json", serde_json::to_string_pretty(&out).unwrap()).map_err(|e| e.to_string())?;
-    println!("recorded gym/critique_experiment.json");
+    if let Some(dir) = out_path.parent() {
+        std::fs::create_dir_all(dir).ok();
+    }
+    std::fs::write(out_path, serde_json::to_string_pretty(&out).unwrap()).map_err(|e| e.to_string())?;
+    println!("recorded {}", out_path.display());
     Ok(())
 }
 

@@ -1,12 +1,13 @@
-# Long ladder: two side rails and five rungs (one array).
-H = 1.99957          # height
-RAIL_W = 0.10257    # rail width (x)
-GAP = 0.29849        # clear width between the rails
-RUNGS = 4.48829
-SPACING = 0.33615
+# kenney/platformer-kit/ladder-long: two side rails and eight rungs 0.25 apart (repair: the first fit kept four, because thin rungs barely move the score)
+H = 1.99997          # height
+RAIL_W = 0.10152     # rail width (x)
+GAP = 0.29691        # clear width between the rails
+RUNGS = 8
+SPACING = 0.25
+FIRST = 0.125        # height of the lowest rung's centre
 
-rail = box(size=[RAIL_W, H, 0.09717], center=[GAP / 2 + RAIL_W / 2, H / 2, 0])
+rail = box(size=[RAIL_W, H, 0.09998], center=[GAP / 2 + RAIL_W / 2, H / 2, 0])
 rails = mirror(rail, axis="x", offset=0)
-rungs = array(box(size=[GAP + -0.04064, 0.06809, 0.06802], center=[0, 0.12192, 0]), count=RUNGS, offset=[0, SPACING, 0])
+rungs = array(box(size=[GAP + -0.05854, 0.06336, 0.06171], center=[0, FIRST, 0]), count=RUNGS, offset=[0, SPACING, 0])
 ladder = merge(rails, rungs)
 out(ladder)

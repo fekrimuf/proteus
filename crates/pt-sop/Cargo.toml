@@ -9,3 +9,4 @@ serde_json.workspace = true
 rayon.workspace = true
 pt-vex.workspace = true
 pt-sim.workspace = true
+png.workspace = true

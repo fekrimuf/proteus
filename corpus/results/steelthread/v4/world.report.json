@@ -1,0 +1,179 @@
+{
+ "blender": "4.5.14 LTS",
+ "warnings": [],
+ "device": "OPTIX",
+ "samples": 128,
+ "resolution": [
+  1600,
+  900
+ ],
+ "lod_nodes_dropped": 0,
+ "objects": 66491,
+ "unique_meshes": 31,
+ "materials": {
+  "terrain_blend": {
+   "resolved": true,
+   "textured": false,
+   "layered": [
+    "ground_water",
+    "ground_flat",
+    "ground_forest",
+    "ground_dirt",
+    "ground_gravel",
+    "ground_rock",
+    "ground_snow"
+   ],
+   "triangles": 819200
+  },
+  "terrain_far": {
+   "resolved": true,
+   "textured": false,
+   "layered": [
+    "ground_water",
+    "ground_flat",
+    "far_forest",
+    "ground_dirt",
+    "ground_gravel",
+    "ground_rock",
+    "ground_snow"
+   ],
+   "triangles": 1835008
+  },
+  "jacaranda_tree__jacaranda_tree_branches": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 982566228
+  },
+  "jacaranda_tree__jacaranda_tree_leaves": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 1917142332
+  },
+  "jacaranda_tree__jacaranda_tree_trunk": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 183629376
+  },
+  "othonna_cerarioides__othonna_cerarioides": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 38494818
+  },
+  "othonna_cerarioides__othonna_cerarioides_leaves": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 57806496
+  },
+  "fern_02__fern_02": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 14795600
+  },
+  "shrub_04__shrub_04": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 313522671
+  },
+  "flower_empodium__flower_empodium": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 523692
+  },
+  "weed_plant_02__weed_plant_02": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 1926228
+  },
+  "nettle_plant__nettle_plant": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 3086216
+  },
+  "pine_sapling_small__pine_sapling_small_bark": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 12395874
+  },
+  "pine_sapling_small__pine_sapling_small_twig": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 3163499371
+  },
+  "rock_moss_set_01__rock_moss_set_01": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 9638558
+  },
+  "rock_moss_set_02__rock_moss_set_02": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 3933780
+  },
+  "dead_tree_trunk__dead_tree_trunk": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 20665806
+  },
+  "tree_stump_01__tree_stump_01": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 10056270
+  },
+  "searsia_lucida__searsia_lucida": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 261391265
+  },
+  "searsia_lucida__searsia_lucida_leaves": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 118156500
+  },
+  "searsia_lucida__searsia_lucida_twigs": {
+   "resolved": true,
+   "textured": true,
+   "authored": true,
+   "triangles": 26598815
+  }
+ },
+ "triangles": 7142484104,
+ "material_coverage": 0.9996,
+ "unresolved": [],
+ "sky": "nishita",
+ "frames": [
+  {
+   "name": "hero",
+   "file": "D:\\Fekri\\Houdini-clone\\corpus\\results\\steelthread\\v4\\frame_hero.png",
+   "seconds": 62.32
+  },
+  {
+   "name": "valley",
+   "file": "D:\\Fekri\\Houdini-clone\\corpus\\results\\steelthread\\v4\\frame_valley.png",
+   "seconds": 48.43
+  },
+  {
+   "name": "eye",
+   "file": "D:\\Fekri\\Houdini-clone\\corpus\\results\\steelthread\\v4\\frame_eye.png",
+   "seconds": 54.19
+  }
+ ],
+ "total_seconds": 256.77
+}

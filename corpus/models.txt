@@ -18,3 +18,26 @@ pine_sapling_small
 searsia_lucida
 othonna_cerarioides
 pachira_aquatica_01
+# Hero-frame set (2026-10-11): full-size conifers, grass, moss and stream-bank rocks. The firs are several million triangles per file
+# (one file holds several trees), so they are instanced a few thousand times at most and the engine export decimates them.
+fir_tree_01
+fir_sapling_medium
+fir_sapling
+pine_sapling_medium
+grass_medium_01
+grass_medium_02
+moss_01
+pine_roots
+tree_stump_02
+boulder_01
+rock_face_01
+rock_face_02
+dead_tree_trunk_02
+namaqualand_stones_01
+namaqualand_rocks_01
+stone_01
+rock_07
+modular_wooden_pier
+dandelion_01
+bark_debris_01
+root_cluster_01

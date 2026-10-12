@@ -1,0 +1,18 @@
+# polyhaven/Barrel_01 (llm-recipe, run llm)
+# polyhaven/Barrel_01: an oil drum turned on a lathe: raised bands at the bottom, two in the middle and the top, flat lid.
+# One revolved profile, so there is a single clean surface (the first repair added the rings as separate tubes and the hidden
+# overlap cost precision). Profile points are (radius, height).
+R = 0.27492             # drum body radius
+RB = 0.2802            # band radius, just proud of the body
+Y0 = -0.0014          # bottom
+Y1 = 0.88255           # top
+B1 = 0.09268           # bottom band top
+M1 = 0.18614           # lower middle band: from here ...
+M2 = 0.22465           # ... to here
+N1 = 0.5691            # upper middle band: from here ...
+N2 = 0.61519           # ... to here
+T1 = 0.71306             # top band starts here
+
+prof = curve(points=[[0, Y0, 0], [RB, Y0, 0], [RB, B1, 0], [R, B1, 0], [R, M1, 0], [RB, M1, 0], [RB, M2, 0], [R, M2, 0], [R, N1, 0], [RB, N1, 0], [RB, N2, 0], [R, N2, 0], [R, T1, 0], [RB, T1, 0], [RB, Y1, 0], [0, Y1, 0]])
+barrel = revolve(prof, divisions=40)
+out(barrel)

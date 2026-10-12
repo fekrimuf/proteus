@@ -1,0 +1,309 @@
+{
+  "development_half": {
+    "fn": 0,
+    "fp": 10,
+    "tn": 0,
+    "tp": 6
+  },
+  "false_alarms_on_unflagged": {
+    "count": 15,
+    "of": 15
+  },
+  "flagged_recall": {
+    "found": 9,
+    "of": 9
+  },
+  "hold_out_half": {
+    "fn": 0,
+    "fp": 5,
+    "tn": 0,
+    "tp": 3
+  },
+  "identity_control_false_alarms": {
+    "count": 22,
+    "of": 24
+  },
+  "items": 24,
+  "judge": "qwen3-vl-8b-q4",
+  "method": "verdict",
+  "other_object_detected": {
+    "count": 24,
+    "of": 24
+  },
+  "rows": [
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/lampRoundFloor",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The lampshade has a distinct top rim in the original, which is not clearly or at"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the domed, chamfered lid is missing; ours has a flat top",
+      "id": "kenney/furniture-kit/trashcan",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The top cap has a distinct beveled edge in the original, which is missing in the"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the original's two L-shaped arms are not reproduced; ours has blocky crystal-like arms",
+      "id": "kenney/nature-kit/cactus_tall",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The top arm on the right side is missing in the copy.",
+        "The bottom arm on the left side is missing in the copy.",
+        "The top of the main stem has a distinct cap in the original but is missing in a "
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the three raised rings are missing; ours is a plain drum",
+      "id": "kenney/survival-kit/barrel",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "rings",
+        "top opening",
+        "side flanges"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/survival-kit/box",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "edges",
+        "facets",
+        "highlighted corners"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/survival-kit/rock-a",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The top part of the main structure is missing its distinct angular top cap in a "
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the two raised rings are missing; ours is a plain ten-sided drum",
+      "id": "polyhaven/Barrel_01",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "rings",
+        "top lid",
+        "bottom rim"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/bench",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The horizontal support bar between the front legs is missing in the copy.",
+        "The backrest's top horizontal bar is missing in the copy.",
+        "The backrest's middle horizontal bar is missing in the copy."
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/bookcaseClosed",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "shelves",
+        "openings",
+        "rungs"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/chair",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "The horizontal support between the front legs is missing in the copy.",
+        "The backrest's horizontal slat is missing in the copy.",
+        "The seat's horizontal support is missing in the copy."
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/desk",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "drawer handle",
+        "drawer front panel",
+        "drawer side panel"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/kitchenStove",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The handle on the oven door is missing in the rebuilt copy.",
+        "The control knobs on the stovetop are missing in the rebuilt copy.",
+        "The recessed panel on the top of the oven is missing in the rebuilt copy."
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/loungeSofa",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "armrests",
+        "backrest",
+        "seat cushions"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/table",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The horizontal support beam under the tabletop is missing in the copy, which is "
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/nature-kit/fence_gate",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "central curved panel",
+        "two horizontal crossbars on each side",
+        "overall shape with rounded center"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "only four rungs, bunched at the bottom; the original has eight evenly spaced",
+      "id": "kenney/platformer-kit/ladder-long",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "rungs",
+        "side rails",
+        "overall structure"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the seven shelves are missing; only the side and back panels were rebuilt",
+      "id": "polyhaven/Shelf_01",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "shelves",
+        "top rail",
+        "bottom rail"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the scrolled arm ends and the swept-up back are missing; ours has flat plain sides",
+      "id": "polyhaven/painted_wooden_bench",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "curved armrests on the ends",
+        "ornamental scrollwork on the ends",
+        "distinctive rounded feet"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the battlements and the recessed top are missing; ours is a plain block",
+      "id": "kenney/castle-kit/tower-square",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "battlements",
+        "top openings",
+        "horizontal grooves"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/fantasy-town-kit/chimney",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The copy lacks the distinct horizontal protrusion on the middle section that is "
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the raised rim and hollow basin are missing; ours is a flat disc",
+      "id": "kenney/fantasy-town-kit/fountain-round",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "rings",
+        "rim",
+        "openings"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/fantasy-town-kit/roof-gable",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The copy lacks the distinct visible feature of the original: the small protruded"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/fantasy-town-kit/stall",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "The copy lacks the distinct visible feature of the original: the horizontal slat"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/fantasy-town-kit/wall-wood-door",
+      "identity_control_false_alarm": true,
+      "judge_says_missing": true,
+      "named": [
+        "arched opening",
+        "door panel detail",
+        "structural recesses"
+      ],
+      "other_object_detected": true
+    }
+  ]
+}

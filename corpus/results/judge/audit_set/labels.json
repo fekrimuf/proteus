@@ -1,0 +1,170 @@
+[
+ {
+  "id": "kenney/furniture-kit/lampRoundFloor",
+  "run": "baseline",
+  "file": "kenney_furniture-kit_lampRoundFloor.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/furniture-kit/trashcan",
+  "run": "baseline",
+  "file": "kenney_furniture-kit_trashcan.png",
+  "flagged": "the domed, chamfered lid is missing; ours has a flat top",
+  "found_by": "structure judge, confirmed by eye"
+ },
+ {
+  "id": "kenney/nature-kit/cactus_tall",
+  "run": "baseline",
+  "file": "kenney_nature-kit_cactus_tall.png",
+  "flagged": "the original's two L-shaped arms are not reproduced; ours has blocky crystal-like arms",
+  "found_by": "eye"
+ },
+ {
+  "id": "kenney/survival-kit/barrel",
+  "run": "baseline",
+  "file": "kenney_survival-kit_barrel.png",
+  "flagged": "the three raised rings are missing; ours is a plain drum",
+  "found_by": "eye"
+ },
+ {
+  "id": "kenney/survival-kit/box",
+  "run": "baseline",
+  "file": "kenney_survival-kit_box.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/survival-kit/rock-a",
+  "run": "baseline",
+  "file": "kenney_survival-kit_rock-a.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "polyhaven/Barrel_01",
+  "run": "baseline",
+  "file": "polyhaven_Barrel_01.png",
+  "flagged": "the two raised rings are missing; ours is a plain ten-sided drum",
+  "found_by": "structure judge, confirmed by eye"
+ },
+ {
+  "id": "kenney/furniture-kit/bench",
+  "run": "llm",
+  "file": "kenney_furniture-kit_bench.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/furniture-kit/bookcaseClosed",
+  "run": "llm",
+  "file": "kenney_furniture-kit_bookcaseClosed.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/furniture-kit/chair",
+  "run": "llm",
+  "file": "kenney_furniture-kit_chair.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/furniture-kit/desk",
+  "run": "llm",
+  "file": "kenney_furniture-kit_desk.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/furniture-kit/kitchenStove",
+  "run": "baseline",
+  "file": "kenney_furniture-kit_kitchenStove.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/furniture-kit/loungeSofa",
+  "run": "llm",
+  "file": "kenney_furniture-kit_loungeSofa.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/furniture-kit/table",
+  "run": "llm",
+  "file": "kenney_furniture-kit_table.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/nature-kit/fence_gate",
+  "run": "llm",
+  "file": "kenney_nature-kit_fence_gate.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/platformer-kit/ladder-long",
+  "run": "llm",
+  "file": "kenney_platformer-kit_ladder-long.png",
+  "flagged": "only four rungs, bunched at the bottom; the original has eight evenly spaced",
+  "found_by": "eye"
+ },
+ {
+  "id": "polyhaven/Shelf_01",
+  "run": "baseline",
+  "file": "polyhaven_Shelf_01.png",
+  "flagged": "the seven shelves are missing; only the side and back panels were rebuilt",
+  "found_by": "eye"
+ },
+ {
+  "id": "polyhaven/painted_wooden_bench",
+  "run": "llm",
+  "file": "polyhaven_painted_wooden_bench.png",
+  "flagged": "the scrolled arm ends and the swept-up back are missing; ours has flat plain sides",
+  "found_by": "structure judge, confirmed by eye"
+ },
+ {
+  "id": "kenney/castle-kit/tower-square",
+  "run": "baseline",
+  "file": "kenney_castle-kit_tower-square.png",
+  "flagged": "the battlements and the recessed top are missing; ours is a plain block",
+  "found_by": "eye"
+ },
+ {
+  "id": "kenney/fantasy-town-kit/chimney",
+  "run": "baseline",
+  "file": "kenney_fantasy-town-kit_chimney.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/fantasy-town-kit/fountain-round",
+  "run": "baseline",
+  "file": "kenney_fantasy-town-kit_fountain-round.png",
+  "flagged": "the raised rim and hollow basin are missing; ours is a flat disc",
+  "found_by": "eye"
+ },
+ {
+  "id": "kenney/fantasy-town-kit/roof-gable",
+  "run": "llm",
+  "file": "kenney_fantasy-town-kit_roof-gable.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/fantasy-town-kit/stall",
+  "run": "llm",
+  "file": "kenney_fantasy-town-kit_stall.png",
+  "flagged": null,
+  "found_by": null
+ },
+ {
+  "id": "kenney/fantasy-town-kit/wall-wood-door",
+  "run": "llm",
+  "file": "kenney_fantasy-town-kit_wall-wood-door.png",
+  "flagged": null,
+  "found_by": null
+ }
+]

@@ -1,0 +1,11 @@
+{
+ "style": "styles/cascade_evening.json",
+ "brief": "A realistic mountain creek in a conifer forest in a glacial canyon: clear water over stones, grass, ferns and rocks on the banks, a timber footbridge and a thatched hut, tall firs, and snow-streaked granite peaks behind, in low hazy sunlight.",
+ "playable": {"size": [1600, 1600], "materials": ["terrain_blend", "terrain_hero"]},
+ "cameras": [
+  {"name": "hero", "eye": {"at": [103, 61.5], "height": 1.8, "yaw": 181, "pitch": 4}, "lens": 28},
+  {"name": "east", "eye": {"at": [12, 58], "height": 1.85, "yaw": 4, "pitch": 5}, "lens": 28},
+  {"name": "village", "eye": {"at": [38, 57.5], "height": 1.8, "yaw": 347, "pitch": 5}, "lens": 28},
+  {"name": "valley", "eye": {"at": [-330, -40], "height": 45, "yaw": 15, "pitch": -3}, "lens": 28}
+ ]
+}

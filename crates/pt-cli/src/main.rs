@@ -149,6 +149,8 @@ fn main() {
         Some("demo") => demo(args.get(2).map_or("out", String::as_str)),
         Some("bench") => bench(args.get(2).map(String::as_str) == Some("a")),
         Some("golden") => golden(),
+        Some("status") => pt_cli::docs::status_cmd(&args[2..]),
+        Some("docs-check") => pt_cli::docs::check_cmd(&args[2..]),
         Some("trace") => trace_cmd(&args[2..]),
         Some("sparse-bench") => sparse_bench_cmd(),
         Some("critique-bench") => critique_bench_cmd(&args[2..]),
@@ -167,6 +169,9 @@ fn main() {
         Some("shot") => shot_cmd(&args[2..]),
         Some("render-scene") => pt_cli::blender::render_scene_cmd(&args[2..]),
         Some("scorecard") => pt_cli::scorecard::scorecard_cmd(&args[2..]),
+        Some("judge") => pt_cli::judge_bench::judge_cmd(&args[2..]),
+        Some("terrain") => pt_cli::terrain::terrain_cmd(&args[2..]),
+        Some("dem-manifest") => pt_cli::terrain::dem_manifest_cmd(&args[2..]),
         Some("gym") => {
             gym::serve();
             Ok(())

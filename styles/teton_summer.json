@@ -1,0 +1,18 @@
+{
+ "name": "teton_summer",
+ "version": 1,
+ "note": "Clear summer morning in a glaciated granite valley: grey-brown scree and dirt, dark green conifer floor, cool haze toward the ridges. Roles are what recipes ask for (set_material(name=\"ground_flat\")); this file decides what they look like.",
+ "materials": {
+  "ground_water":  {"use": "water"},
+  "far_forest":    {"fallback": [0.016, 0.034, 0.015], "roughness": 0.95, "note": "linear values: a conifer canopy reflects about 3 percent of the light"},
+  "ground_flat":   {"use": "grass_lush",   "tint": [0.36, 0.50, 0.24], "scale_m": 2.5},
+  "ground_forest": {"use": "forest_floor", "tint": [0.40, 0.50, 0.34]},
+  "ground_dirt":   {"use": "forest_floor", "tint": [0.62, 0.55, 0.48], "scale_m": 1.6},
+  "ground_gravel": {"use": "rock_boulder",  "tint": [0.52, 0.72, 0.90], "scale_m": 2.4},
+  "ground_rock":   {"use": "rock_boulder",  "tint": [0.40, 0.57, 0.71], "scale_m": 5.0, "bump": 1.4},
+  "ground_snow":   {"use": "snow"}
+ },
+ "lighting": {"sky": "nishita", "sun_elevation": 38, "sun_azimuth": 150, "dust": 0.4, "fog_density": 0.00026, "fog_height": 420, "fog_extent": 400000, "fog_color": [0.62, 0.76, 0.96]},
+ "render": {"samples": 128, "resolution": [1600, 900], "exposure": -0.5, "view_transform": "Khronos PBR Neutral", "look": "None"},
+ "ground": {"material": "ground_flat"}
+}

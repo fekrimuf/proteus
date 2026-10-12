@@ -1,17 +1,24 @@
 # kenney/castle-kit/tower-square (llm-recipe, run llm)
-# Square tower: flared base, narrower waist, top band and four corner merlons.
-S = 0.98946          # footprint
-BASE_H = 0.44384    # flared base
-WAIST_H = 0.62014   # narrower middle
-WAIST = 0.9299     # waist width
-BAND_H = 0.18141    # top band
-MERLON_H = 0.05217  # crenellation height
-MERLON = 0.299    # merlon footprint
+# kenney/castle-kit/tower-square: a square tower: wide base, inset body, flared band, then a crown with a parapet wall, a central block and
+# four corner merlons (repair: the first fit was a plain block with no battlements).
+# The shell is ONE four-sided lathe turned 45 degrees (a square prism per profile step), so there is a single clean surface and no hidden
+# faces between stacked boxes. Profile points are (radius, height); a square of half-width h has radius h * 1.414.
+RB = 0.70669          # base, band and parapet outer radius (a square 1.02 wide)
+RBODY = 0.65705       # inset body (0.94 wide)
+RIN = 0.67149         # inner edge of the parapet wall (0.78 wide)
+RCORE = 0.29772       # central block (0.6 wide)
+SHOULDER = 0.38641     # where the base starts to slope in
+BASE_H = 0.3059       # top of the sloped shoulder (the body starts here)
+BODY_TOP = 1.13181     # top of the body
+BAND_TOP = 1.21526     # top of the flared band (the body slopes out to the parapet): the crown floor
+PARAPET_TOP = 1.26502  # top of the parapet wall and the central block
+TOP = 1.31057           # top of the merlons
+HALF = 0.47381          # half the footprint
+MERLON = 0.21542         # merlon size at the corners
 
-base = box(size=[S + -0.03342, BASE_H, S + 0.00796], center=[0, BASE_H / 2, 0])
-waist = box(size=[WAIST, WAIST_H, WAIST], center=[0, BASE_H + WAIST_H / 2, 0])
-band = box(size=[S + 0.01932, BAND_H, S + 0.01373], center=[0, BASE_H + WAIST_H + BAND_H / 2, 0])
-merlon = box(size=[MERLON, MERLON_H, MERLON], center=[0.35686, BASE_H + WAIST_H + BAND_H + MERLON_H / 2, 0.3515])
+prof = curve(points=[[0, 0, 0], [RB, 0, 0], [RB, SHOULDER, 0], [RBODY, BASE_H, 0], [RBODY, BODY_TOP, 0], [RB, BAND_TOP, 0], [RB, PARAPET_TOP, 0], [RIN, PARAPET_TOP, 0], [RIN, BAND_TOP, 0], [RCORE, BAND_TOP, 0], [RCORE, PARAPET_TOP, 0], [0, PARAPET_TOP, 0]])
+shell = transform(revolve(prof, divisions=4), r=[0, 45, 0])
+merlon = box(size=[MERLON, TOP - PARAPET_TOP, MERLON], center=[HALF - MERLON / 2, (PARAPET_TOP + TOP) / 2, HALF - MERLON / 2])
 merlons = mirror(mirror(merlon, axis="x", offset=0), axis="z", offset=0)
-tower = merge(base, waist, band, merlons)
+tower = merge(shell, merlons)
 out(tower)

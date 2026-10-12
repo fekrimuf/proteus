@@ -71,6 +71,26 @@ pub fn audit(geo: &Geometry) -> Audit {
         a.area_km2 = ((hi[0] - lo[0]) as f64 * (hi[2] - lo[2]) as f64) / 1.0e6;
     }
     let Some(inst) = &geo.instances else { return a };
+    // Per-square-kilometre measures use the DRESSED area (the box around the placed instances), not the whole mesh: a far ring of
+    // distant terrain with no instances on it is scenery, not content.
+    if inst.len() > 0 {
+        let (mut x0, mut x1, mut z0, mut z1) = (f32::MAX, f32::MIN, f32::MAX, f32::MIN);
+        // (a far stand-in, `lod_hint` with a draw distance, is scenery too: the spikes of a forest kilometres away)
+        let scenery: Vec<bool> = inst.protos.iter().map(|p| pt_core::lod::hinted_cull(p).is_some()).collect();
+        for (k, xf) in inst.xf.iter().enumerate() {
+            if scenery[inst.proto_id[k] as usize] {
+                continue;
+            }
+            x0 = x0.min(xf[3]);
+            x1 = x1.max(xf[3]);
+            z0 = z0.min(xf[11]);
+            z1 = z1.max(xf[11]);
+        }
+        let dressed = ((x1 - x0) as f64 * (z1 - z0) as f64) / 1.0e6;
+        if dressed > 0.0 {
+            a.area_km2 = a.area_km2.min(dressed);
+        }
+    }
     let mut counts = vec![0u64; inst.protos.len()];
     for &p in inst.proto_id.iter() {
         counts[p as usize] += 1;
@@ -78,7 +98,12 @@ pub fn audit(geo: &Geometry) -> Audit {
     a.instances = inst.len() as u64;
     let mut large = vec![false; inst.protos.len()];
     for (i, p) in inst.protos.iter().enumerate() {
-        large[i] = p.base_bounds().is_some_and(|(lo, hi)| (hi[0] - lo[0]).max(hi[1] - lo[1]).max(hi[2] - lo[2]) > 2.0);
+        // a far stand-in (`lod_hint` with a draw distance: the spikes of a distant forest) is not a prototype a viewer can see
+        // repeating; it is what a forest looks like from a kilometre away
+        // Large = stands up: over 2 m in its longest side AND at least 1.5 m tall (a tree, a tall bush, a boulder). A 4 m patch of
+        // grass is about a metre tall: it is ground cover, drawn a hundred times in a 50 m square by design, and nobody sees one
+        // patch repeat.
+        large[i] = pt_core::lod::hinted_cull(p).is_none() && p.bounds().is_some_and(|(lo, hi)| (hi[0] - lo[0]).max(hi[1] - lo[1]).max(hi[2] - lo[2]) > 2.0 && hi[1] - lo[1] >= 1.5);
     }
     let mut cells: std::collections::HashMap<(i32, i32, u32), u64> = std::collections::HashMap::new();
     for (k, xf) in inst.xf.iter().enumerate() {
@@ -164,10 +189,49 @@ pub fn engine_materials(doc: &Value) -> Value {
     let mats = doc.get("materials").and_then(Value::as_array).cloned().unwrap_or_default();
     let untextured: Vec<&str> = mats
         .iter()
-        .filter(|m| m.pointer("/pbrMetallicRoughness/baseColorTexture").is_none())
+        .filter(|m| m.pointer("/pbrMetallicRoughness/baseColorTexture").is_none() && m.pointer("/extras/proteus_flat").and_then(Value::as_bool) != Some(true))
         .filter_map(|m| m.get("name").and_then(Value::as_str))
         .collect();
     json!({"materials": mats.len(), "untextured": untextured})
+}
+
+/// Tell the engine file what the style says about every material that is neither authored in an asset nor layered: a library
+/// scan becomes `library:<name>` (the colour map tiles through box-projected UVs), a plain colour becomes `flat:<name>`.
+/// Without this an engine shows a procedural hut and the water as grey placeholders.
+pub fn style_records(g: &mut Geometry, scene: &Value, lib: &Value, corpus: &Path) {
+    for name in g.material_names() {
+        if g.detail.contains_key(&format!("{}{name}", pt_core::gltf::ASSET_MATERIAL_PREFIX)) || g.detail.contains_key(&format!("layers:{name}")) {
+            continue;
+        }
+        let spec = scene.pointer(&format!("/materials/{name}")).cloned().unwrap_or(json!({}));
+        let key = spec.get("use").and_then(Value::as_str).unwrap_or(&name).to_string();
+        let entry = lib.pointer(&format!("/materials/{key}")).cloned().unwrap_or(json!({}));
+        let pick = |k: &str| spec.get(k).or_else(|| entry.get(k)).cloned();
+        let file = entry.get("polyhaven").and_then(Value::as_str).filter(|_| entry.get("kind").is_none()).map(|id| corpus.join("polyhaven/materials").join(id).join(format!("{id}_diff_1k.jpg"))).filter(|p| p.exists());
+        match file {
+            Some(path) => {
+                g.detail.insert(format!("library:{name}"), json!({"diff": path.to_string_lossy(), "scale_m": pick("scale_m").unwrap_or(json!(1.0)), "tint": pick("tint").unwrap_or(json!([1.0, 1.0, 1.0])), "roughness": pick("roughness").unwrap_or(json!(0.85))}));
+            }
+            None => {
+                if let Some(color) = pick("color").or_else(|| pick("fallback")) {
+                    g.detail.insert(format!("flat:{name}"), json!({"color": color, "roughness": pick("roughness").unwrap_or(json!(0.8))}));
+                }
+            }
+        }
+    }
+}
+
+/// The report of a stage that finished earlier, if every file it lists is still there: `list` points at an array of objects or
+/// an object of objects, and `key` names the file path inside each. `None` when the stage has to run again.
+fn finished_stage(report: &Path, list: &str, key: &str) -> Option<Value> {
+    let v: Value = serde_json::from_str(&std::fs::read_to_string(report).ok()?).ok()?;
+    let items: Vec<&Value> = match v.pointer(list)? {
+        Value::Array(a) => a.iter().collect(),
+        Value::Object(o) => o.values().collect(),
+        _ => return None,
+    };
+    let all_there = !items.is_empty() && items.iter().all(|i| i.get(key).and_then(Value::as_str).is_some_and(|p| Path::new(p).exists()));
+    all_there.then_some(v)
 }
 
 fn absolute(p: &Path) -> PathBuf {
@@ -180,10 +244,29 @@ fn run_validator(glb: &Path) -> Value {
     if !exe.exists() {
         return json!({"available": false});
     }
-    let out = Command::new(&exe).arg(&glb).arg("-o").output();
-    let Ok(out) = out else { return json!({"available": false}) };
-    let text = format!("{}
-{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+    // The validator holds about ten times the file in memory and can take longer than everything else together on a file of
+    // several hundred megabytes; it writes to a file and gets a time limit, so a slow validation is reported, not waited for forever.
+    let report = std::env::temp_dir().join(format!("pt_validator_{}.txt", std::process::id()));
+    let Ok(sink) = std::fs::File::create(&report) else { return json!({"available": false}) };
+    let Ok(sink_err) = sink.try_clone() else { return json!({"available": false}) };
+    // the summary line ("Errors: 0, Warnings: 0, ...") goes to stderr, the JSON report to stdout: both into the one file
+    let Ok(mut child) = Command::new(&exe).arg(&glb).arg("-o").stdout(sink).stderr(sink_err).spawn() else { return json!({"available": false}) };
+    let limit = std::env::var("PT_VALIDATOR_SECONDS").ok().and_then(|s| s.parse::<u64>().ok()).unwrap_or(900);
+    let started = Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(_)) => break,
+            Ok(None) if started.elapsed().as_secs() < limit => std::thread::sleep(std::time::Duration::from_millis(500)),
+            _ => {
+                let _ = child.kill();
+                let _ = child.wait();
+                let _ = std::fs::remove_file(&report);
+                return json!({"available": true, "timed_out": true, "seconds": limit});
+            }
+        }
+    }
+    let text = std::fs::read_to_string(&report).unwrap_or_default();
+    let _ = std::fs::remove_file(&report);
     let line = text.lines().find(|l| l.starts_with("Errors:")).unwrap_or("");
     let n = |key: &str| line.split(',').find(|p| p.trim().starts_with(key)).and_then(|p| p.split(':').nth(1)).and_then(|v| v.trim().parse::<u64>().ok());
     let mut codes: BTreeMap<String, u64> = BTreeMap::new();
@@ -239,7 +322,7 @@ fn fmt_big(x: f64) -> String {
 }
 
 /// Assemble the measures from everything the referees reported. Pure, so it is unit-tested.
-pub fn measures(audit: &Audit, render: &Value, godot: &Value, fps: &Value, validator: &Value, engine: &Value, traced: (usize, usize), scene: &Value) -> Vec<Measure> {
+pub fn measures(audit: &Audit, render: &Value, godot: &Value, fps: &Value, validator: &Value, engine: &Value, traced: (usize, usize), scene: &Value, judge: &Value) -> Vec<Measure> {
     let mut m: Vec<Measure> = Vec::new();
     let mut add = |family, id, label, value: Option<f64>, shown: String, bar: &str, pass: Option<bool>, route| {
         m.push(Measure { family, id, label, value, shown, bar: bar.into(), pass, route });
@@ -253,6 +336,17 @@ pub fn measures(audit: &Audit, render: &Value, godot: &Value, fps: &Value, valid
     let fog = scene.pointer("/lighting/fog_density").and_then(Value::as_f64).unwrap_or(0.0);
     let atmo = sky != "flat" && fog > 0.0;
     add("Visual", "v_atmosphere", "Physical sky, shadows and depth haze on", Some(atmo as u8 as f64), format!("sky {sky}, haze {}", if fog > 0.0 { "on" } else { "off" }), "sky and haze on", Some(atmo), "set lighting.sky and lighting.fog_density in the style");
+    // The vision judge (pt judge): does the frame read as the brief, and does it read as the brief rather than as a different world?
+    let judged = judge.get("frames").and_then(Value::as_array).is_some_and(|f| !f.is_empty());
+    let fit = f(judge, "/mean_fit").filter(|_| judged);
+    add("Visual", "v_brief_fit", "The judge rates the frames against the brief (0 to 10)", fit, fit.map_or("not judged".into(), |x| format!("{x:.1} of 10")), "at least 7 of 10", fit.map(|x| x >= 7.0), "read the judge's sentences on the page: the missing feature becomes a generator task");
+    let (won, of) = (f(judge, "/brief_picked/count"), f(judge, "/brief_picked/of"));
+    let share = won.zip(of).filter(|(_, o)| *o > 0.0 && judged).map(|(w, o)| w / o);
+    add("Visual", "v_brief_vs_foils", "Frames the judge reads as the brief rather than as three other worlds", share, share.map_or("not judged".into(), |s| format!("{:.0}% ({} of {})", s * 100.0, won.unwrap_or(0.0), of.unwrap_or(0.0))), "at least 90%", share.map(|s| s >= 0.9), "the world does not read as its brief: strengthen the style (palette, shape language) and the typology");
+    let blank = f(judge, "/control_blank_fit").filter(|_| judged);
+    let contra = f(judge, "/contradictions").zip(of).filter(|_| judged).map(|(c, o)| if o > 0.0 { c / o } else { 0.0 });
+    let sane = blank.zip(contra).map(|(b, c)| b <= 2.0 && c <= 0.2);
+    add("Visual", "v_judge_sane", "Judge reliability: a blank frame scores 0 to 2 and its answers hold when the order is swapped", blank, sane.map_or("not judged".into(), |_| format!("blank scores {:.0}, {:.0}% of answers flipped with the order", blank.unwrap_or(0.0), contra.unwrap_or(0.0) * 100.0)), "blank at most 2, flips at most 20%", sane, "re-calibrate the judge (pt judge critique, pt judge audit) before trusting the Visual rows");
     // Art coherence
     let style = render.get("style").and_then(Value::as_str).or_else(|| scene.get("style_name").and_then(Value::as_str));
     add("Art coherence", "a_style", "A style drove the look", Some(style.is_some() as u8 as f64), style.unwrap_or("none").to_string(), "a named style", Some(style.is_some()), "give the scene a style file");
@@ -276,12 +370,13 @@ pub fn measures(audit: &Audit, render: &Value, godot: &Value, fps: &Value, valid
     // Content breadth
     let per_km2 = if audit.area_km2 > 0.0 { variants / audit.area_km2 } else { 0.0 };
     add("Content breadth", "b_unique", "Distinct prototypes per square kilometre", Some(per_km2), format!("{per_km2:.1}"), "at least 15", Some(per_km2 >= 15.0), "more generator families");
-    add("Content breadth", "b_repeat", "Most copies of one large prototype (over 2 m) in a 50 m square", Some(audit.max_local_repeats as f64), audit.max_local_repeats.to_string(), "at most 12", Some(audit.max_local_repeats <= 12), "more tree and rock variants (generator families), scale and tint variation");
+    add("Content breadth", "b_repeat", "Most copies of one large prototype (over 2 m, standing 1.5 m or taller) in a 50 m square", Some(audit.max_local_repeats as f64), audit.max_local_repeats.to_string(), "at most 12", Some(audit.max_local_repeats <= 12), "more tree and rock variants (generator families), scale and tint variation");
     let lod = if audit.heavy_protos == 0 { 1.0 } else { audit.heavy_with_lod as f64 / audit.heavy_protos as f64 };
     add("Content breadth", "b_lod", "Heavy meshes (over 2000 triangles) that have an LOD chain", Some(lod), format!("{:.0}% ({} of {})", lod * 100.0, audit.heavy_with_lod, audit.heavy_protos), "100%", Some(lod >= 1.0), "decimate node and LOD generation on import");
     // Delivery
     let verr = f(validator, "/errors");
-    add("Delivery", "d_validator", "glTF validator errors", verr, verr.map_or("validator missing".into(), |e| format!("{e:.0} errors, {} warnings", f(validator, "/warnings").unwrap_or(0.0))), "0 errors", verr.map(|e| e == 0.0), "fix the exporter");
+    let v_missing = if validator.get("timed_out").is_some() { "not finished in the time limit" } else { "validator missing" };
+    add("Delivery", "d_validator", "glTF validator errors", verr, verr.map_or(v_missing.into(), |e| format!("{e:.0} errors, {} warnings", f(validator, "/warnings").unwrap_or(0.0))), "0 errors", verr.map(|e| e == 0.0), "fix the exporter");
     let gerr = godot.get("errors").and_then(Value::as_array).map(Vec::len);
     let gok = godot.get("ok").and_then(Value::as_bool);
     add("Delivery", "d_engine", "Engine import errors", gerr.map(|e| e as f64), gok.map_or("engine missing".into(), |ok| if ok { "imported cleanly".into() } else { "import failed".into() }), "0 errors", gok, "fix the exporter");
@@ -294,7 +389,7 @@ pub fn measures(audit: &Audit, render: &Value, godot: &Value, fps: &Value, valid
     m
 }
 
-fn page(title: &str, subtitle: &str, ms: &[Measure], frames: &[PathBuf], audit: &Audit, notes: &str, baseline: Option<&Value>, fragment: bool) -> String {
+fn page(title: &str, subtitle: &str, ms: &[Measure], frames: &[PathBuf], audit: &Audit, notes: &str, baseline: Option<&Value>, judge: &Value, fragment: bool) -> String {
     use crate::report::{esc, img_tag, CSS};
     let (pass, total) = (ms.iter().filter(|m| m.pass == Some(true)).count(), ms.iter().filter(|m| m.pass.is_some()).count());
     let fails: Vec<&Measure> = ms.iter().filter(|m| m.pass == Some(false)).collect();
@@ -315,9 +410,22 @@ fn page(title: &str, subtitle: &str, ms: &[Measure], frames: &[PathBuf], audit: 
     }
     html.push_str("<h2>The frames</h2>\n<div class=\"gallery\">\n");
     for f in frames {
-        html.push_str(&format!("<figure class=\"pair\">{}<figcaption>{}</figcaption></figure>\n", img_tag(f, "frame", "100%"), esc(&f.file_stem().map_or(String::new(), |s| s.to_string_lossy().into_owned()))));
+        // The fragment (what gets published) LINKS the frames by file name: four full-size frames embedded as text are over the
+        // 16 MB a published page may be. The standalone page embeds them, so it can be opened from anywhere.
+        let name = f.file_name().map_or(String::new(), |s| s.to_string_lossy().into_owned());
+        let tag = if fragment { format!("<img alt=\"frame\" style=\"width:100%\" src=\"{}\">", esc(&name)) } else { img_tag(f, "frame", "100%") };
+        html.push_str(&format!("<figure class=\"pair\">{tag}<figcaption>{}</figcaption></figure>\n", esc(&f.file_stem().map_or(String::new(), |s| s.to_string_lossy().into_owned()))));
     }
-    html.push_str(&format!("</div>\n<h2>Measures</h2>\n<p class=\"sub\">Bars are drafts from the plan (B13.1) until they are calibrated against reference scenes.</p>\n<div class=\"tablewrap\"><table>\n<tr><th>Family</th><th>Measure</th><th class=\"n\">Result</th><th>Bar</th><th></th>{}</tr>\n", if baseline.is_some() { "<th>Baseline build</th>" } else { "" }));
+    html.push_str("</div>\n");
+    if let Some(rows) = judge.get("frames").and_then(Value::as_array).filter(|r| !r.is_empty()) {
+        html.push_str(&format!("<h2>What the judge saw</h2>\n<p class=\"sub\">Judge {} read each frame against the brief: \"{}\". It also had to choose between the brief and {} other worlds, in both orders.</p>\n<div class=\"tablewrap\"><table>\n<tr><th>Frame</th><th class=\"n\">Fit (0 to 10)</th><th>In its own words</th></tr>\n", esc(judge["judge"].as_str().unwrap_or("?")), esc(judge["brief"].as_str().unwrap_or("")), judge["foils"].as_array().map_or(0, Vec::len)));
+        for r in rows {
+            let name = Path::new(r["file"].as_str().unwrap_or("")).file_stem().map_or(String::new(), |s| s.to_string_lossy().into_owned());
+            html.push_str(&format!("<tr><td>{}</td><td class=\"n\">{}</td><td>{}</td></tr>\n", esc(&name), r["fit"], esc(r["seen"].as_str().unwrap_or(""))));
+        }
+        html.push_str("</table></div>\n");
+    }
+    html.push_str(&format!("<h2>Measures</h2>\n<p class=\"sub\">Bars are drafts from the plan (B13.1) until they are calibrated against reference scenes.</p>\n<div class=\"tablewrap\"><table>\n<tr><th>Family</th><th>Measure</th><th class=\"n\">Result</th><th>Bar</th><th></th>{}</tr>\n", if baseline.is_some() { "<th>Baseline build</th>" } else { "" }));
     for m in ms {
         let (cls, word) = match m.pass {
             Some(true) => ("green", "pass"),
@@ -350,7 +458,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let pos: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
     let flag_val = |f: &str| args.iter().position(|a| a == f).and_then(|i| args.get(i + 1));
     let (Some(recipe), Some(scene_path)) = (pos.first(), pos.get(1)) else {
-        return Err("usage: pt scorecard <recipe.hcs> <scene.json> --out DIR [--no-render] [--no-fps] [--quick] [--samples N] [--notes TEXT]".into());
+        return Err("usage: pt scorecard <recipe.hcs> <scene.json> --out DIR [--no-render] [--no-fps] [--quick] [--samples N] [--notes TEXT] [--reuse]".into());
     };
     let out_dir = PathBuf::from(flag_val("--out").ok_or("--out DIR is required")?);
     std::fs::create_dir_all(&out_dir).map_err(|e| e.to_string())?;
@@ -363,11 +471,12 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
     let geo = g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?;
     let cook_s = t.elapsed().as_secs_f64();
+    drop(g); // the graph keeps every node's result; only the cooked world is needed from here on, and Blender needs the memory
 
     // 2. scene (style folded in, layers injected) and audits
     let scene_text = std::fs::read_to_string(scene_path.as_str()).map_err(|e| format!("{scene_path}: {e}"))?;
     let mut scene: Value = serde_json::from_str(scene_text.trim_start_matches('\u{feff}')).map_err(|e| format!("{scene_path}: {e}"))?;
-    let opts = blender::Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: Some(out_dir.clone()), lod: false };
+    let opts = blender::Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: Some(out_dir.clone()), lod: false, only: None };
     blender::resolve_style(&mut scene)?;
     blender::inject_layers(&mut scene, &geo);
     let root = blender::repo_root();
@@ -381,19 +490,44 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let glb = out_dir.join("world.engine.glb"); // what an engine gets: levels of detail, capped per level
     let frames_base = out_dir.join("frame.png");
     let mut render = json!({});
+    // `--reuse`: a run that was cut off (a closed session, a crash in a later stage) keeps what it finished. The frames and the
+    // bake are the long stages; each is reused when its report and every file it names are still in the output folder.
+    let reuse = args.iter().any(|a| a == "--reuse");
+    let kept_render = if reuse { finished_stage(&out_dir.join("world.report.json"), "/frames", "file") } else { None };
     if args.iter().any(|a| a == "--no-render") {
         let t = Instant::now();
         std::fs::write(&render_glb, pt_core::gltf::to_glb(&geo)).map_err(|e| e.to_string())?;
         render["export_s"] = json!(t.elapsed().as_secs_f64());
+    } else if let (Some(r), true) = (kept_render, render_glb.exists()) {
+        render = r;
+        render["reused"] = json!(true);
     } else {
         render = blender::render_geometry(&geo, "world", scene.clone(), &frames_base, &opts)?;
     }
     // layered materials (terrain blends) have no portable form: bake them to albedo and normal textures for the engine file
     let mut engine_geo: Geometry = (*geo).clone();
+    // the layer weights are what the baked textures replace: an engine has no use for them, and they are a third of the terrain's bytes
+    engine_geo.point.remove("Wt0");
+    engine_geo.point.remove("Wt1");
+    style_records(&mut engine_geo, &scene, &lib, &crate::corpus::root());
+    if let Some(inst) = engine_geo.instances.as_mut() {
+        for p in inst.protos.iter_mut() {
+            let plain = p.material_names().iter().any(|n| !p.detail.contains_key(&format!("{}{n}", pt_core::gltf::ASSET_MATERIAL_PREFIX)));
+            if plain {
+                let mut q = (**p).clone();
+                style_records(&mut q, &scene, &lib, &crate::corpus::root());
+                *p = std::sync::Arc::new(q);
+            }
+        }
+    }
     let mut baked_report = json!({});
     if !args.iter().any(|a| a == "--no-bake") && !blender::layers_of(&geo).is_empty() {
         let t = Instant::now();
-        let baked = blender::bake_layers(&render_glb, scene.clone(), &geo, &out_dir, 4096)?;
+        let kept_bake = if reuse { finished_stage(&out_dir.join("bake.report.json"), "/baked", "albedo") } else { None };
+        let baked: BTreeMap<String, Value> = match kept_bake.and_then(|r| r.get("baked").and_then(Value::as_object).cloned()) {
+            Some(m) => m.into_iter().collect(),
+            None => blender::bake_layers(&render_glb, scene.clone(), &geo, &out_dir, 4096)?,
+        };
         for (name, b) in &baked {
             engine_geo.detail.insert(format!("baked:{name}"), json!({"albedo": b["albedo"], "normal": b["normal"]}));
         }
@@ -402,7 +536,9 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let t = Instant::now();
     let engine_lod = !args.iter().any(|a| a == "--no-lod");
     let bytes = if engine_lod {
-        pt_core::gltf::to_glb_lod(&engine_geo, &pt_core::lod::LodPolicy { cache_dir: Some(root.join("out/lod_cache")), ..pt_core::lod::LodPolicy::engine() })
+        // tiled: one instanced node per ground tile, prototype and level, so the engine imports a forest in seconds (a node per
+        // instance and level stopped Godot's importer at a quarter of a million nodes)
+        pt_core::gltf::to_glb_tiled(&engine_geo, &pt_core::lod::LodPolicy { cache_dir: Some(root.join("out/lod_cache")), ..pt_core::lod::LodPolicy::engine() })
     } else {
         pt_core::gltf::to_glb(&engine_geo)
     };
@@ -415,7 +551,23 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
 
     // 4. referees (the engine and the validator see the engine export)
     let validator = run_validator(&glb);
-    let godot = run_godot(&glb, &["nav=1"], false);
+    // the navigation mesh is baked and measured over the playable window (scene "playable": {"size": [w, d]}, centred on the origin) when the
+    // world has a far ring; otherwise over the whole terrain
+    let nav_box = scene.pointer("/playable/size").and_then(Value::as_array).filter(|s| s.len() == 2).map(|s| {
+        let (hw, hd) = (s[0].as_f64().unwrap_or(0.0) / 2.0, s[1].as_f64().unwrap_or(0.0) / 2.0);
+        format!("nav_box={},{},{},{}", -hw, -hd, hw, hd)
+    });
+    let mut nav_args: Vec<&str> = vec!["nav=1"];
+    if let Some(b) = &nav_box {
+        nav_args.push(b);
+    }
+    // which materials of the base mesh are ground to walk on (scene "playable": {"materials": [...]}); the base mesh also carries
+    // water, a merged distant forest and buildings
+    let nav_mats = scene.pointer("/playable/materials").and_then(Value::as_array).map(|a| format!("nav_mats={}", a.iter().filter_map(Value::as_str).collect::<Vec<_>>().join(",")));
+    if let Some(m) = &nav_mats {
+        nav_args.push(m);
+    }
+    let godot = run_godot(&glb, &nav_args, false);
     // the engine view stands where the scene's first eye-height camera stands, so its picture and frame rate are comparable to the render
     let eye_cam = scene.get("cameras").and_then(Value::as_array).into_iter().flatten().chain(scene.get("camera")).find(|c| c.get("eye").is_some()).cloned();
     let engine_shot = out_dir.join("engine_eye.png");
@@ -433,10 +585,34 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let fps_refs: Vec<&str> = fps_args.iter().map(String::as_str).collect();
     let fps = if args.iter().any(|a| a == "--no-fps") { json!({}) } else { run_godot(&glb, &fps_refs, true) };
 
-    // 5. measures, JSON, page
+    // 5. the vision judge reads the rendered frames (last, so it never shares the GPU with the frame-rate measurement)
+    let frame_files: Vec<PathBuf> = render.get("frames").and_then(Value::as_array).into_iter().flatten().filter_map(|f| f.get("file").and_then(Value::as_str).map(PathBuf::from)).collect();
+    let brief = flag_val("--brief").cloned().or_else(|| scene.get("brief").and_then(Value::as_str).map(String::from));
+    let mut foils: Vec<String> = args.windows(2).filter(|w| w[0] == "--foil").map(|w| w[1].clone()).collect();
+    if foils.is_empty() {
+        foils = scene.get("foils").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(String::from).collect()).unwrap_or_default();
+    }
+    if foils.is_empty() {
+        foils = crate::judge_bench::DEFAULT_FOILS.iter().map(|s| s.to_string()).collect();
+    }
+    let judge_report = match (&brief, args.iter().any(|a| a == "--no-judge" || a == "--no-render"), frame_files.is_empty()) {
+        (Some(b), false, false) => {
+            let t = Instant::now();
+            match crate::judge_bench::judge_frames(&crate::judge::Judge::local(), &frame_files, b, &foils) {
+                Ok(mut r) => {
+                    r["seconds"] = json!(t.elapsed().as_secs_f64());
+                    r
+                }
+                Err(e) => json!({"error": e}),
+            }
+        }
+        _ => json!({}),
+    };
+
+    // 6. measures, JSON, page
     let engine_doc = pt_core::gltf::read_json(&glb).unwrap_or(json!({}));
     let engine = engine_materials(&engine_doc);
-    let ms = measures(&a, &render, &godot, &fps, &validator, &engine, (traced_ok, traced_total), &scene);
+    let ms = measures(&a, &render, &godot, &fps, &validator, &engine, (traced_ok, traced_total), &scene, &judge_report);
     let mut frames: Vec<PathBuf> = render.get("frames").and_then(Value::as_array).into_iter().flatten().filter_map(|f| f.get("file").and_then(Value::as_str).map(PathBuf::from)).collect();
     if engine_shot.exists() {
         frames.push(engine_shot.clone()); // what the engine makes of the delivered file, next to the render
@@ -446,15 +622,15 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let subtitle = format!("Style {style} · {recipe} with {scene_path} · measured by Blender (look), Godot (engine) and the glTF validator (file) · {}", crate::corpus::now_iso());
     let notes = flag_val("--notes").map_or("", |s| s.as_str());
     let baseline: Option<Value> = flag_val("--baseline").and_then(|p| std::fs::read_to_string(p).ok()).and_then(|t| serde_json::from_str(t.trim_start_matches('\u{feff}')).ok());
-    std::fs::write(out_dir.join("scorecard.html"), page(&title, &subtitle, &ms, &frames, &a, notes, baseline.as_ref(), false)).map_err(|e| e.to_string())?;
-    std::fs::write(out_dir.join("scorecard_fragment.html"), page(&title, &subtitle, &ms, &frames, &a, notes, baseline.as_ref(), true)).map_err(|e| e.to_string())?;
+    std::fs::write(out_dir.join("scorecard.html"), page(&title, &subtitle, &ms, &frames, &a, notes, baseline.as_ref(), &judge_report, false)).map_err(|e| e.to_string())?;
+    std::fs::write(out_dir.join("scorecard_fragment.html"), page(&title, &subtitle, &ms, &frames, &a, notes, baseline.as_ref(), &judge_report, true)).map_err(|e| e.to_string())?;
     let (pass, total) = (ms.iter().filter(|m| m.pass == Some(true)).count(), ms.iter().filter(|m| m.pass.is_some()).count());
     let summary = json!({
         "title": title, "recipe": recipe, "scene": scene_path, "style": style, "when": crate::corpus::now_iso(),
         "pass": pass, "total": total, "measures": ms.iter().map(Measure::to_json).collect::<Vec<_>>(),
         "audit": {"base_triangles": a.base_triangles, "instances": a.instances, "total_triangles": a.total_triangles, "unique_triangles": a.unique_triangles,
                   "external_triangles": a.external_triangles, "external_unique_triangles": a.external_unique_triangles, "max_repeats": a.max_repeats, "max_local_repeats": a.max_local_repeats, "area_km2": a.area_km2, "protos": a.protos, "ledger_missing": missing},
-        "render": render, "godot": godot, "fps": fps, "validator": validator, "baked": baked_report, "engine_materials": engine,
+        "render": render, "judge": judge_report, "godot": godot, "fps": fps, "validator": validator, "baked": baked_report, "engine_materials": engine,
         "timings_s": {"cook": cook_s, "total": t_all.elapsed().as_secs_f64()}, "glb_mb": {"engine": glb_mb, "render": render_glb_mb}, "engine_export_s": engine_export_s, "engine_lod": engine_lod,
     });
     std::fs::write(out_dir.join("scorecard.json"), serde_json::to_string_pretty(&summary).unwrap_or_default()).map_err(|e| e.to_string())?;
@@ -478,6 +654,9 @@ mod tests {
     #[test]
     fn audit_counts_instanced_triangles_repeats_and_lod_need() {
         let mut proto = tri(3000);
+        for q in proto.p_mut() {
+            q[1] *= 2.0; // 2 m tall: it stands up, so it counts as a large prototype
+        }
         proto.detail.insert("material:tree__bark".into(), json!({"source": "polyhaven/models/x/x_1k.gltf", "index": 0}));
         let mut world = tri(10);
         world.instances = Some(pt_core::Instances { protos: vec![std::sync::Arc::new(proto), std::sync::Arc::new(tri(100))], proto_id: std::sync::Arc::new(vec![0, 0, 1]), xf: std::sync::Arc::new(vec![pt_core::math::IDENTITY; 3]), attrs: Default::default() });
@@ -500,7 +679,7 @@ mod tests {
         let validator = json!({"available": true, "errors": 0, "warnings": 19});
         let scene = json!({"lighting": {"sky": "nishita", "fog_density": 0.0002}});
         let engine = json!({"untextured": []});
-        let ms = measures(&a, &render, &godot, &fps, &validator, &engine, (5, 5), &scene);
+        let ms = measures(&a, &render, &godot, &fps, &validator, &engine, (5, 5), &scene, &json!({}));
         let get = |id: &str| ms.iter().find(|m| m.id == id).unwrap().pass;
         for ok in ["v_coverage", "v_atmosphere", "a_style", "a_variety", "w_nav", "p_draw", "p_vram", "b_unique", "b_repeat", "d_validator", "d_engine", "d_ledger"] {
             assert_eq!(get(ok), Some(true), "{ok}");
@@ -509,16 +688,35 @@ mod tests {
             assert_eq!(get(bad), Some(false), "{bad}");
         }
         assert_eq!(get("d_cc0_share"), None, "informational");
+        for unjudged in ["v_brief_fit", "v_brief_vs_foils", "v_judge_sane"] {
+            assert_eq!(get(unjudged), None, "no judge ran, so {unjudged} is not invented");
+        }
         // nothing measured -> no pass or fail is invented
-        let none = measures(&a, &json!({}), &json!({"available": false}), &json!({}), &json!({"available": false}), &json!({}), (0, 0), &json!({}));
+        let none = measures(&a, &json!({}), &json!({"available": false}), &json!({}), &json!({"available": false}), &json!({}), (0, 0), &json!({}), &json!({}));
         assert!(none.iter().find(|m| m.id == "p_fps").unwrap().pass.is_none() && none.iter().find(|m| m.id == "v_coverage").unwrap().pass.is_none());
+    }
+
+    #[test]
+    fn judge_rows_pass_on_a_good_report_and_fail_on_a_weak_or_unreliable_one() {
+        let a = Audit::default();
+        let run = |judge: Value| measures(&a, &json!({}), &json!({}), &json!({}), &json!({}), &json!({}), (0, 0), &json!({}), &judge);
+        let good = json!({"frames": [{"file": "a.png", "fit": 8, "seen": "x"}], "mean_fit": 8.0, "brief_picked": {"count": 9, "of": 9}, "contradictions": 0, "control_blank_fit": 0.0});
+        let ms = run(good);
+        assert!(["v_brief_fit", "v_brief_vs_foils", "v_judge_sane"].iter().all(|id| ms.iter().find(|m| m.id == *id).unwrap().pass == Some(true)));
+        // a world that reads as something else, from a judge that flips with the order and rates a blank frame highly
+        let bad = json!({"frames": [{"file": "a.png", "fit": 3, "seen": "x"}], "mean_fit": 3.0, "brief_picked": {"count": 4, "of": 9}, "contradictions": 4, "control_blank_fit": 6.0});
+        let ms = run(bad);
+        assert!(["v_brief_fit", "v_brief_vs_foils", "v_judge_sane"].iter().all(|id| ms.iter().find(|m| m.id == *id).unwrap().pass == Some(false)));
     }
 
     #[test]
     fn page_leads_with_the_result_and_the_route() {
         let a = Audit::default();
-        let ms = measures(&a, &json!({"material_coverage": 1.0}), &json!({}), &json!({"fps": {"fps": 2.0}}), &json!({}), &json!({}), (1, 1), &json!({}));
-        let html = page("T", "s", &ms, &[], &a, "", None, false);
+        let ms = measures(&a, &json!({"material_coverage": 1.0}), &json!({}), &json!({"fps": {"fps": 2.0}}), &json!({}), &json!({}), (1, 1), &json!({}), &json!({}));
+        let judge = json!({"judge": "j", "brief": "a valley", "foils": ["x"], "frames": [{"file": "d/frame_eye.png", "fit": 8, "seen": "a green valley"}]});
+        let html = page("T", "s", &ms, &[], &a, "", None, &judge, false);
         assert!(html.contains("measures pass.") && html.contains("Next:") && html.contains("route:"), "{}", &html[..400.min(html.len())]);
+        assert!(html.contains("What the judge saw") && html.contains("a green valley") && html.contains("frame_eye"));
+        assert!(!page("T", "s", &ms, &[], &a, "", None, &json!({}), false).contains("What the judge saw"));
     }
 }

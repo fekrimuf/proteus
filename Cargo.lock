@@ -728,6 +728,7 @@ dependencies = [
 name = "pt-sop"
 version = "0.1.0"
 dependencies = [
+ "png",
  "pt-core",
  "pt-sim",
  "pt-vex",

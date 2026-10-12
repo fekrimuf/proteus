@@ -3,6 +3,93 @@
     "note":  "CC0 PBR material sets for the Blender render (Level 2). Names map to these ids in corpus/materials/library.json.",
     "assets":  [
                    {
+                       "id":  "polyhaven/materials/aerial_grass_rock",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/aerial_grass_rock/aerial_grass_rock_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/aerial_grass_rock/aerial_grass_rock_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_grass_rock/aerial_grass_rock_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_grass_rock/aerial_grass_rock_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_grass_rock/aerial_grass_rock_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_grass_rock/aerial_grass_rock_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_grass_rock/aerial_grass_rock_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_grass_rock/aerial_grass_rock_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_grass_rock/aerial_grass_rock_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/aerial_rocks_02",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/aerial_rocks_02/aerial_rocks_02_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/aerial_rocks_02/aerial_rocks_02_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/aerial_rocks_02_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_rocks_02/aerial_rocks_02_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/aerial_rocks_02_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_rocks_02/aerial_rocks_02_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/aerial_rocks_02_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_rocks_02/aerial_rocks_02_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/aerial_rocks_02_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/aerial_rocks_04",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/aerial_rocks_04/aerial_rocks_04_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/aerial_rocks_04/aerial_rocks_04_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_04/aerial_rocks_04_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_rocks_04/aerial_rocks_04_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_04/aerial_rocks_04_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_rocks_04/aerial_rocks_04_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_04/aerial_rocks_04_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/aerial_rocks_04/aerial_rocks_04_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_04/aerial_rocks_04_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
                        "id":  "polyhaven/materials/bark_brown_02",
                        "source":  "polyhaven",
                        "set":  "materials",
@@ -90,6 +177,35 @@
                                  ]
                    },
                    {
+                       "id":  "polyhaven/materials/brown_mud_leaves_01",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/brown_mud_leaves_01/brown_mud_leaves_01_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/brown_mud_leaves_01/brown_mud_leaves_01_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud_leaves_01/brown_mud_leaves_01_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/brown_mud_leaves_01/brown_mud_leaves_01_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud_leaves_01/brown_mud_leaves_01_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/brown_mud_leaves_01/brown_mud_leaves_01_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud_leaves_01/brown_mud_leaves_01_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/brown_mud_leaves_01/brown_mud_leaves_01_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_mud_leaves_01/brown_mud_leaves_01_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
                        "id":  "polyhaven/materials/castle_wall_slates",
                        "source":  "polyhaven",
                        "set":  "materials",
@@ -115,6 +231,35 @@
                                      {
                                          "path":  "polyhaven/materials/castle_wall_slates/castle_wall_slates_disp_1k.jpg",
                                          "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/castle_wall_slates/castle_wall_slates_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/cliff_side",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/cliff_side/cliff_side_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/cliff_side/cliff_side_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cliff_side/cliff_side_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/cliff_side/cliff_side_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cliff_side/cliff_side_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/cliff_side/cliff_side_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cliff_side/cliff_side_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/cliff_side/cliff_side_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/cliff_side/cliff_side_disp_1k.jpg"
                                      }
                                  ]
                    },
@@ -177,6 +322,64 @@
                                  ]
                    },
                    {
+                       "id":  "polyhaven/materials/forest_ground_04",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/forest_ground_04/forest_ground_04_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/forest_ground_04/forest_ground_04_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/forest_ground_04/forest_ground_04_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/forest_ground_04/forest_ground_04_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/forest_ground_04/forest_ground_04_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_ground_04/forest_ground_04_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/forest_leaves_02",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/forest_leaves_02/forest_leaves_02_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/forest_leaves_02/forest_leaves_02_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_diffuse_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/forest_leaves_02/forest_leaves_02_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/forest_leaves_02/forest_leaves_02_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/forest_leaves_02/forest_leaves_02_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
                        "id":  "polyhaven/materials/forrest_ground_01",
                        "source":  "polyhaven",
                        "set":  "materials",
@@ -202,6 +405,35 @@
                                      {
                                          "path":  "polyhaven/materials/forrest_ground_01/forrest_ground_01_disp_1k.jpg",
                                          "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/ganges_river_pebbles",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/ganges_river_pebbles/ganges_river_pebbles_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/ganges_river_pebbles/ganges_river_pebbles_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/ganges_river_pebbles/ganges_river_pebbles_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/ganges_river_pebbles/ganges_river_pebbles_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/ganges_river_pebbles/ganges_river_pebbles_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/ganges_river_pebbles/ganges_river_pebbles_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/ganges_river_pebbles/ganges_river_pebbles_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/ganges_river_pebbles/ganges_river_pebbles_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/ganges_river_pebbles/ganges_river_pebbles_disp_1k.jpg"
                                      }
                                  ]
                    },
@@ -326,6 +558,35 @@
                                  ]
                    },
                    {
+                       "id":  "polyhaven/materials/moss_wood",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/moss_wood/moss_wood_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/moss_wood/moss_wood_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/moss_wood/moss_wood_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/moss_wood/moss_wood_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/moss_wood/moss_wood_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/moss_wood/moss_wood_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/moss_wood/moss_wood_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/moss_wood/moss_wood_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/moss_wood/moss_wood_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
                        "id":  "polyhaven/materials/mossy_rock",
                        "source":  "polyhaven",
                        "set":  "materials",
@@ -351,6 +612,93 @@
                                      {
                                          "path":  "polyhaven/materials/mossy_rock/mossy_rock_disp_1k.jpg",
                                          "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/mossy_stone_wall",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/mossy_stone_wall/mossy_stone_wall_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/mossy_stone_wall/mossy_stone_wall_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_stone_wall/mossy_stone_wall_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/mossy_stone_wall/mossy_stone_wall_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_stone_wall/mossy_stone_wall_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/mossy_stone_wall/mossy_stone_wall_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_stone_wall/mossy_stone_wall_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/mossy_stone_wall/mossy_stone_wall_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_stone_wall/mossy_stone_wall_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/old_planks_02",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/old_planks_02/old_planks_02_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/old_planks_02/old_planks_02_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_planks_02/old_planks_02_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/old_planks_02/old_planks_02_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_planks_02/old_planks_02_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/old_planks_02/old_planks_02_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_planks_02/old_planks_02_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/old_planks_02/old_planks_02_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_planks_02/old_planks_02_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/old_stone_wall",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/old_stone_wall/old_stone_wall_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/old_stone_wall/old_stone_wall_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_stone_wall/old_stone_wall_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/old_stone_wall/old_stone_wall_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_stone_wall/old_stone_wall_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/old_stone_wall/old_stone_wall_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_stone_wall/old_stone_wall_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/old_stone_wall/old_stone_wall_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/old_stone_wall/old_stone_wall_disp_1k.jpg"
                                      }
                                  ]
                    },
@@ -413,6 +761,35 @@
                                  ]
                    },
                    {
+                       "id":  "polyhaven/materials/river_small_rocks",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/river_small_rocks/river_small_rocks_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/river_small_rocks/river_small_rocks_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/river_small_rocks/river_small_rocks_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/river_small_rocks/river_small_rocks_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/river_small_rocks/river_small_rocks_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/river_small_rocks/river_small_rocks_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/river_small_rocks/river_small_rocks_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/river_small_rocks/river_small_rocks_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/river_small_rocks/river_small_rocks_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
                        "id":  "polyhaven/materials/rock_boulder_cracked",
                        "source":  "polyhaven",
                        "set":  "materials",
@@ -471,6 +848,64 @@
                                  ]
                    },
                    {
+                       "id":  "polyhaven/materials/rocky_terrain_02",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/rocky_terrain_02/rocky_terrain_02_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/rocky_terrain_02/rocky_terrain_02_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_terrain_02/rocky_terrain_02_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/rocky_terrain_02/rocky_terrain_02_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_terrain_02/rocky_terrain_02_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/rocky_terrain_02/rocky_terrain_02_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_terrain_02/rocky_terrain_02_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/rocky_terrain_02/rocky_terrain_02_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_terrain_02/rocky_terrain_02_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/rocky_trail",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/rocky_trail/rocky_trail_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/rocky_trail/rocky_trail_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_trail/rocky_trail_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/rocky_trail/rocky_trail_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_trail/rocky_trail_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/rocky_trail/rocky_trail_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_trail/rocky_trail_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/rocky_trail/rocky_trail_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocky_trail/rocky_trail_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
                        "id":  "polyhaven/materials/roof_09",
                        "source":  "polyhaven",
                        "set":  "materials",
@@ -496,6 +931,35 @@
                                      {
                                          "path":  "polyhaven/materials/roof_09/roof_09_disp_1k.jpg",
                                          "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_09/roof_09_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/roof_planks",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/roof_planks/roof_planks_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/roof_planks/roof_planks_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_planks/roof_planks_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/roof_planks/roof_planks_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_planks/roof_planks_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/roof_planks/roof_planks_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_planks/roof_planks_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/roof_planks/roof_planks_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_planks/roof_planks_disp_1k.jpg"
                                      }
                                  ]
                    },
@@ -645,6 +1109,93 @@
                                  ]
                    },
                    {
+                       "id":  "polyhaven/materials/snow_field_aerial",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/snow_field_aerial/snow_field_aerial_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/snow_field_aerial/snow_field_aerial_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_field_aerial/snow_field_aerial_col_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/snow_field_aerial/snow_field_aerial_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_field_aerial/snow_field_aerial_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/snow_field_aerial/snow_field_aerial_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_field_aerial/snow_field_aerial_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/snow_field_aerial/snow_field_aerial_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_field_aerial/snow_field_aerial_height_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/sparse_grass",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/sparse_grass/sparse_grass_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/sparse_grass/sparse_grass_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/sparse_grass/sparse_grass_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/sparse_grass/sparse_grass_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/sparse_grass/sparse_grass_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/thatch_roof_angled",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/thatch_roof_angled/thatch_roof_angled_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/thatch_roof_angled/thatch_roof_angled_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/thatch_roof_angled/thatch_roof_angled_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/thatch_roof_angled/thatch_roof_angled_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/thatch_roof_angled/thatch_roof_angled_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/thatch_roof_angled/thatch_roof_angled_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/thatch_roof_angled/thatch_roof_angled_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/thatch_roof_angled/thatch_roof_angled_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/thatch_roof_angled/thatch_roof_angled_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
                        "id":  "polyhaven/materials/weathered_brown_planks",
                        "source":  "polyhaven",
                        "set":  "materials",
@@ -670,6 +1221,93 @@
                                      {
                                          "path":  "polyhaven/materials/weathered_brown_planks/weathered_brown_planks_disp_1k.jpg",
                                          "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_brown_planks/weathered_brown_planks_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/weathered_planks",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/weathered_planks/weathered_planks_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/weathered_planks/weathered_planks_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_planks/weathered_planks_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/weathered_planks/weathered_planks_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_planks/weathered_planks_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/weathered_planks/weathered_planks_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_planks/weathered_planks_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/weathered_planks/weathered_planks_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_planks/weathered_planks_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/wood_trunk_wall",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/wood_trunk_wall/wood_trunk_wall_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/wood_trunk_wall/wood_trunk_wall_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_trunk_wall/wood_trunk_wall_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/wood_trunk_wall/wood_trunk_wall_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_trunk_wall/wood_trunk_wall_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/wood_trunk_wall/wood_trunk_wall_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_trunk_wall/wood_trunk_wall_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/wood_trunk_wall/wood_trunk_wall_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_trunk_wall/wood_trunk_wall_disp_1k.jpg"
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "polyhaven/materials/wooden_rough_planks",
+                       "source":  "polyhaven",
+                       "set":  "materials",
+                       "category":  "material",
+                       "difficulty":  "material",
+                       "license":  "CC0-1.0",
+                       "license_url":  "https://creativecommons.org/publicdomain/zero/1.0/",
+                       "attribution":  "Poly Haven (polyhaven.com); CC0 per https://polyhaven.com/license; the API terms ask for a \u0027Powered by Poly Haven\u0027 credit when the API is used in a product",
+                       "main":  "polyhaven/materials/wooden_rough_planks/wooden_rough_planks_diff_1k.jpg",
+                       "files":  [
+                                     {
+                                         "path":  "polyhaven/materials/wooden_rough_planks/wooden_rough_planks_diff_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_rough_planks/wooden_rough_planks_diff_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/wooden_rough_planks/wooden_rough_planks_rough_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_rough_planks/wooden_rough_planks_rough_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/wooden_rough_planks/wooden_rough_planks_nor_gl_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_rough_planks/wooden_rough_planks_nor_gl_1k.jpg"
+                                     },
+                                     {
+                                         "path":  "polyhaven/materials/wooden_rough_planks/wooden_rough_planks_disp_1k.jpg",
+                                         "url":  "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_rough_planks/wooden_rough_planks_disp_1k.jpg"
                                      }
                                  ]
                    }

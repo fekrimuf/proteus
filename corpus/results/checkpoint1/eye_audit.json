@@ -1,12 +1,22 @@
 {
   "reviewer": "Claude (the model that wrote the recipes), looking at the top-row pair images of all 24 silver or gold results on 2026-10-10",
-  "note": "A visual read by the author, not a blind test. The owner's own look (and Checkpoint 3) overrides it.",
+  "note": "A visual read by the author, not a blind test. The owner's own look (and Checkpoint 3) overrides it. Three entries were added the same day after the part-counting vision judge (pt judge audit) flagged them and the pictures were re-read: the first read missed them. A flag with a `source` marks only that path's result as defective: the baseline results below were replaced the same day by repaired language-model recipes (see `repaired`), and a flagged result loses to a clean solved one in the stack.",
   "flagged": [
     {"id": "kenney/nature-kit/cactus_tall", "why": "the original's two L-shaped arms are not reproduced; ours has blocky crystal-like arms"},
-    {"id": "kenney/survival-kit/barrel", "why": "the three raised rings are missing; ours is a plain drum"},
-    {"id": "kenney/platformer-kit/ladder-long", "why": "only four rungs, bunched at the bottom; the original has eight evenly spaced"},
-    {"id": "polyhaven/Shelf_01", "why": "the seven shelves are missing; only the side and back panels were rebuilt"},
-    {"id": "kenney/castle-kit/tower-square", "why": "the battlements and the recessed top are missing; ours is a plain block"},
-    {"id": "kenney/fantasy-town-kit/fountain-round", "why": "the raised rim and hollow basin are missing; ours is a flat disc"}
+    {"id": "kenney/castle-kit/tower-square", "why": "the battlements and the recessed top are missing; ours is a plain block", "source": "primitive-baseline"},
+    {"id": "polyhaven/painted_wooden_bench", "why": "the scrolled arm ends and the swept-up back are missing; ours has flat plain sides", "found_by": "structure judge, confirmed by eye"},
+    {"id": "kenney/survival-kit/barrel", "why": "the raised hoops are missing; ours is a plain drum", "source": "primitive-baseline"},
+    {"id": "polyhaven/Barrel_01", "why": "the raised rings are missing; ours is a plain ten-sided drum", "source": "primitive-baseline", "found_by": "structure judge, confirmed by eye"},
+    {"id": "polyhaven/Shelf_01", "why": "the seven shelves are missing; only the side and back panels were rebuilt", "source": "primitive-baseline"},
+    {"id": "kenney/furniture-kit/trashcan", "why": "the domed, chamfered lid is missing; ours has a flat top", "source": "primitive-baseline", "found_by": "structure judge, confirmed by eye"},
+    {"id": "kenney/fantasy-town-kit/fountain-round", "why": "the raised rim and hollow basin are missing; ours is a flat disc", "source": "primitive-baseline"}
+  ],
+  "repaired": [
+    {"id": "kenney/platformer-kit/ladder-long", "was": "only four rungs, bunched at the bottom; the original has eight evenly spaced", "now": "eight rungs 0.25 apart, gold, parts match (pt judge parts)", "recipe": "corpus/recipes/llm_src/kenney_platformer-kit_ladder-long.hcs"},
+    {"id": "kenney/survival-kit/barrel", "now": "one lathe profile with four hoops (heights frozen as whole millimetres so the tuner cannot shrink them), recessed lid and bung; silver, parts match", "recipe": "corpus/recipes/llm_src/kenney_survival-kit_barrel.hcs"},
+    {"id": "polyhaven/Barrel_01", "now": "one lathe profile with four raised bands; gold, parts match", "recipe": "corpus/recipes/llm_src/polyhaven_Barrel_01.hcs"},
+    {"id": "polyhaven/Shelf_01", "now": "uprights, back, plinth, top cap and an array of seven shelves; silver, parts match", "recipe": "corpus/recipes/llm_src/polyhaven_Shelf_01.hcs"},
+    {"id": "kenney/furniture-kit/trashcan", "now": "six-sided body, domed chamfered lid, pedal and handle bar; silver, parts match", "recipe": "corpus/recipes/llm_src/kenney_furniture-kit_trashcan.hcs"},
+    {"id": "kenney/fantasy-town-kit/fountain-round", "now": "one lathe profile: stacked outer rings, raised rim, channel and water disc; gold, parts match", "recipe": "corpus/recipes/llm_src/kenney_fantasy-town-kit_fountain-round.hcs"}
   ]
 }

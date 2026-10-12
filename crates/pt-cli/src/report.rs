@@ -21,7 +21,7 @@ fn num(v: &Value, p: &str) -> f64 {
     v.pointer(p).and_then(Value::as_f64).unwrap_or(0.0)
 }
 
-fn s<'a>(v: &'a Value, p: &str) -> &'a str {
+pub(crate) fn s<'a>(v: &'a Value, p: &str) -> &'a str {
     v.pointer(p).and_then(Value::as_str).unwrap_or("")
 }
 
@@ -29,9 +29,24 @@ fn score(v: &Value) -> (u8, f64, f64) {
     (rank(s(v, "/tier")), num(v, "/metrics/f_score") + num(v, "/metrics/silhouette_iou"), -num(v, "/free_parameters"))
 }
 
-fn better(a: &Value, b: &Value) -> bool {
+pub(crate) fn better(a: &Value, b: &Value) -> bool {
     let (x, y) = (score(a), score(b));
     x.0 > y.0 || (x.0 == y.0 && (x.1 > y.1 + 1e-9 || ((x.1 - y.1).abs() <= 1e-9 && x.2 > y.2)))
+}
+
+/// Which path's result stands for an asset in the stack: the better by tier and score, except that a result flagged as defective
+/// (a missing feature the numbers cannot see) loses to a solved result that is not flagged, whatever their scores.
+pub(crate) fn stack_pick(base: &Value, llm: &Value, base_flagged: bool, llm_flagged: bool) -> &'static str {
+    let solved = |v: &Value| v.get("solved") == Some(&json!(true));
+    if base_flagged && !llm_flagged && solved(llm) {
+        "llm-recipe"
+    } else if llm_flagged && !base_flagged && solved(base) {
+        "primitive-baseline"
+    } else if better(llm, base) {
+        "llm-recipe"
+    } else {
+        "primitive-baseline"
+    }
 }
 
 /// Wilson 95% interval for k successes out of n.
@@ -157,11 +172,11 @@ struct Entry {
     stack_src: &'static str,
 }
 
-fn load(path: &Path) -> Result<Value, String> {
+pub(crate) fn load(path: &Path) -> Result<Value, String> {
     serde_json::from_str(&std::fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?).map_err(|e| format!("{}: {e}", path.display()))
 }
 
-fn assets_of(v: &Value) -> Vec<Value> {
+pub(crate) fn assets_of(v: &Value) -> Vec<Value> {
     v.get("assets").and_then(Value::as_array).cloned().unwrap_or_default()
 }
 
@@ -178,13 +193,22 @@ pub fn report_cmd(args: &[String]) -> Result<(), String> {
     let base_run = s(&base, "/run").to_string();
     let llm_run = llm.as_ref().map(|l| s(l, "/run").to_string());
 
+    // The reviewer's visual flags on solved results (optional): id, why, and optionally which path's result is the defective one.
+    let eye: Option<Value> = flag("--eye").map(|p| load(Path::new(p))).transpose()?;
+    let flagged: std::collections::HashMap<String, (String, Option<String>)> = eye
+        .as_ref()
+        .and_then(|e| e.get("flagged").and_then(Value::as_array))
+        .map(|a| a.iter().filter_map(|f| Some((f.get("id")?.as_str()?.to_string(), (f.get("why")?.as_str()?.to_string(), f.get("source").and_then(Value::as_str).map(String::from))))).collect())
+        .unwrap_or_default();
+    let flag_of = |id: &str, src: &str| flagged.get(id).filter(|(_, s)| s.as_deref().is_none_or(|s| s == src)).map(|(w, _)| w.as_str());
+
     let mut entries: Vec<Entry> = Vec::new();
     let llm_assets = llm.as_ref().map(assets_of).unwrap_or_default();
     for a in assets_of(&base) {
         let id = s(&a, "/id").to_string();
         let l = llm_assets.iter().find(|x| s(x, "/id") == id && s(x, "/source") == "llm-recipe").cloned();
         let (stack, src) = match &l {
-            Some(lv) if better(lv, &a) => (lv.clone(), "llm-recipe"),
+            Some(lv) if stack_pick(&a, lv, flag_of(&id, "primitive-baseline").is_some(), flag_of(&id, "llm-recipe").is_some()) == "llm-recipe" => (lv.clone(), "llm-recipe"),
             _ => (a.clone(), "primitive-baseline"),
         };
         entries.push(Entry { id, asset: a.clone(), base: Some(a), llm: l, stack, stack_src: src });
@@ -213,22 +237,18 @@ pub fn report_cmd(args: &[String]) -> Result<(), String> {
         "red"
     };
     let (lo, hi) = wilson(stack_solved, n);
-    // Second reading: the reviewer's visual flags on solved results (optional).
-    let eye: Option<Value> = flag("--eye").map(|p| load(Path::new(p))).transpose()?;
-    let flagged: std::collections::HashMap<String, String> = eye
-        .as_ref()
-        .and_then(|e| e.get("flagged").and_then(Value::as_array))
-        .map(|a| a.iter().filter_map(|f| Some((f.get("id")?.as_str()?.to_string(), f.get("why")?.as_str()?.to_string()))).collect())
-        .unwrap_or_default();
+    // Second reading: the reviewer's visual flags on solved results (loaded above).
     let eye_html = if eye.is_some() {
-        let ok = |e: &Entry| solved(&e.stack) && !flagged.contains_key(&e.id);
+        let ok = |e: &Entry| solved(&e.stack) && flag_of(&e.id, e.stack_src).is_none();
         let (all_ok, mine_ok, hold_ok) = (count(&|e| ok(e)), count(&|e| !hold(e) && ok(e)), count(&|e| hold(e) && ok(e)));
         let (m_pass, h_pass) = (mine_ok as f64 / n_mine.max(1) as f64 >= 0.30, hold_ok as f64 / n_hold.max(1) as f64 >= 0.20);
-        let items: String = entries.iter().filter(|e| solved(&e.stack) && flagged.contains_key(&e.id)).map(|e| format!("<li><b>{}</b>: {}</li>", esc(&e.id), esc(&flagged[&e.id]))).collect();
+        let items: String = entries.iter().filter(|e| solved(&e.stack) && flag_of(&e.id, e.stack_src).is_some()).map(|e| format!("<li><b>{}</b>: {}</li>", esc(&e.id), esc(flag_of(&e.id, e.stack_src).unwrap_or("")))).collect();
+        let n_flagged = entries.iter().filter(|e| solved(&e.stack) && flag_of(&e.id, e.stack_src).is_some()).count();
+        let gate_text = if m_pass && h_pass { "Both readings pass gate G1." } else { "On this reading the development share is below the gate G1 bar; the plan's own score passes." };
         format!(
-            "<h2>A second reading: looking at the 24 pictures</h2>\n<p>The plan's score can pass a rebuild that is missing a thin part, because thin parts are a small share of the surface area it averages over. So I looked at the pictures of every solved result. {} of the {stack_solved} look right at a glance. {} pass the numbers but miss something you would notice:</p><ul>{items}</ul>\n<div class=\"tablewrap\"><table><tr><th>Reading</th><th class=\"n\">all</th><th class=\"n\">development</th><th class=\"n\">hold-out</th></tr><tr><td>The plan's score</td><td class=\"n\">{stack_solved} of {n}</td><td class=\"n\">{stack_mine} of {n_mine}</td><td class=\"n\">{stack_hold} of {n_hold}</td></tr><tr><td>Plan's score and looks right to me</td><td class=\"n\">{all_ok} of {n}</td><td class=\"n\">{mine_ok} of {n_mine} <span class=\"chip {}\">{}</span></td><td class=\"n\">{hold_ok} of {n_hold} <span class=\"chip {}\">{}</span></td></tr></table></div>\n<p class=\"sub\">This is the author's visual read, not a blind test; your own look overrides it. Both readings pass gate G1.</p>\n",
+            "<h2>A second reading: looking at the {stack_solved} pictures</h2>\n<p>The plan's score can pass a rebuild that is missing a thin part, because thin parts are a small share of the surface area it averages over. So I looked at the pictures of every solved result. {} of the {stack_solved} look right at a glance. {} pass the numbers but miss something you would notice:</p><ul>{items}</ul>\n<div class=\"tablewrap\"><table><tr><th>Reading</th><th class=\"n\">all</th><th class=\"n\">development</th><th class=\"n\">hold-out</th></tr><tr><td>The plan's score</td><td class=\"n\">{stack_solved} of {n}</td><td class=\"n\">{stack_mine} of {n_mine}</td><td class=\"n\">{stack_hold} of {n_hold}</td></tr><tr><td>Plan's score and looks right to me</td><td class=\"n\">{all_ok} of {n}</td><td class=\"n\">{mine_ok} of {n_mine} <span class=\"chip {}\">{}</span></td><td class=\"n\">{hold_ok} of {n_hold} <span class=\"chip {}\">{}</span></td></tr></table></div>\n<p class=\"sub\">This is the author's visual read, not a blind test; your own look overrides it. {gate_text}</p>\n",
             all_ok,
-            flagged.len(),
+            n_flagged,
             if m_pass { "green" } else { "red" },
             if m_pass { "pass" } else { "below" },
             if h_pass { "green" } else { "red" },
@@ -293,7 +313,7 @@ pub fn report_cmd(args: &[String]) -> Result<(), String> {
             m("f_score"),
             m("silhouette_iou"),
             num(&e.stack, "/free_parameters"),
-            format!("{}{}", if hold(e) { " <i>(hold-out)</i>" } else { "" }, flagged.get(&e.id).map_or(String::new(), |w| format!("<br><i>Looks wrong to me: {}</i>", esc(w)))),
+            format!("{}{}", if hold(e) { " <i>(hold-out)</i>" } else { "" }, flag_of(&e.id, e.stack_src).map_or(String::new(), |w| format!("<br><i>Looks wrong to me: {}</i>", esc(w)))),
             if e.stack_src == "llm-recipe" { "recipe written by the language model, numbers tuned by search" } else { "built by the no-language-model baseline" }
         ));
     }
@@ -409,5 +429,16 @@ mod tests {
         let c = json!({"tier": "silver", "metrics": {"f_score": 0.9, "silhouette_iou": 0.9}, "free_parameters": 12});
         assert!(better(&a, &b) && !better(&b, &a));
         assert!(better(&c, &a), "same quality, fewer knobs wins");
+    }
+
+    #[test]
+    fn a_flagged_result_loses_to_a_clean_solved_one_even_with_a_lower_score() {
+        let solved = |f: f64| json!({"tier": "silver", "solved": true, "metrics": {"f_score": f, "silhouette_iou": f}, "free_parameters": 20});
+        let (high, low) = (solved(0.96), solved(0.92));
+        assert_eq!(stack_pick(&high, &low, false, false), "primitive-baseline", "no flags: the higher score stands");
+        assert_eq!(stack_pick(&high, &low, true, false), "llm-recipe", "the flagged baseline (a plain top where the original has a dome) loses");
+        assert_eq!(stack_pick(&low, &high, false, true), "primitive-baseline");
+        let bronze = json!({"tier": "bronze", "solved": false, "metrics": {"f_score": 0.88, "silhouette_iou": 0.98}, "free_parameters": 13});
+        assert_eq!(stack_pick(&high, &bronze, true, false), "primitive-baseline", "an unsolved clean result cannot replace a solved one");
     }
 }

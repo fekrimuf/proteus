@@ -397,7 +397,7 @@ impl Session {
                     Some(_) => return Err("scene must be an object or a path to a .json file".into()),
                 };
                 let out = std::path::PathBuf::from(a.get("path").and_then(Value::as_str).map_or_else(|| format!("out/render/mcp_{node}.png"), String::from));
-                let opts = crate::blender::Opts { quick: a.get("quick").and_then(Value::as_bool).unwrap_or(false), samples: a.get("samples").and_then(Value::as_u64).map(|n| n as u32), keep: None, lod: a.get("lod").and_then(Value::as_bool).unwrap_or(false) };
+                let opts = crate::blender::Opts { quick: a.get("quick").and_then(Value::as_bool).unwrap_or(false), samples: a.get("samples").and_then(Value::as_u64).map(|n| n as u32), keep: None, lod: a.get("lod").and_then(Value::as_bool).unwrap_or(false), only: None };
                 let report = crate::blender::render_geometry(&geo, &format!("mcp_{node}"), scene, &out, &opts)?;
                 let first = report.pointer("/frames/0/file").and_then(Value::as_str).ok_or("Blender reported no frames")?;
                 let png = std::fs::read(first).map_err(|e| format!("{first}: {e}"))?;
@@ -610,7 +610,7 @@ impl Session {
                 let r = crate::recipes::propose(s(a, "name")?, s(a, "code")?)?;
                 j(json!({"accepted_for_review": r.failures.is_empty(), "specs": format!("{}/{}", r.specs_ok, r.specs_total), "failures": r.failures, "hash": r.hash}))
             }
-            "get_guide" => j(json!({"guide": include_str!("../../../docs/AGENT_GUIDE.md")})),
+            "get_guide" => j(json!({"guide": concat!(include_str!("../../../docs/AGENT_GUIDE.md"), "\n\n", include_str!("../../../docs/WORLD_GUIDE.md"))})),
             "set_option" => {
                 if let Some(p) = a.get("provenance").and_then(Value::as_bool) {
                     self.graph.provenance = p;

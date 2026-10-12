@@ -1,0 +1,248 @@
+{
+  "development_half": {
+    "fn": 1,
+    "fp": 0,
+    "tn": 10,
+    "tp": 5
+  },
+  "false_alarms_on_unflagged": {
+    "count": 0,
+    "of": 15
+  },
+  "flagged_recall": {
+    "found": 8,
+    "of": 9
+  },
+  "hold_out_half": {
+    "fn": 0,
+    "fp": 0,
+    "tn": 5,
+    "tp": 3
+  },
+  "identity_control_false_alarms": {
+    "count": 0,
+    "of": 24
+  },
+  "items": 24,
+  "judge": "qwen3-vl-8b-q4",
+  "method": "structure",
+  "other_object_detected": {
+    "count": 23,
+    "of": 24
+  },
+  "rows": [
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/lampRoundFloor",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the domed, chamfered lid is missing; ours has a flat top",
+      "id": "kenney/furniture-kit/trashcan",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "top: original dome_or_cap, copy flat"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the original's two L-shaped arms are not reproduced; ours has blocky crystal-like arms",
+      "id": "kenney/nature-kit/cactus_tall",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the three raised rings are missing; ours is a plain drum",
+      "id": "kenney/survival-kit/barrel",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "rungs rings shelves or slats: original 4, copy 0",
+        "arms branches or handles: original 0, copy 1",
+        "openings or holes: original 1, copy 0"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/survival-kit/box",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/survival-kit/rock-a",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the two raised rings are missing; ours is a plain ten-sided drum",
+      "id": "polyhaven/Barrel_01",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "rungs rings shelves or slats: original 3, copy 0"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/bench",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/bookcaseClosed",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/chair",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/desk",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/kitchenStove",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": false
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/loungeSofa",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/furniture-kit/table",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/nature-kit/fence_gate",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "only four rungs, bunched at the bottom; the original has eight evenly spaced",
+      "id": "kenney/platformer-kit/ladder-long",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "rungs rings shelves or slats: original 5, copy 3"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the seven shelves are missing; only the side and back panels were rebuilt",
+      "id": "polyhaven/Shelf_01",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "rungs rings shelves or slats: original 5, copy 0",
+        "top: original flat, copy rim_or_lip"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the scrolled arm ends and the swept-up back are missing; ours has flat plain sides",
+      "id": "polyhaven/painted_wooden_bench",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "arms branches or handles: original 2, copy 0"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the battlements and the recessed top are missing; ours is a plain block",
+      "id": "kenney/castle-kit/tower-square",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "top: original battlements, copy flat"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/fantasy-town-kit/chimney",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": "the raised rim and hollow basin are missing; ours is a flat disc",
+      "id": "kenney/fantasy-town-kit/fountain-round",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": true,
+      "named": [
+        "rungs rings shelves or slats: original 2, copy 0",
+        "openings or holes: original 1, copy 0",
+        "top: original rim_or_lip, copy flat"
+      ],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/fantasy-town-kit/roof-gable",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/fantasy-town-kit/stall",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    },
+    {
+      "flagged_by_eye": null,
+      "id": "kenney/fantasy-town-kit/wall-wood-door",
+      "identity_control_false_alarm": false,
+      "judge_says_missing": false,
+      "named": [],
+      "other_object_detected": true
+    }
+  ]
+}

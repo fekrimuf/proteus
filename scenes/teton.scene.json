@@ -1,0 +1,10 @@
+{
+ "style": "styles/teton_summer.json",
+ "brief": "A realistic alpine valley on a clear morning: a green meadow floor, scattered trees and boulders, forested slopes and rocky snow-topped mountains.",
+ "playable": {"size": [1600, 1600]},
+ "cameras": [
+  {"name": "hero", "eye": {"at": [-100, 650], "height": 80, "yaw": -82, "pitch": -2}, "lens": 28},
+  {"name": "valley", "eye": {"at": [150, -550], "height": 25, "yaw": 100, "pitch": 1}, "lens": 24},
+  {"name": "eye", "eye": {"at": [60, 200], "height": 1.7, "yaw": -70, "pitch": 4}, "lens": 28}
+ ]
+}

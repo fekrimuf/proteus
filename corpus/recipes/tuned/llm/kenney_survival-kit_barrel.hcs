@@ -1,0 +1,21 @@
+# kenney/survival-kit/barrel (llm-recipe, run llm)
+# kenney/survival-kit/barrel: a wooden barrel turned on a lathe: four raised hoops (bottom, two between, top), recessed lid.
+# One revolved profile (radius, height): single clean surface, no hidden overlap.
+# The hoop heights are whole numbers (millimetres) on purpose: the surface score cannot see a 9 mm band, so a tuner left free to move them
+# shrinks them to nothing (the first tuned version lost two hoops). Whole numbers are structure and are not tuned; the radii and height are.
+R = 0.10998            # staves
+RB = 0.11819           # hoops, just proud of the staves
+H = 0.33705            # height
+RLID = 0.07485         # lid recess radius
+B1 = 57              # bottom hoop top (mm)
+M1 = 86              # middle hoop 1: from here ... (mm)
+M2 = 143             # ... to here
+N1 = 201             # middle hoop 2: from here ...
+N2 = 258             # ... to here
+T1 = 287             # top hoop starts here
+
+prof = curve(points=[[0, 0, 0], [RB, 0, 0], [RB, B1 / 1000, 0], [R, B1 / 1000, 0], [R, M1 / 1000, 0], [RB, M1 / 1000, 0], [RB, M2 / 1000, 0], [R, M2 / 1000, 0], [R, N1 / 1000, 0], [RB, N1 / 1000, 0], [RB, N2 / 1000, 0], [R, N2 / 1000, 0], [R, T1 / 1000, 0], [RB, T1 / 1000, 0], [RB, H, 0], [RLID, H, 0], [RLID, H - 0.0098, 0], [0, H - 0.00785, 0]])
+shell = revolve(prof, divisions=24)
+bung = transform(tube(cols=8, height=0.01607, radius=0.0226), t=[-0.04377, H - 0.0008, -0.01618])
+barrel = merge(shell, bung)
+out(barrel)

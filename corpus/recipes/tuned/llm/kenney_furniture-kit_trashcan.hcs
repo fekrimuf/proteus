@@ -1,0 +1,16 @@
+# kenney/furniture-kit/trashcan (llm-recipe, run llm)
+# kenney/furniture-kit/trashcan: a six-sided bin with a domed, chamfered lid, a pedal at the foot and a handle bar at the lid
+# (repair: the first fit had a flat top)
+H = 0.42259             # height to the top of the lid
+R = 0.10415            # body radius
+LID_H = 0.08897         # height of the domed lid
+LID_R = 0.0845        # radius at the very top of the lid
+PEDAL = 0.05315        # pedal length, sticking out of the front
+BAR = 0.09186          # handle bar width
+
+body = transform(tube(cols=6, height=H - LID_H, radius=R, radius_top=R * 1.0037), t=[0, (H - LID_H) / 2, 0])
+lid = transform(tube(cols=6, height=LID_H, radius=R * 1.05923, radius_top=LID_R), t=[0, H - LID_H / 2, 0])
+pedal = box(size=[0.03206, 0.02172, PEDAL], center=[0, 0.02411, R + PEDAL / 2 - 0.0359])
+handle = box(size=[BAR, 0.0036, 0.02717], center=[0, 0.36538, -0.09705])
+bin = merge(body, lid, pedal, handle)
+out(bin)

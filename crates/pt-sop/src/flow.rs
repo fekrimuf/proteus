@@ -96,7 +96,7 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             e.is_grid = true;
             Ok(e)
         }
-        "hf_slope" | "hf_erode_thermal" | "hf_erode_hydraulic" | "hf_terrace" => {
+        "hf_slope" | "hf_erode_thermal" | "hf_erode_hydraulic" | "hf_terrace" | "hf_flow" => {
             let mut e = in0();
             if !e.is_grid {
                 return Err(vec![fd(format!("{kind} needs a grid heightfield but its input is not a regular grid"), "feed it from `grid` (optionally through noise/transform/wrangle/smooth) without merge, blast, fuse or subdivide in between")]);
@@ -104,10 +104,32 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             let add: &[&str] = match kind {
                 "hf_slope" => &["slope", "slope_deg"],
                 "hf_erode_hydraulic" => &["erosion", "deposit", "water", "flow"],
+                "hf_flow" => &["filled", "fill_depth", "flow_acc", "twi", "stream", "lake"],
                 _ => &[],
             };
             for a in add {
                 e.point.insert((*a).to_string(), Ty::Float);
+            }
+            if kind == "hf_flow" && p.f("river_width") > 0.0 {
+                for a in ["river", "river_sd", "river_w", "water_y"] {
+                    e.point.insert(a.to_string(), Ty::Float);
+                }
+            }
+            Ok(e)
+        }
+        "hf_fit" | "hf_hole" | "hf_refine" => {
+            let mut e = in0();
+            let needs_grid = if kind == "hf_fit" { ins.get(1).cloned().flatten().unwrap_or_default().is_grid } else { e.is_grid };
+            if !needs_grid {
+                let which = if kind == "hf_fit" { "input 1 (the outer level)" } else { "its input" };
+                return Err(vec![fd(format!("{kind} needs a grid heightfield on {which}"), "feed it from `grid`, `dem` or `hf_refine` before any hf_hole, merge, blast or fuse")]);
+            }
+            match kind {
+                "hf_hole" => e.is_grid = false,
+                "hf_refine" => {
+                    e.point.insert("edge".into(), Ty::Float);
+                }
+                _ => {}
             }
             Ok(e)
         }
@@ -208,6 +230,11 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             Ok(e)
         }
         "box" | "sphere" | "tube" | "torus" | "circle" | "import_asset" => Ok(GeoEnv::base_points(&[], true)),
+        "dem" => {
+            let mut e = GeoEnv::base_points(&[("elev", Ty::Float)], true);
+            e.is_grid = true; // a far ring with a hole is not one; the heightfield tools check at cook time
+            Ok(e)
+        }
         "line" => Ok(GeoEnv::base_points(&[], false)),
         "curve" | "helix" | "resample" => Ok(GeoEnv::base_points(&[], false)),
         "sweep" | "revolve" => Ok(GeoEnv::base_points(&[], true)),

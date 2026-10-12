@@ -4,6 +4,9 @@
 
 mod assets;
 mod attrs;
+pub mod dem;
+mod hydro;
+pub mod hfield;
 mod deform;
 pub mod flow;
 pub mod kernel;
@@ -100,6 +103,9 @@ pub fn schemas() -> Vec<NodeSchema> {
     v.extend(prims::schemas());
     v.extend(deform::schemas());
     v.extend(assets::schemas());
+    v.extend(dem::schemas());
+    v.extend(hydro::schemas());
+    v.extend(hfield::schemas());
     v.extend(attrs::schemas());
     v.extend(topo::schemas());
     v.extend(terrain::schemas());
@@ -186,6 +192,15 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Res {
         return r;
     }
     if let Some(r) = assets::cook(kind, p, inputs) {
+        return r;
+    }
+    if let Some(r) = dem::cook(kind, p) {
+        return r;
+    }
+    if let Some(r) = hydro::cook(kind, p, inputs) {
+        return r;
+    }
+    if let Some(r) = hfield::cook(kind, p, inputs) {
         return r;
     }
     if let Some(r) = attrs::cook(kind, p, inputs) {
@@ -774,3 +789,7 @@ pub fn sample_surface(src: &Geometry, n: usize, seed: i64) -> Result<Vec<[f32; 3
 pub fn sample_surface_normals(src: &Geometry, n: usize, seed: i64) -> Result<Vec<([f32; 3], [f32; 3])>, String> {
     Ok(surface_samples(src, n, seed)?.into_iter().map(|s| (s.0, s.1)).collect())
 }
+
+/// Tests that point `PT_CORPUS` at a temporary folder hold this lock so they cannot race.
+#[cfg(test)]
+pub(crate) static CORPUS_ENV: std::sync::Mutex<()> = std::sync::Mutex::new(());

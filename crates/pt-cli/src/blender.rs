@@ -65,10 +65,10 @@ fn range(o: &Value, key: &str, lo: f64, hi: f64, section: &str, out: &mut Vec<St
 pub fn check_scene(s: &Value) -> Vec<String> {
     let mut e = Vec::new();
     let Some(top) = s.as_object() else { return vec!["scene file must be a JSON object".into()] };
-    unknown_keys(top, &["version", "render", "lighting", "camera", "cameras", "ground", "materials", "default_material", "style", "style_name", "note"], "scene", &mut e);
+    unknown_keys(top, &["version", "render", "lighting", "camera", "cameras", "ground", "materials", "default_material", "style", "style_name", "note", "brief", "foils", "playable"], "scene", &mut e);
     if let Some(r) = s.get("render") {
         if let Some(o) = r.as_object() {
-            unknown_keys(o, &["samples", "resolution", "device", "seed", "denoise", "noise_threshold", "clamp_indirect", "bounces", "view_transform", "look", "exposure", "smooth_angle"], "render", &mut e);
+            unknown_keys(o, &["samples", "resolution", "device", "seed", "denoise", "noise_threshold", "clamp_indirect", "bounces", "transparent_bounces", "volume_bounces", "view_transform", "look", "exposure", "white_balance", "glare", "glare_threshold", "glare_size", "foliage_translucency", "smooth_angle"], "render", &mut e);
         }
         range(r, "samples", 1.0, 4096.0, "render", &mut e);
         range(r, "exposure", -10.0, 10.0, "render", &mut e);
@@ -87,7 +87,7 @@ pub fn check_scene(s: &Value) -> Vec<String> {
     }
     if let Some(l) = s.get("lighting") {
         if let Some(o) = l.as_object() {
-            unknown_keys(o, &["sky", "strength", "sun_elevation", "sun_azimuth", "sun_size", "sun_intensity", "air", "dust", "ozone", "altitude", "hdri", "rotation", "color", "fog_density", "fog_height", "fog_extent", "fog_anisotropy", "fog_color"], "lighting", &mut e);
+            unknown_keys(o, &["sky", "strength", "sun_elevation", "sun_azimuth", "sun_size", "sun_intensity", "air", "dust", "ozone", "altitude", "hdri", "rotation", "color", "fog_density", "fog_height", "fog_extent", "fog_anisotropy", "fog_color", "fog_base", "mist_density", "mist_height", "mist_extent", "mist_step"], "lighting", &mut e);
         }
         match l.get("sky").and_then(Value::as_str).unwrap_or("nishita") {
             "nishita" | "flat" => {}
@@ -101,6 +101,9 @@ pub fn check_scene(s: &Value) -> Vec<String> {
         range(l, "sun_elevation", -10.0, 90.0, "lighting", &mut e);
         range(l, "sun_azimuth", -3600.0, 3600.0, "lighting", &mut e);
         range(l, "fog_density", 0.0, 10.0, "lighting", &mut e);
+        range(l, "mist_density", 0.0, 10.0, "lighting", &mut e);
+        range(l, "mist_height", 0.5, 5000.0, "lighting", &mut e);
+        range(l, "fog_height", 1.0, 100000.0, "lighting", &mut e);
         range(l, "strength", 0.0, 1000.0, "lighting", &mut e);
     }
     let mut cams: Vec<(&str, &Value)> = Vec::new();
@@ -202,6 +205,8 @@ pub struct Opts {
     pub keep: Option<PathBuf>,
     /// Export levels of detail (nodes `inst_<i>__lod<l>` with distance ranges); the render draws level 0 only.
     pub lod: bool,
+    /// Render only these cameras of the scene (names, comma separated): look development on one view.
+    pub only: Option<String>,
 }
 
 fn load_library(root: &Path) -> Value {
@@ -264,6 +269,12 @@ fn prepare_scene(mut scene: Value, what: &str, o: &Opts) -> Result<Value, String
 
 /// Render an already cooked geometry (what the MCP server and `render` use). `stem` names the work files.
 pub fn render_geometry(geo: &Geometry, stem: &str, scene: Value, out: &Path, o: &Opts) -> Result<Value, String> {
+    let (glb, scene, unknown) = export_for_render(geo, stem, scene, o)?;
+    run_blender(&glb, &scene, unknown, stem, out, o, &[])
+}
+
+/// Write the model Blender will read and finish the scene description for it (layer roles, unknown material names).
+fn export_for_render(geo: &Geometry, stem: &str, scene: Value, o: &Opts) -> Result<(PathBuf, Value, Vec<String>), String> {
     let mut scene = prepare_scene(scene, "description", o)?;
     inject_layers(&mut scene, geo);
     let root = repo_root();
@@ -277,7 +288,7 @@ pub fn render_geometry(geo: &Geometry, stem: &str, scene: Value, out: &Path, o: 
         pt_core::gltf::to_glb(geo)
     };
     std::fs::write(&glb, bytes).map_err(|e| e.to_string())?;
-    run_blender(&glb, &scene, unknown, stem, out, o, &[])
+    Ok((glb, scene, unknown))
 }
 
 /// Render `input` (a recipe file or name, or a `.glb`/`.gltf`) with `scene_path` to `out`. Returns the Blender-side report
@@ -292,10 +303,15 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
     }
     let path = find_recipe(input)?;
     let code = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let mut g = Graph::new();
-    let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
-    let geo = g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?;
-    render_geometry(&geo, &stem, scene, out, o)
+    // The graph and the cooked world are dropped before Blender starts: a large world is gigabytes here and Blender needs
+    // several times the model's size to import it, and the two together do not fit in the memory of an ordinary desktop.
+    let (glb, scene, unknown) = {
+        let mut g = Graph::new();
+        let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
+        let geo = g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?;
+        export_for_render(&geo, &stem, scene, o)?
+    };
+    run_blender(&glb, &scene, unknown, &stem, out, o, &[])
 }
 
 /// Bake the layered materials of an exported model (terrain blends) into an albedo and a tangent-space normal PNG each, through
@@ -303,12 +319,28 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
 pub fn bake_layers(model: &Path, mut scene: Value, geo: &Geometry, work: &Path, res: u32) -> Result<BTreeMap<String, Value>, String> {
     resolve_style(&mut scene)?;
     inject_layers(&mut scene, geo);
-    let o = Opts { quick: false, samples: None, keep: Some(work.to_path_buf()), lod: false };
+    let o = Opts { quick: false, samples: None, keep: Some(work.to_path_buf()), lod: false, only: None };
     let dir = work.join("bake");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let extra = vec!["bake=1".to_string(), format!("bake_dir={}", std::env::current_dir().unwrap_or_default().join(&dir).display()), format!("bake_res={res}")];
     let report = run_blender(model, &scene, vec![], "bake", &work.join("bake_unused.png"), &o, &extra)?;
     Ok(report.get("baked").and_then(Value::as_object).map(|m| m.iter().map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default())
+}
+
+/// BLAKE3 of a file's content as hex, read in chunks (a world file can be gigabytes).
+fn file_hash(path: &Path) -> Result<String, String> {
+    use std::io::Read;
+    let mut f = std::fs::File::open(path).map_err(|e| format!("{}: {e}", path.display()))?;
+    let mut h = blake3::Hasher::new();
+    let mut buf = vec![0u8; 1 << 22];
+    loop {
+        let n = f.read(&mut buf).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        h.update(&buf[..n]);
+    }
+    Ok(h.finalize().to_hex().to_string())
 }
 
 fn run_blender(model: &Path, scene: &Value, unknown: Vec<String>, stem: &str, out: &Path, o: &Opts, extra: &[String]) -> Result<Value, String> {
@@ -339,6 +371,31 @@ fn run_blender(model: &Path, scene: &Value, unknown: Vec<String>, stem: &str, ou
     if o.quick {
         cmd.arg("quick=1");
     }
+    if let Some(names) = &o.only {
+        cmd.arg(format!("only={names}"));
+    }
+    // Import cache: Blender needs minutes to import a large world and seconds to open it again. The cache file is named after
+    // the model file and its content, so a changed model never meets a stale cache; older caches of the same model are removed.
+    // The render and the terrain bake of one world read the same model, so the bake opens what the render imported.
+    {
+        if let Ok(hash) = file_hash(model) {
+            // under out/ (never in a results folder: the cache is as large as the world file)
+            let cache_dir = root.join("out/blend_cache");
+            let _ = std::fs::create_dir_all(&cache_dir);
+            let model_stem = model.file_stem().map_or_else(|| stem.to_string(), |s| s.to_string_lossy().into_owned());
+            let cache = cache_dir.join(format!("{model_stem}.{}.blend", &hash[..12]));
+            if let Ok(dir) = std::fs::read_dir(&cache_dir) {
+                for f in dir.flatten() {
+                    let name = f.file_name().to_string_lossy().into_owned();
+                    let stale = name.starts_with(&format!("{model_stem}.")) && (name.ends_with(".blend") || name.ends_with(".blend1")) && f.path() != cache;
+                    if stale {
+                        let _ = std::fs::remove_file(f.path());
+                    }
+                }
+            }
+            cmd.arg(format!("blend_cache={}", cwd.join(&cache).display()));
+        }
+    }
     cmd.args(extra);
     let output = cmd.output().map_err(|e| format!("could not start Blender: {e}"))?;
     let text = String::from_utf8_lossy(&output.stdout);
@@ -359,9 +416,9 @@ pub fn render_scene_cmd(args: &[String]) -> Result<(), String> {
     let pos: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
     let flag_val = |f: &str| args.iter().position(|a| a == f).and_then(|i| args.get(i + 1));
     let (Some(input), Some(scene), Some(out)) = (pos.first(), pos.get(1), pos.get(2)) else {
-        return Err("usage: pt render-scene <recipe|file.glb> <scene.json> <out.png> [--quick] [--samples N] [--keep DIR] [--lod]".into());
+        return Err("usage: pt render-scene <recipe|file.glb> <scene.json> <out.png> [--quick] [--samples N] [--keep DIR] [--lod] [--only CAMERA,CAMERA]".into());
     };
-    let opts = Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: flag_val("--keep").map(PathBuf::from), lod: args.iter().any(|a| a == "--lod") };
+    let opts = Opts { quick: args.iter().any(|a| a == "--quick"), samples: flag_val("--samples").and_then(|s| s.parse().ok()), keep: flag_val("--keep").map(PathBuf::from), lod: args.iter().any(|a| a == "--lod"), only: flag_val("--only").cloned() };
     let report = render(input, Path::new(scene), Path::new(out), &opts)?;
     println!("{}", serde_json::to_string_pretty(&report).unwrap_or_default());
     Ok(())

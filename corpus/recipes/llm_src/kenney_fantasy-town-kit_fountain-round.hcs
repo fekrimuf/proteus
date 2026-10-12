@@ -1,0 +1,16 @@
+# kenney/fantasy-town-kit/fountain-round: a round fountain turned on a lathe: stacked rings on the outside, a raised rim, a channel
+# and a flat water disc inside (repair: the first fit was a solid disc with no basin). Profile points are (radius, height).
+R = 1.02             # outer radius
+RIM = 0.98           # radius of the narrower rings
+H = 0.28             # height of the rim
+RING1 = 0.07         # first ring top
+RING2 = 0.117        # second ring top
+WALL_TOP = 0.257     # outer wall top
+INNER = 0.80         # inner edge of the rim
+CHANNEL = 0.72       # inner edge of the channel
+FLOOR = 0.20         # channel floor
+WATER = 0.24         # height of the water disc
+
+prof = curve(points=[[0, 0, 0], [R, 0, 0], [R, RING1, 0], [RIM, RING1, 0], [RIM, RING2, 0], [R, RING2, 0], [R, WALL_TOP, 0], [RIM, H, 0], [INNER, H, 0], [INNER - 0.02, FLOOR, 0], [CHANNEL, FLOOR, 0], [CHANNEL, WATER, 0], [0, WATER, 0]])
+fountain = revolve(prof, divisions=48)
+out(fountain)

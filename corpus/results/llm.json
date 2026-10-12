@@ -36,7 +36,7 @@
       "metrics_strict": {
         "chamfer": 0.00760258035176548,
         "f_score": 0.9488601062430968,
-        "normal_consistency": 0.42492303541447035,
+        "normal_consistency": 0.4249230354144703,
         "precision": 0.9094,
         "recall": 0.9919,
         "silhouette_iou": 0.8030741039787717,
@@ -90,16 +90,16 @@
         "precision": 0.9914,
         "recall": 0.8499,
         "silhouette_iou": 0.8706212264035151,
-        "size_ratio": 0.9991085529327393
+        "size_ratio": 0.9991085529327391
       },
       "metrics_strict": {
-        "chamfer": 0.013629599476381959,
+        "chamfer": 0.01362959947638196,
         "f_score": 0.8037985423718478,
         "normal_consistency": 0.35928141541909064,
         "precision": 0.93445,
         "recall": 0.7052,
         "silhouette_iou": 0.6137355194329076,
-        "size_ratio": 0.9991085529327393
+        "size_ratio": 0.9991085529327391
       },
       "notes": [
         "refined 12 numbers: loss 0.3126 -> 0.3126"
@@ -134,7 +134,7 @@
       "holdout": true,
       "id": "kenney/nature-kit/cactus_tall",
       "import": {
-        "diagonal": 0.9135046005249023,
+        "diagonal": 0.9135046005249025,
         "nodes": 1,
         "parts": 1,
         "triangles": 122,
@@ -144,7 +144,7 @@
       "key": "a783a0f5c6f36a61831ef2a94405cdacbf16f990b2675f04fb58d05c5e3fe167",
       "metrics": {
         "chamfer": 0.005966432262815088,
-        "f_score": 0.9625438978166619,
+        "f_score": 0.962543897816662,
         "normal_consistency": 0.8081312604554256,
         "precision": 0.9426,
         "recall": 0.98335,
@@ -153,7 +153,7 @@
       },
       "metrics_strict": {
         "chamfer": 0.007190779242264117,
-        "f_score": 0.9172929902468261,
+        "f_score": 0.917292990246826,
         "normal_consistency": 0.7870250595105417,
         "precision": 0.89955,
         "recall": 0.93575,
@@ -208,7 +208,7 @@
         "normal_consistency": 0.12327006414064293,
         "precision": 0.7997,
         "recall": 0.95225,
-        "silhouette_iou": 0.9142363786594595,
+        "silhouette_iou": 0.9142363786594596,
         "size_ratio": 0.9999922513961792
       },
       "metrics_strict": {
@@ -300,7 +300,7 @@
     {
       "category": "container",
       "cost": {
-        "cpu_seconds": 9.490109499999999,
+        "cpu_seconds": 9.4901095,
         "evals": 1633,
         "llm_turns": 1,
         "tokens": 0
@@ -323,16 +323,16 @@
       "key": "5017750879d5c685c675b57d6cc752e75ec40c5868946e282e54f6bd00099014",
       "metrics": {
         "chamfer": 0.006976502846313381,
-        "f_score": 0.9717223650385605,
+        "f_score": 0.9717223650385604,
         "normal_consistency": 0.07165023433452006,
         "precision": 1.0,
         "recall": 0.945,
-        "silhouette_iou": 0.9694705355189427,
+        "silhouette_iou": 0.9694705355189428,
         "size_ratio": 1.0002447366714478
       },
       "metrics_strict": {
         "chamfer": 0.007540222774423462,
-        "f_score": 0.9674221694460219,
+        "f_score": 0.967422169446022,
         "normal_consistency": 0.0964877416948555,
         "precision": 1.0,
         "recall": 0.9369,
@@ -382,7 +382,7 @@
       "key": "0da05ce6d9859e371e2a17b0886b2ed81a7d6974e182358e3ac4994676cc3269",
       "metrics": {
         "chamfer": 0.011220498952886748,
-        "f_score": 0.9029871982281283,
+        "f_score": 0.9029871982281285,
         "normal_consistency": 0.3013954672258347,
         "precision": 0.9064,
         "recall": 0.8996,
@@ -440,7 +440,7 @@
       },
       "key": "3ff182b7b4ace762a90d7e06bd558f28121eb53539e645db0a06640649e47343",
       "metrics": {
-        "chamfer": 0.011603142382165163,
+        "chamfer": 0.011603142382165164,
         "f_score": 0.8651030432276657,
         "normal_consistency": 0.6085798810431984,
         "precision": 0.9131,
@@ -509,7 +509,7 @@
       },
       "metrics_strict": {
         "chamfer": 0.004423636147622322,
-        "f_score": 0.9876831515274227,
+        "f_score": 0.9876831515274228,
         "normal_consistency": 0.7653038796747103,
         "precision": 0.9973,
         "recall": 0.97825,
@@ -549,7 +549,7 @@
       "holdout": true,
       "id": "kenney/furniture-kit/bedBunk",
       "import": {
-        "diagonal": 1.4991884231567383,
+        "diagonal": 1.4991884231567385,
         "nodes": 5,
         "parts": 5,
         "triangles": 580,
@@ -559,7 +559,7 @@
       "key": "a95d994303c11081178b5661e29ffacecefcc97d7784d635e7746d7d4b1f0a42",
       "metrics": {
         "chamfer": 0.007111783509621468,
-        "f_score": 0.9618864838877339,
+        "f_score": 0.961886483887734,
         "normal_consistency": 0.5937939785810139,
         "precision": 0.97245,
         "recall": 0.95155,
@@ -595,7 +595,7 @@
     {
       "category": "furniture",
       "cost": {
-        "cpu_seconds": 1.4052793000000001,
+        "cpu_seconds": 1.4052793,
         "evals": 353,
         "llm_turns": 2,
         "tokens": 0
@@ -620,7 +620,7 @@
         "normal_consistency": 0.8558250000000001,
         "precision": 0.99175,
         "recall": 0.9896,
-        "silhouette_iou": 0.9107360831186007,
+        "silhouette_iou": 0.9107360831186008,
         "size_ratio": 1.0
       },
       "metrics_strict": {
@@ -629,7 +629,7 @@
         "normal_consistency": 0.8558749999999999,
         "precision": 0.99175,
         "recall": 0.9896,
-        "silhouette_iou": 0.9107360831186007,
+        "silhouette_iou": 0.9107360831186008,
         "size_ratio": 1.0
       },
       "notes": [
@@ -663,7 +663,7 @@
       "holdout": false,
       "id": "kenney/furniture-kit/bookcaseClosed",
       "import": {
-        "diagonal": 0.9721111059188843,
+        "diagonal": 0.9721111059188844,
         "nodes": 1,
         "parts": 1,
         "triangles": 372,
@@ -766,7 +766,7 @@
     {
       "category": "furniture",
       "cost": {
-        "cpu_seconds": 1.4316588000000001,
+        "cpu_seconds": 1.4316588,
         "evals": 353,
         "llm_turns": 2,
         "tokens": 0
@@ -787,16 +787,16 @@
       "key": "78e358dd09417b3d976a981afba9522b99f4046a6ff3234f6b8046b9f38bf5a6",
       "metrics": {
         "chamfer": 0.004938074032395855,
-        "f_score": 0.9619899615404605,
+        "f_score": 0.9619899615404603,
         "normal_consistency": 0.7874657979935408,
         "precision": 0.96965,
         "recall": 0.95445,
-        "silhouette_iou": 0.9358562516928501,
+        "silhouette_iou": 0.93585625169285,
         "size_ratio": 0.9999739527702332
       },
       "metrics_strict": {
         "chamfer": 0.008484696729884078,
-        "f_score": 0.9396679963831711,
+        "f_score": 0.9396679963831712,
         "normal_consistency": 0.5626681788556278,
         "precision": 0.959,
         "recall": 0.9211,
@@ -857,7 +857,7 @@
         "normal_consistency": 0.8561172117263078,
         "precision": 0.91095,
         "recall": 0.99295,
-        "silhouette_iou": 0.9483261191579813,
+        "silhouette_iou": 0.9483261191579812,
         "size_ratio": 1.001798152923584
       },
       "notes": [
@@ -911,7 +911,7 @@
       "metrics_strict": {
         "chamfer": 0.004589284577015558,
         "f_score": 0.9758272948406096,
-        "normal_consistency": 0.9071750000000001,
+        "normal_consistency": 0.907175,
         "precision": 0.9995,
         "recall": 0.95325,
         "silhouette_iou": 0.918282369934877,
@@ -937,7 +937,7 @@
     {
       "category": "vehicle",
       "cost": {
-        "cpu_seconds": 2.9688299000000002,
+        "cpu_seconds": 2.9688299,
         "evals": 641,
         "llm_turns": 1,
         "tokens": 0
@@ -1018,7 +1018,7 @@
       "key": "832514f63cf893cd11134cfa84ce54990cdc6bee79ea43a462bb64ab21b67528",
       "metrics": {
         "chamfer": 0.004392293398200121,
-        "f_score": 0.9809432254777071,
+        "f_score": 0.9809432254777072,
         "normal_consistency": 0.7282034073583981,
         "precision": 0.9639,
         "recall": 0.9986,
@@ -1027,7 +1027,7 @@
       },
       "metrics_strict": {
         "chamfer": 0.00757629305641857,
-        "f_score": 0.9540372843191159,
+        "f_score": 0.954037284319116,
         "normal_consistency": 0.6565413751095244,
         "precision": 0.9274,
         "recall": 0.98225,
@@ -1136,7 +1136,7 @@
       },
       "key": "188ca7aed01e6068e22314a2f148a040aa9fcbbdbf50e367f47a0e00d52acacf",
       "metrics": {
-        "chamfer": 0.009694527575016619,
+        "chamfer": 0.00969452757501662,
         "f_score": 0.8145233591668685,
         "normal_consistency": 0.65185,
         "precision": 0.7293,
@@ -1145,7 +1145,7 @@
         "size_ratio": 1.0001047849655151
       },
       "metrics_strict": {
-        "chamfer": 0.012902567063951039,
+        "chamfer": 0.01290256706395104,
         "f_score": 0.8026876576080303,
         "normal_consistency": 0.594075,
         "precision": 0.70915,
@@ -1166,63 +1166,6 @@
         "reference_triangles": 48,
         "reference_watertight": true,
         "triangles": 48,
-        "watertight": true,
-        "within_budget": true
-      }
-    },
-    {
-      "category": "structure",
-      "cost": {
-        "cpu_seconds": 6.0021398,
-        "evals": 1751,
-        "llm_turns": 1,
-        "tokens": 0
-      },
-      "difficulty": "compound",
-      "failure": [],
-      "free_parameters": 10,
-      "holdout": false,
-      "id": "kenney/platformer-kit/ladder-long",
-      "import": {
-        "diagonal": 2.063976764678955,
-        "nodes": 1,
-        "parts": 10,
-        "triangles": 88,
-        "warnings": [],
-        "watertight": false
-      },
-      "key": "a64db97ede2e031c039d7623dc1f73e94d0bd9cde671700334bb4de4136ee6c7",
-      "metrics": {
-        "chamfer": 0.002752084621936034,
-        "f_score": 0.9539748953974896,
-        "normal_consistency": 0.8889500000089707,
-        "precision": 1.0,
-        "recall": 0.912,
-        "silhouette_iou": 0.9035522754568678,
-        "size_ratio": 0.999979555606842
-      },
-      "metrics_strict": {
-        "chamfer": 0.0027530815910065828,
-        "f_score": 0.9539748953974896,
-        "normal_consistency": 0.8889000000089706,
-        "precision": 1.0,
-        "recall": 0.912,
-        "silhouette_iou": 0.9035522754568678,
-        "size_ratio": 0.999979555606842
-      },
-      "notes": [
-        "refined 10 numbers: loss 0.2511 -> 0.1601"
-      ],
-      "recipe": "corpus/recipes/tuned\\llm\\kenney_platformer-kit_ladder-long.hcs",
-      "solved": true,
-      "source": "llm-recipe",
-      "tier": "silver",
-      "validity": {
-        "errors": 0,
-        "ok": true,
-        "reference_triangles": 88,
-        "reference_watertight": false,
-        "triangles": 72,
         "watertight": true,
         "within_budget": true
       }
@@ -1259,16 +1202,16 @@
         "precision": 0.621,
         "recall": 0.7539,
         "silhouette_iou": 0.7687226814948958,
-        "size_ratio": 1.0000578165054321
+        "size_ratio": 1.000057816505432
       },
       "metrics_strict": {
         "chamfer": 0.03046450587187587,
         "f_score": 0.4440628808243728,
-        "normal_consistency": 0.09446874330334587,
+        "normal_consistency": 0.09446874330334588,
         "precision": 0.4141,
         "recall": 0.4787,
         "silhouette_iou": 0.6148146487193686,
-        "size_ratio": 1.0000578165054321
+        "size_ratio": 1.000057816505432
       },
       "notes": [
         "refined 12 numbers: loss 0.8282 -> 0.7084"
@@ -1381,7 +1324,7 @@
         "size_ratio": 1.000133752822876
       },
       "metrics_strict": {
-        "chamfer": 0.0073074489561064425,
+        "chamfer": 0.007307448956106443,
         "f_score": 0.9692316261797926,
         "normal_consistency": 0.7722199647678912,
         "precision": 0.9549,
@@ -1496,7 +1439,7 @@
         "precision": 0.97215,
         "recall": 0.8139,
         "silhouette_iou": 0.8557829136266524,
-        "size_ratio": 0.9999954700469971
+        "size_ratio": 0.9999954700469972
       },
       "metrics_strict": {
         "chamfer": 0.006641429018191712,
@@ -1505,7 +1448,7 @@
         "precision": 0.97185,
         "recall": 0.81635,
         "silhouette_iou": 0.8553908605122402,
-        "size_ratio": 0.9999954700469971
+        "size_ratio": 0.9999954700469972
       },
       "notes": [
         "refined 14 numbers: loss 0.3223 -> 0.3223"
@@ -1556,7 +1499,7 @@
         "precision": 0.66245,
         "recall": 0.8533,
         "silhouette_iou": 0.904455966613152,
-        "size_ratio": 0.9984307289123535
+        "size_ratio": 0.9984307289123536
       },
       "metrics_strict": {
         "chamfer": 0.03200587175919307,
@@ -1565,7 +1508,7 @@
         "precision": 0.51335,
         "recall": 0.59455,
         "silhouette_iou": 0.8385830682558739,
-        "size_ratio": 0.9984307289123535
+        "size_ratio": 0.9984307289123536
       },
       "notes": [
         "refined 10 numbers: loss 0.5775 -> 0.5775"
@@ -1598,7 +1541,7 @@
       "holdout": false,
       "id": "polyhaven/painted_wooden_bench",
       "import": {
-        "diagonal": 1.5474133491516113,
+        "diagonal": 1.547413349151611,
         "nodes": 1,
         "parts": 1,
         "triangles": 630,
@@ -1608,21 +1551,21 @@
       "key": "5e14c84b0299429b456ee90698be7085181f889ed7dc410355e3894e92301388",
       "metrics": {
         "chamfer": 0.0028368789863843285,
-        "f_score": 0.9660701032528531,
+        "f_score": 0.9660701032528533,
         "normal_consistency": 0.8978732440959749,
         "precision": 0.96825,
         "recall": 0.9639,
         "silhouette_iou": 0.924061652587383,
-        "size_ratio": 0.9999765753746033
+        "size_ratio": 0.9999765753746032
       },
       "metrics_strict": {
         "chamfer": 0.003894700643810981,
-        "f_score": 0.9659942831262941,
+        "f_score": 0.965994283126294,
         "normal_consistency": 0.8804763068825517,
         "precision": 0.96835,
         "recall": 0.96365,
-        "silhouette_iou": 0.9164787970859363,
-        "size_ratio": 0.9999765753746033
+        "silhouette_iou": 0.9164787970859364,
+        "size_ratio": 0.9999765753746032
       },
       "notes": [
         "refined 15 numbers: loss 0.1378 -> 0.1378"
@@ -1644,7 +1587,7 @@
     {
       "category": "furniture",
       "cost": {
-        "cpu_seconds": 1.3062713000000001,
+        "cpu_seconds": 1.3062713,
         "evals": 321,
         "llm_turns": 1,
         "tokens": 0
@@ -1672,7 +1615,7 @@
         "precision": 0.91235,
         "recall": 0.6609,
         "silhouette_iou": 0.9358684619119249,
-        "size_ratio": 0.9986376762390137
+        "size_ratio": 0.9986376762390136
       },
       "metrics_strict": {
         "chamfer": 0.016409263497697578,
@@ -1680,8 +1623,8 @@
         "normal_consistency": 0.3369250950406478,
         "precision": 0.8963,
         "recall": 0.65675,
-        "silhouette_iou": 0.9486244456803739,
-        "size_ratio": 0.9986376762390137
+        "silhouette_iou": 0.948624445680374,
+        "size_ratio": 0.9986376762390136
       },
       "notes": [
         "refined 8 numbers: loss 0.4660 -> 0.4660"
@@ -1731,16 +1674,16 @@
         "precision": 0.80945,
         "recall": 0.9668,
         "silhouette_iou": 0.7957960063543151,
-        "size_ratio": 1.0000536441802979
+        "size_ratio": 1.000053644180298
       },
       "metrics_strict": {
-        "chamfer": 0.010400393553416595,
+        "chamfer": 0.010400393553416596,
         "f_score": 0.8670295316615139,
         "normal_consistency": 0.26777803771327446,
         "precision": 0.7993,
         "recall": 0.9473,
         "silhouette_iou": 0.776819996326892,
-        "size_ratio": 1.0000536441802979
+        "size_ratio": 1.000053644180298
       },
       "notes": [
         "refined 30 numbers: loss 0.3953 -> 0.3953"
@@ -1844,7 +1787,7 @@
       },
       "key": "e9c05c2f835d268ec49a54f355a5319482887d4b65f3b9edab12a8bd5c944c28",
       "metrics": {
-        "chamfer": 0.010856837185999793,
+        "chamfer": 0.010856837185999791,
         "f_score": 0.9999,
         "normal_consistency": 0.8365855797316479,
         "precision": 0.9999,
@@ -1918,7 +1861,7 @@
         "normal_consistency": 0.71827475191243,
         "precision": 0.69055,
         "recall": 0.81995,
-        "silhouette_iou": 0.9232210179488245,
+        "silhouette_iou": 0.9232210179488244,
         "size_ratio": 1.0001357793807983
       },
       "notes": [
@@ -2029,7 +1972,7 @@
         "precision": 0.6358,
         "recall": 0.90945,
         "silhouette_iou": 0.819791228659844,
-        "size_ratio": 1.0002573728561401
+        "size_ratio": 1.00025737285614
       },
       "metrics_strict": {
         "chamfer": 0.012642704067203966,
@@ -2038,7 +1981,7 @@
         "precision": 0.63025,
         "recall": 0.8885,
         "silhouette_iou": 0.8181953990498985,
-        "size_ratio": 1.0002573728561401
+        "size_ratio": 1.00025737285614
       },
       "notes": [
         "refined 5 numbers: loss 0.5414 -> 0.5414"
@@ -2053,66 +1996,6 @@
         "reference_triangles": 104,
         "reference_watertight": true,
         "triangles": 144,
-        "watertight": true,
-        "within_budget": true
-      }
-    },
-    {
-      "category": "building",
-      "cost": {
-        "cpu_seconds": 1.5345262,
-        "evals": 353,
-        "llm_turns": 1,
-        "tokens": 0
-      },
-      "difficulty": "building",
-      "failure": [
-        "missing_detail",
-        "extra_material"
-      ],
-      "free_parameters": 13,
-      "holdout": false,
-      "id": "kenney/castle-kit/tower-square",
-      "import": {
-        "diagonal": 1.9277187585830688,
-        "nodes": 1,
-        "parts": 1,
-        "triangles": 176,
-        "warnings": [],
-        "watertight": false
-      },
-      "key": "024b714671be911eaa9b7aee83d55315e4c03a6d31fb89c25210d1e4ad92ffa5",
-      "metrics": {
-        "chamfer": 0.01110919168880026,
-        "f_score": 0.8352324216881875,
-        "normal_consistency": 0.6621458618272096,
-        "precision": 0.80515,
-        "recall": 0.86765,
-        "silhouette_iou": 0.9728731420269021,
-        "size_ratio": 0.999940037727356
-      },
-      "metrics_strict": {
-        "chamfer": 0.011146159634930142,
-        "f_score": 0.8378128143998093,
-        "normal_consistency": 0.7048656311865895,
-        "precision": 0.8087,
-        "recall": 0.8691,
-        "silhouette_iou": 0.9738506995042633,
-        "size_ratio": 0.999940037727356
-      },
-      "notes": [
-        "refined 13 numbers: loss 0.3017 -> 0.3017"
-      ],
-      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_tower-square.hcs",
-      "solved": false,
-      "source": "llm-recipe",
-      "tier": "bronze",
-      "validity": {
-        "errors": 0,
-        "ok": true,
-        "reference_triangles": 176,
-        "reference_watertight": false,
-        "triangles": 84,
         "watertight": true,
         "within_budget": true
       }
@@ -2148,16 +2031,16 @@
         "precision": 0.6997,
         "recall": 0.99725,
         "silhouette_iou": 0.9732763485308986,
-        "size_ratio": 1.0000438690185547
+        "size_ratio": 1.000043869018555
       },
       "metrics_strict": {
-        "chamfer": 0.013783497630483133,
+        "chamfer": 0.013783497630483131,
         "f_score": 0.8230623159382731,
         "normal_consistency": 0.7400628029607237,
         "precision": 0.7008,
         "recall": 0.997,
         "silhouette_iou": 0.9772313384641764,
-        "size_ratio": 1.0000438690185547
+        "size_ratio": 1.000043869018555
       },
       "notes": [
         "refined 14 numbers: loss 0.3312 -> 0.3312"
@@ -2206,7 +2089,7 @@
         "normal_consistency": 0.7003048628866673,
         "precision": 0.66925,
         "recall": 0.95595,
-        "silhouette_iou": 0.9444412251953853,
+        "silhouette_iou": 0.9444412251953852,
         "size_ratio": 0.9993284940719604
       },
       "metrics_strict": {
@@ -2259,12 +2142,12 @@
       "key": "035c95438b371862253b968179a6603cce08bcc196283d6cb55eea0f224ce519",
       "metrics": {
         "chamfer": 0.005068113438730584,
-        "f_score": 0.9555244435144253,
+        "f_score": 0.9555244435144252,
         "normal_consistency": 0.8796600098648808,
         "precision": 0.97125,
         "recall": 0.9403,
         "silhouette_iou": 0.9136802813991824,
-        "size_ratio": 0.9998083710670471
+        "size_ratio": 0.9998083710670472
       },
       "metrics_strict": {
         "chamfer": 0.024339649688094357,
@@ -2273,7 +2156,7 @@
         "precision": 0.26415,
         "recall": 0.2761,
         "silhouette_iou": 0.8355386984387841,
-        "size_ratio": 0.9998083710670471
+        "size_ratio": 0.9998083710670472
       },
       "notes": [
         "refined 7 numbers: loss 0.1826 -> 0.1826"
@@ -2306,7 +2189,7 @@
       "holdout": false,
       "id": "kenney/fantasy-town-kit/stall",
       "import": {
-        "diagonal": 1.2474339008331299,
+        "diagonal": 1.24743390083313,
         "nodes": 1,
         "parts": 9,
         "triangles": 106,
@@ -2325,8 +2208,8 @@
       },
       "metrics_strict": {
         "chamfer": 0.0017686605323888917,
-        "f_score": 0.9886987080625995,
-        "normal_consistency": 0.9259723610609769,
+        "f_score": 0.9886987080625996,
+        "normal_consistency": 0.9259723610609768,
         "precision": 1.0,
         "recall": 0.97765,
         "silhouette_iou": 0.9692117785466834,
@@ -2363,7 +2246,7 @@
       "holdout": true,
       "id": "kenney/fantasy-town-kit/wall-wood-door",
       "import": {
-        "diagonal": 1.4177446365356445,
+        "diagonal": 1.4177446365356443,
         "nodes": 2,
         "parts": 5,
         "triangles": 376,
@@ -2377,7 +2260,7 @@
         "normal_consistency": 0.7699117735233157,
         "precision": 0.98415,
         "recall": 0.9487,
-        "silhouette_iou": 0.9288606383396013,
+        "silhouette_iou": 0.9288606383396012,
         "size_ratio": 0.9977532029151917
       },
       "metrics_strict": {
@@ -2405,6 +2288,407 @@
         "watertight": true,
         "within_budget": true
       }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 5.4324335,
+        "evals": 1549,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 16,
+      "holdout": false,
+      "id": "kenney/furniture-kit/trashcan",
+      "import": {
+        "diagonal": 0.5301132202148438,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 68,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "93ae9fcc92ed6e69fe58dcdc1210aee1c236ea54183dcbd1b887046dd724661e",
+      "metrics": {
+        "chamfer": 0.007127189301721582,
+        "f_score": 0.9225890335476205,
+        "normal_consistency": 0.8527777162225917,
+        "precision": 0.8732,
+        "recall": 0.9779,
+        "silhouette_iou": 0.9636283540267316,
+        "size_ratio": 1.0001485347747805
+      },
+      "metrics_strict": {
+        "chamfer": 0.006926330487943886,
+        "f_score": 0.9226820275999892,
+        "normal_consistency": 0.8637781357064145,
+        "precision": 0.87265,
+        "recall": 0.9788,
+        "silhouette_iou": 0.9682816237186452,
+        "size_ratio": 1.0001485347747805
+      },
+      "notes": [
+        "refined 16 numbers: loss 1.3117 -> 0.1851"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_furniture-kit_trashcan.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 68,
+        "reference_watertight": true,
+        "triangles": 64,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 5.9674251,
+        "evals": 1261,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 10,
+      "holdout": false,
+      "id": "polyhaven/Barrel_01",
+      "import": {
+        "diagonal": 1.186767578125,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 2682,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "08609ca031ffbf23ea22acb52b3b6a5a8a5329488cb1ddfe72b75b0c0c7d2448",
+      "metrics": {
+        "chamfer": 0.0033259175178891433,
+        "f_score": 1.0,
+        "normal_consistency": 0.9400078041353536,
+        "precision": 1.0,
+        "recall": 1.0,
+        "silhouette_iou": 0.9882757876106651,
+        "size_ratio": 1.0003715753555298
+      },
+      "metrics_strict": {
+        "chamfer": 0.003430286673305742,
+        "f_score": 0.9988488962306652,
+        "normal_consistency": 0.9295345229558588,
+        "precision": 0.9999,
+        "recall": 0.9978,
+        "silhouette_iou": 0.9806276343259516,
+        "size_ratio": 1.0003715753555298
+      },
+      "notes": [
+        "refined 10 numbers: loss 0.0952 -> 0.0549"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_Barrel_01.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "gold",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 2682,
+        "reference_watertight": false,
+        "triangles": 1120,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "structure",
+      "cost": {
+        "cpu_seconds": 1.1782671,
+        "evals": 321,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 10,
+      "holdout": false,
+      "id": "kenney/platformer-kit/ladder-long",
+      "import": {
+        "diagonal": 2.063976764678955,
+        "nodes": 1,
+        "parts": 10,
+        "triangles": 88,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "6b8005dc80d983d7ec3a332be8c6b259df0784f05967d4b8b47193fb9cede3e0",
+      "metrics": {
+        "chamfer": 0.0006664573985107591,
+        "f_score": 1.0,
+        "normal_consistency": 0.9265749999839814,
+        "precision": 1.0,
+        "recall": 1.0,
+        "silhouette_iou": 0.9697255075720956,
+        "size_ratio": 0.999979555606842
+      },
+      "metrics_strict": {
+        "chamfer": 0.0006667722183959451,
+        "f_score": 1.0,
+        "normal_consistency": 0.926524999984302,
+        "precision": 1.0,
+        "recall": 1.0,
+        "silhouette_iou": 0.9696113937414352,
+        "size_ratio": 0.999979555606842
+      },
+      "notes": [
+        "refined 9 numbers: loss 0.0290 -> 0.0290"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_platformer-kit_ladder-long.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "gold",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 88,
+        "reference_watertight": false,
+        "triangles": 120,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "furniture",
+      "cost": {
+        "cpu_seconds": 5.0198998,
+        "evals": 1191,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "compound",
+      "failure": [],
+      "free_parameters": 11,
+      "holdout": false,
+      "id": "polyhaven/Shelf_01",
+      "import": {
+        "diagonal": 2.323925256729126,
+        "nodes": 1,
+        "parts": 7,
+        "triangles": 182,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "328da41ce39432923a776c9e55524e672916b029085105f6267f2debda49499c",
+      "metrics": {
+        "chamfer": 0.006075509720259448,
+        "f_score": 0.9383844337362228,
+        "normal_consistency": 0.4969713289364356,
+        "precision": 0.91405,
+        "recall": 0.96405,
+        "silhouette_iou": 0.9687092106778104,
+        "size_ratio": 1.0000383853912354
+      },
+      "metrics_strict": {
+        "chamfer": 0.005831323551785036,
+        "f_score": 0.9279613468684368,
+        "normal_consistency": 0.48773882497219,
+        "precision": 0.90715,
+        "recall": 0.94975,
+        "silhouette_iou": 0.9774888035550922,
+        "size_ratio": 1.0000383853912354
+      },
+      "notes": [
+        "refined 10 numbers: loss 0.1959 -> 0.1372"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\polyhaven_Shelf_01.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 182,
+        "reference_watertight": false,
+        "triangles": 144,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 8.443896,
+        "evals": 2113,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [
+        "missing_detail"
+      ],
+      "free_parameters": 13,
+      "holdout": false,
+      "id": "kenney/castle-kit/tower-square",
+      "import": {
+        "diagonal": 1.9277187585830688,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 176,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "4e64d857aabdf0e4d5603eaa84cd392309c90b8d7c06329af66b90553675a487",
+      "metrics": {
+        "chamfer": 0.011615975162419445,
+        "f_score": 0.86533723303343,
+        "normal_consistency": 0.7549757235192344,
+        "precision": 0.9315,
+        "recall": 0.80795,
+        "silhouette_iou": 0.9844185762631306,
+        "size_ratio": 0.9998839497566224
+      },
+      "metrics_strict": {
+        "chamfer": 0.011609255891175584,
+        "f_score": 0.8652511930086816,
+        "normal_consistency": 0.7502444059156206,
+        "precision": 0.9315,
+        "recall": 0.8078,
+        "silhouette_iou": 0.9843557424585436,
+        "size_ratio": 0.9998839497566224
+      },
+      "notes": [
+        "refined 12 numbers: loss 0.3925 -> 0.2605"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_castle-kit_tower-square.hcs",
+      "solved": false,
+      "source": "llm-recipe",
+      "tier": "bronze",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 176,
+        "reference_watertight": false,
+        "triangles": 128,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "building",
+      "cost": {
+        "cpu_seconds": 6.5221948,
+        "evals": 1321,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "building",
+      "failure": [],
+      "free_parameters": 11,
+      "holdout": false,
+      "id": "kenney/fantasy-town-kit/fountain-round",
+      "import": {
+        "diagonal": 2.842252492904663,
+        "nodes": 2,
+        "parts": 2,
+        "triangles": 1002,
+        "warnings": [],
+        "watertight": false
+      },
+      "key": "a3da96aa50f2554bae64229023699b55a44fd3171dd1c68c523467d64f469bb9",
+      "metrics": {
+        "chamfer": 0.002319231479151468,
+        "f_score": 0.9914016994881364,
+        "normal_consistency": 0.3871745070591569,
+        "precision": 1.0,
+        "recall": 0.98295,
+        "silhouette_iou": 0.9925174287217088,
+        "size_ratio": 0.999478816986084
+      },
+      "metrics_strict": {
+        "chamfer": 0.0023122475858738142,
+        "f_score": 0.9914271306101864,
+        "normal_consistency": 0.38844138465225697,
+        "precision": 1.0,
+        "recall": 0.983,
+        "silhouette_iou": 0.9920146146700658,
+        "size_ratio": 0.999478816986084
+      },
+      "notes": [
+        "refined 11 numbers: loss 0.4292 -> 0.0436"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_fantasy-town-kit_fountain-round.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "gold",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 1002,
+        "reference_watertight": false,
+        "triangles": 1056,
+        "watertight": true,
+        "within_budget": true
+      }
+    },
+    {
+      "category": "container",
+      "cost": {
+        "cpu_seconds": 3.6667733,
+        "evals": 815,
+        "llm_turns": 1,
+        "tokens": 0
+      },
+      "difficulty": "primitive",
+      "failure": [],
+      "free_parameters": 29,
+      "holdout": false,
+      "id": "kenney/survival-kit/barrel",
+      "import": {
+        "diagonal": 0.47979214787483215,
+        "nodes": 1,
+        "parts": 1,
+        "triangles": 412,
+        "warnings": [],
+        "watertight": true
+      },
+      "key": "116abf83d79dbf691aafdd492eb05aa0b8dfba89e4301ad4e868d2fff683303d",
+      "metrics": {
+        "chamfer": 0.0074741743841805295,
+        "f_score": 0.9491777815807487,
+        "normal_consistency": 0.7207549519874388,
+        "precision": 0.96835,
+        "recall": 0.93075,
+        "silhouette_iou": 0.9213853659040728,
+        "size_ratio": 1.0001795291900635
+      },
+      "metrics_strict": {
+        "chamfer": 0.0074281836022728025,
+        "f_score": 0.9493935272440115,
+        "normal_consistency": 0.7229251338444533,
+        "precision": 0.96815,
+        "recall": 0.93135,
+        "silhouette_iou": 0.9217844791966752,
+        "size_ratio": 1.0001795291900635
+      },
+      "notes": [
+        "refined 11 numbers: loss 0.2567 -> 0.2022"
+      ],
+      "recipe": "corpus/recipes/tuned\\llm\\kenney_survival-kit_barrel.hcs",
+      "solved": true,
+      "source": "llm-recipe",
+      "tier": "silver",
+      "validity": {
+        "errors": 0,
+        "ok": true,
+        "reference_triangles": 412,
+        "reference_watertight": true,
+        "triangles": 796,
+        "watertight": true,
+        "within_budget": true
+      }
     }
   ],
   "holdout": [
@@ -2429,28 +2713,28 @@
   "solver": "primitive-v0a.5",
   "summary": {
     "failures": {
-      "extra_material": 16,
+      "extra_material": 15,
       "missing_detail": 13,
       "proportion_error": 9,
       "triangle_budget": 1,
       "wrong_topology": 1
     },
-    "mean_cpu_seconds": 3.530662675609756,
-    "mean_f_score": 0.8558421382935772,
-    "mean_free_parameters": 13.682926829268293,
-    "mean_llm_turns": 1.1219512195121952,
-    "mean_silhouette_iou": 0.8856915857286286,
-    "solved": 12,
+    "mean_cpu_seconds": 3.7706824630434777,
+    "mean_f_score": 0.8688524029203728,
+    "mean_free_parameters": 13.869565217391305,
+    "mean_llm_turns": 1.108695652173913,
+    "mean_silhouette_iou": 0.8962084745253527,
+    "solved": 17,
     "solved_holdout": 2,
-    "solved_mining": 10,
+    "solved_mining": 15,
     "tiers": {
       "bronze": 17,
-      "gold": 2,
+      "gold": 5,
       "none": 12,
-      "silver": 10
+      "silver": 12
     },
-    "total": 41,
+    "total": 46,
     "total_holdout": 10,
-    "total_mining": 31
+    "total_mining": 36
   }
 }

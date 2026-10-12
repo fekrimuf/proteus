@@ -36,6 +36,7 @@ func _initialize() -> void:
 	result["scene_ms"] = Time.get_ticks_msec() - t0
 	get_root().add_child(root)
 	await process_frame  # the nodes are inside the tree from here on (global transforms are valid)
+	_apply_instancing(state, root)
 	_apply_lod(root)
 	_count(root)
 	if opts.has("nav"):
@@ -52,15 +53,96 @@ func _lod_level(n: Node) -> int:
 	return int(s.substr(i + 5)) if i >= 0 else -1
 
 
+# The engine bridge for instancing. A tiled export gives every ground tile, prototype and level ONE node that carries
+# `EXT_mesh_gpu_instancing` (three accessors: translation, rotation, scale). Godot 4.7's importer reads the node as a single
+# mesh and ignores the extension, so the instances are built here: each such node becomes a MultiMeshInstance3D, which the
+# engine draws as one instanced batch. The node's name and extras (the level and its distance range) are kept.
+func _float_accessor(state: GLTFState, index: int, glb: PackedByteArray) -> PackedFloat32Array:
+	var acc: Dictionary = (state.json["accessors"] as Array)[index]
+	var view: Dictionary = (state.json["bufferViews"] as Array)[int(acc["bufferView"])]
+	var off := int(view.get("byteOffset", 0)) + int(acc.get("byteOffset", 0))
+	var comps := 4 if String(acc["type"]) == "VEC4" else 3
+	return glb.slice(off, off + int(acc["count"]) * comps * 4).to_float32_array()
+
+
+func _apply_instancing(state: GLTFState, root: Node) -> void:
+	var nodes: Array = state.json.get("nodes", [])
+	var glb := state.get_glb_data()
+	# glTF node -> scene node by NAME: the importer swaps its own mesh nodes for MeshInstance3D at the end, so the ids it
+	# recorded per glTF node are stale; the exporter's tile names are unique
+	var by_name := {}
+	var walk: Array[Node] = [root]
+	while not walk.is_empty():
+		var w: Node = walk.pop_back()
+		by_name[String(w.name)] = w
+		for c in w.get_children():
+			walk.append(c)
+	var built := {}  # "t,r,s" accessor ids -> Array of Transform3D, shared by the levels of one tile
+	var made := 0
+	var placed := 0
+	for i in nodes.size():
+		var jn: Dictionary = nodes[i]
+		if not jn.has("extensions") or not (jn["extensions"] as Dictionary).has("EXT_mesh_gpu_instancing"):
+			continue
+		var att: Dictionary = jn["extensions"]["EXT_mesh_gpu_instancing"]["attributes"]
+		var old: Node = by_name.get(String(jn.get("name", "")))
+		if old == null or not (old is MeshInstance3D) or (old as MeshInstance3D).mesh == null:
+			(result["errors"] as Array).append("instancing: node %d has no mesh to instance" % i)
+			continue
+		var key := "%d,%d,%d" % [int(att["TRANSLATION"]), int(att["ROTATION"]), int(att["SCALE"])]
+		if not built.has(key):
+			var t := _float_accessor(state, int(att["TRANSLATION"]), glb)
+			var r := _float_accessor(state, int(att["ROTATION"]), glb)
+			var s := _float_accessor(state, int(att["SCALE"]), glb)
+			var xf: Array = []
+			for k in t.size() / 3:
+				var b := Basis(Quaternion(r[k * 4], r[k * 4 + 1], r[k * 4 + 2], r[k * 4 + 3])).scaled_local(Vector3(s[k * 3], s[k * 3 + 1], s[k * 3 + 2]))
+				xf.append(Transform3D(b, Vector3(t[k * 3], t[k * 3 + 1], t[k * 3 + 2])))
+			built[key] = xf
+		var xforms: Array = built[key]
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = (old as MeshInstance3D).mesh
+		mm.instance_count = xforms.size()
+		for k in xforms.size():
+			mm.set_instance_transform(k, xforms[k])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		var nm := String(old.name)
+		if old.has_meta("extras"):
+			mmi.set_meta("extras", old.get_meta("extras"))
+		var parent := old.get_parent()
+		parent.remove_child(old)
+		old.queue_free()
+		mmi.name = nm
+		parent.add_child(mmi)
+		made += 1
+		placed += xforms.size()
+	result["instancing"] = {"nodes": made, "instances_with_levels": placed}
+
+
 # The engine bridge for LODs: the exporter writes one node per level with its distance range in the node extras
 # (`proteus_lod_range`, metres); here they become visibility ranges, which is how an engine switches levels by distance.
 func _apply_lod(root: Node) -> void:
 	var applied := 0
+	var parented := 0
+	var by_name := {}
+	var all: Array[Node] = [root]
+	while not all.is_empty():
+		var w: Node = all.pop_back()
+		by_name[String(w.name)] = w
+		for c in w.get_children():
+			all.append(c)
 	var stack: Array[Node] = [root]
 	while not stack.is_empty():
 		var n: Node = stack.pop_back()
 		for c in n.get_children():
 			stack.append(c)
+		# The ground receives shadows and does not cast them: every shadow cascade would draw the whole terrain again (it is
+		# most of a world's triangles), for shadows of hills that a baked or far shadow gives a shipped game anyway.
+		if n is MeshInstance3D and String(n.name).begins_with(TERRAIN_NODE + "__terrain"):
+			(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			result["ground_nodes_without_shadow"] = int(result.get("ground_nodes_without_shadow", 0)) + 1
 		if n is GeometryInstance3D and n.has_meta("extras"):
 			var ex: Variant = n.get_meta("extras")
 			if ex is Dictionary and ex.has("proteus_lod_range"):
@@ -69,12 +151,22 @@ func _apply_lod(root: Node) -> void:
 				(n as GeometryInstance3D).visibility_range_end = float(r[1])
 				(n as GeometryInstance3D).visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
 				applied += 1
+				# ground cover (grass, ferns, pebbles) does not cast shadows: it is most of what a world draws and its shadows are lost in itself
+				if ex.get("proteus_cover", false):
+					(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				# a near tile is drawn exactly when its far tile (the last level, one batch for 4 x 4 near tiles) is not
+				if ex.has("proteus_hlod_parent") and by_name.has(String(ex["proteus_hlod_parent"])):
+					(n as GeometryInstance3D).visibility_parent = n.get_path_to(by_name[String(ex["proteus_hlod_parent"])])
+					parented += 1
 	result["lod_ranges_applied"] = applied
+	result["hlod_parents_set"] = parented
 
 
 func _count(root: Node) -> void:
 	var nodes := 0
 	var mesh_instances := 0
+	var instanced_nodes := 0
+	var instances := 0
 	var lower_lod_nodes := 0
 	var triangles := 0
 	var unique_meshes := {}
@@ -115,11 +207,39 @@ func _count(root: Node) -> void:
 			var box := mi.global_transform * mi.get_aabb()
 			aabb = box if first else aabb.merge(box)
 			first = false
+		elif n is MultiMeshInstance3D:
+			# a tile of a tiled export: one node draws every instance of one prototype in one ground tile (EXT_mesh_gpu_instancing)
+			var mm := (n as MultiMeshInstance3D).multimesh
+			if mm == null or mm.mesh == null:
+				continue
+			instanced_nodes += 1
+			var mtris := 0
+			for s in mm.mesh.get_surface_count():
+				mtris += ((mm.mesh as ArrayMesh).surface_get_array_index_len(s) if mm.mesh is ArrayMesh else 0) / 3
+				var m2 := mm.mesh.surface_get_material(s)
+				if m2 != null:
+					materials[m2.get_rid()] = true
+					if m2 is BaseMaterial3D:
+						for prop in [m2.albedo_texture, m2.normal_texture, m2.roughness_texture, m2.metallic_texture, m2.ao_texture, m2.emission_texture]:
+							if prop != null and not textures.has(prop.get_rid()):
+								textures[prop.get_rid()] = true
+								tex_bytes += prop.get_width() * prop.get_height() * 4 * 4 / 3
+			if _lod_level(n) <= 0:
+				triangles += mtris * mm.instance_count
+				instances += mm.instance_count
+			else:
+				lower_lod_nodes += 1
+			unique_meshes[mm.mesh.get_rid()] = mtris
+			var box2 := (n as MultiMeshInstance3D).global_transform * (n as MultiMeshInstance3D).get_aabb()
+			aabb = box2 if first else aabb.merge(box2)
+			first = false
 	var unique_tris := 0
 	for v in unique_meshes.values():
 		unique_tris += v
 	result["nodes"] = nodes
 	result["mesh_instances"] = mesh_instances
+	result["instanced_nodes"] = instanced_nodes
+	result["instances_in_tiles"] = instances
 	result["lower_lod_nodes"] = lower_lod_nodes
 	result["unique_meshes"] = unique_meshes.size()
 	result["triangles_total"] = triangles
@@ -133,14 +253,14 @@ func _count(root: Node) -> void:
 
 # Navigation coverage of the terrain: baked navmesh area divided by the area of terrain triangles that are walkable by slope.
 func _navmesh(root: Node, opts: Dictionary) -> void:
-	var terrain: MeshInstance3D = null
+	var bases: Array = []
 	for c in root.get_children():
-		if c is MeshInstance3D and String(c.name).begins_with(TERRAIN_NODE):
-			terrain = c
-			break
-	if terrain == null:
+		if c is MeshInstance3D and String(c.name).begins_with(TERRAIN_NODE) and (c as MeshInstance3D).mesh != null:
+			bases.append(c)
+	if bases.is_empty():
 		(result["errors"] as Array).append("navmesh: no '%s' node (the base geometry) to bake" % TERRAIN_NODE)
 		return
+	var terrain: MeshInstance3D = bases[0]
 	var max_slope := float(opts.get("slope", "40"))
 	var nav := NavigationMesh.new()
 	nav.cell_size = float(opts.get("cell", "1.0"))
@@ -149,25 +269,128 @@ func _navmesh(root: Node, opts: Dictionary) -> void:
 	nav.agent_height = 1.8
 	nav.agent_max_climb = 0.6
 	nav.agent_max_slope = max_slope
-	var src := NavigationMeshSourceGeometryData3D.new()
-	src.add_mesh(terrain.mesh, terrain.global_transform)
-	var t0 := Time.get_ticks_msec()
-	NavigationServer3D.bake_from_source_geometry_data(nav, src)
-	var bake_ms := Time.get_ticks_msec() - t0
-	var verts := nav.get_vertices()
+	# A world with a far ring is hundreds of square kilometres; the navigation mesh is baked and measured over the PLAYABLE window only
+	# (`nav_box=x0,z0,x1,z1` in metres), with a margin so the bake does not end in a wall at the edge of the measured ground.
+	var box := Rect2()
+	var has_box := false
+	if opts.has("nav_box"):
+		var bp := String(opts["nav_box"]).split(",")
+		if bp.size() == 4:
+			box = Rect2(float(bp[0]), float(bp[1]), float(bp[2]) - float(bp[0]), float(bp[3]) - float(bp[1]))
+			has_box = true
+	# The base mesh has one surface per material: the ground people walk on, but also water, a merged distant forest, buildings.
+	# `nav_mats=a,b` names the ground's materials; without it every surface whose material starts with "terrain" or "ground"
+	# counts, and a mesh with a single surface is taken whole.
+	var want: PackedStringArray = String(opts.get("nav_mats", "")).split(",", false)
+	var tv := PackedVector3Array()
+	var ti := PackedInt32Array()
+	var used: Array = []
+	# (a tiled export writes the base mesh as one node per material, `geometry__<material>`; an older file has one node with a
+	# surface per material: both are read here)
+	var n_surf := 0
+	for b in bases:
+		n_surf += (b as MeshInstance3D).mesh.get_surface_count()
+	for b in bases:
+		var bm: Mesh = (b as MeshInstance3D).mesh
+		for s in bm.get_surface_count():
+			var mat := bm.surface_get_material(s)
+			var nm := String(mat.resource_name) if mat != null else ""
+			var take := n_surf == 1
+			if not want.is_empty():
+				take = take or want.has(nm)
+			else:
+				take = take or nm.begins_with("terrain") or nm.begins_with("ground")
+			if not take:
+				continue
+			var arrays := bm.surface_get_arrays(s)
+			var base := tv.size()
+			tv.append_array(arrays[Mesh.ARRAY_VERTEX])
+			var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+			if base == 0:
+				ti = idx
+			else:
+				var start := ti.size()
+				ti.append_array(idx)
+				for k in range(start, ti.size()):
+					ti[k] += base
+			used.append(nm)
+	if ti.is_empty():
+		(result["errors"] as Array).append("navmesh: no ground surface on '%s' (materials wanted: %s)" % [TERRAIN_NODE, ",".join(want)])
+		return
+	# Recast indexes a baked mesh with 16 bits, so one bake holds about 65 000 vertices: a square kilometre and a half of real
+	# terrain overflows it and comes back EMPTY (0 polygons, no error). The window is therefore baked in tiles of at most
+	# `nav_tile` metres (400 by default): each tile gets the ground inside it plus a margin, and a filter box so its polygons
+	# stop at its own edge; the tiles' polygons are added up.
+	var tile_m := float(opts.get("nav_tile", "400"))
+	const MARGIN := 24.0
+	var nx := 1
+	var nz := 1
+	if has_box:
+		nx = maxi(1, int(ceil(box.size.x / tile_m)))
+		nz = maxi(1, int(ceil(box.size.y / tile_m)))
+	var sx := box.size.x / nx
+	var sz := box.size.y / nz
+	var tile_faces: Array = []  # plain Arrays: a Packed array stored in an Array is copied by a cast
+	for i in nx * nz:
+		tile_faces.append([])
+	var outer := box.grow(MARGIN)
+	for t in range(0, ti.size(), 3):
+		var fa := tv[ti[t]]
+		var fb := tv[ti[t + 1]]
+		var fc := tv[ti[t + 2]]
+		if not has_box:
+			(tile_faces[0] as Array).append_array([fa, fb, fc])
+			continue
+		var cen := (fa + fb + fc) / 3.0
+		if not outer.has_point(Vector2(cen.x, cen.z)):
+			continue
+		var ix0 := clampi(int(floor((cen.x - MARGIN - box.position.x) / sx)), 0, nx - 1)
+		var ix1 := clampi(int(floor((cen.x + MARGIN - box.position.x) / sx)), 0, nx - 1)
+		var iz0 := clampi(int(floor((cen.z - MARGIN - box.position.y) / sz)), 0, nz - 1)
+		var iz1 := clampi(int(floor((cen.z + MARGIN - box.position.y) / sz)), 0, nz - 1)
+		for ix in range(ix0, ix1 + 1):
+			for iz in range(iz0, iz1 + 1):
+				(tile_faces[ix * nz + iz] as Array).append_array([fa, fb, fc])
+	var all_tris: Array = []
 	var area := 0.0
-	for p in nav.get_polygon_count():
-		var poly := nav.get_polygon(p)
-		for k in range(1, poly.size() - 1):
-			var a := verts[poly[0]]
-			var b := verts[poly[k]]
-			var c := verts[poly[k + 1]]
-			area += absf((b - a).cross(c - a).y) * 0.5  # horizontal area
+	var poly_count := 0
+	var bake_ms := 0
+	for ix in nx:
+		for iz in nz:
+			var arr: Array = tile_faces[ix * nz + iz]
+			if arr.is_empty():
+				continue
+			var src := NavigationMeshSourceGeometryData3D.new()
+			src.add_faces(PackedVector3Array(arr), terrain.global_transform)
+			var tile_nav := NavigationMesh.new()
+			tile_nav.cell_size = nav.cell_size
+			tile_nav.cell_height = nav.cell_height
+			tile_nav.agent_radius = nav.agent_radius
+			tile_nav.agent_height = nav.agent_height
+			tile_nav.agent_max_climb = nav.agent_max_climb
+			tile_nav.agent_max_slope = nav.agent_max_slope
+			if has_box:
+				# the box is as tall as the tile's own ground and no taller: the bake stores heights as 16-bit steps of the cell
+				# height above the box's floor, so a box "from minus to plus 100 km" puts every vertex at a garbage height
+				var ylo := 1.0e30
+				var yhi := -1.0e30
+				for v in arr:
+					ylo = minf(ylo, (v as Vector3).y)
+					yhi = maxf(yhi, (v as Vector3).y)
+				tile_nav.filter_baking_aabb = AABB(Vector3(box.position.x + sx * ix, ylo - 5.0, box.position.y + sz * iz), Vector3(sx, yhi - ylo + 10.0, sz))
+			var t0 := Time.get_ticks_msec()
+			NavigationServer3D.bake_from_source_geometry_data(tile_nav, src)
+			bake_ms += Time.get_ticks_msec() - t0
+			var verts := tile_nav.get_vertices()
+			poly_count += tile_nav.get_polygon_count()
+			for p in tile_nav.get_polygon_count():
+				var poly := tile_nav.get_polygon(p)
+				for k in range(1, poly.size() - 1):
+					var tri := [verts[poly[0]], verts[poly[k]], verts[poly[k + 1]]]
+					area += absf((tri[1] - tri[0]).cross(tri[2] - tri[0]).y) * 0.5  # horizontal area
+					all_tris.append(tri)
 	# expected: horizontal area of terrain triangles whose slope is within the limit, and the INTENDED walkable ground
 	# (slope under `intended` degrees, 25 by default): the part of the world a designer means people to walk on
-	var arrays := terrain.mesh.surface_get_arrays(0)
-	var tv: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-	var ti: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
 	var walkable := 0.0
 	var total := 0.0
 	var cos_lim := cos(deg_to_rad(max_slope))
@@ -179,6 +402,10 @@ func _navmesh(root: Node, opts: Dictionary) -> void:
 		var a := tv[ti[t]]
 		var b := tv[ti[t + 1]]
 		var c := tv[ti[t + 2]]
+		if has_box:
+			var cen2 := (a + b + c) / 3.0
+			if not box.has_point(Vector2(cen2.x, cen2.z)):
+				continue
 		var nrm := (b - a).cross(c - a)
 		var len := nrm.length()
 		if len < 1e-9:
@@ -198,21 +425,18 @@ func _navmesh(root: Node, opts: Dictionary) -> void:
 	var nav_tris: Array = []
 	var grid := {}
 	const G := 8.0
-	for p in nav.get_polygon_count():
-		var poly := nav.get_polygon(p)
-		for k in range(1, poly.size() - 1):
-			var tri := [verts[poly[0]], verts[poly[k]], verts[poly[k + 1]]]
-			nav_tris.append(tri)
-			var lo_x := int(floor(minf(tri[0].x, minf(tri[1].x, tri[2].x)) / G))
-			var hi_x := int(floor(maxf(tri[0].x, maxf(tri[1].x, tri[2].x)) / G))
-			var lo_z := int(floor(minf(tri[0].z, minf(tri[1].z, tri[2].z)) / G))
-			var hi_z := int(floor(maxf(tri[0].z, maxf(tri[1].z, tri[2].z)) / G))
-			for gx in range(lo_x, hi_x + 1):
-				for gz in range(lo_z, hi_z + 1):
-					var key := Vector2i(gx, gz)
-					if not grid.has(key):
-						grid[key] = []  # a plain Array (by reference); a Packed array would be copied by the cast below
-					(grid[key] as Array).append(nav_tris.size() - 1)
+	for tri in all_tris:
+		nav_tris.append(tri)
+		var lo_x := int(floor(minf(tri[0].x, minf(tri[1].x, tri[2].x)) / G))
+		var hi_x := int(floor(maxf(tri[0].x, maxf(tri[1].x, tri[2].x)) / G))
+		var lo_z := int(floor(minf(tri[0].z, minf(tri[1].z, tri[2].z)) / G))
+		var hi_z := int(floor(maxf(tri[0].z, maxf(tri[1].z, tri[2].z)) / G))
+		for gx in range(lo_x, hi_x + 1):
+			for gz in range(lo_z, hi_z + 1):
+				var key := Vector2i(gx, gz)
+				if not grid.has(key):
+					grid[key] = []  # a plain Array (by reference); a Packed array would be copied by the cast below
+				(grid[key] as Array).append(nav_tris.size() - 1)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
 	var samples := int(opts.get("samples", "20000"))
@@ -257,11 +481,11 @@ func _navmesh(root: Node, opts: Dictionary) -> void:
 		if found:
 			reached += 1
 	result["navmesh"] = {
-		"polygons": nav.get_polygon_count(), "area_m2": snappedf(area, 1.0), "walkable_terrain_m2": snappedf(walkable, 1.0),
+		"polygons": poly_count, "tiles": nx * nz, "area_m2": snappedf(area, 1.0), "walkable_terrain_m2": snappedf(walkable, 1.0),
 		"terrain_m2": snappedf(total, 1.0), "coverage": snappedf(area / maxf(walkable, 1.0), 0.001), "bake_ms": bake_ms,
 		"max_slope_deg": max_slope, "agent_radius": nav.agent_radius,
 		"intended_slope_deg": float(opts.get("intended", "25")), "intended_m2": snappedf(intended_area, 1.0),
-		"coverage_intended": snappedf(float(reached) / maxf(samples, 1), 0.001), "samples": samples,
+		"coverage_intended": snappedf(float(reached) / maxf(samples, 1), 0.001), "samples": samples, "ground_materials": used,
 	}
 
 
@@ -286,13 +510,19 @@ func _dist_xz_to_tri(p: Vector3, a: Vector3, b: Vector3, c: Vector3) -> float:
 
 # Height of the terrain (the "geometry" node) under (x, z), by ray against its triangles; -1e9 if there is none.
 func _ground_y(root: Node, x: float, z: float) -> float:
+	# the highest hit over every base node (the terrain levels, the water, a bridge): what the render's camera stands on too
+	var best := -1e9
 	for c in root.get_children():
 		if c is MeshInstance3D and String(c.name).begins_with(TERRAIN_NODE) and c.mesh != null:
-			var tm: TriangleMesh = (c as MeshInstance3D).mesh.generate_triangle_mesh()
+			var mi := c as MeshInstance3D
+			var box := mi.get_aabb()
+			if x < box.position.x or x > box.end.x or z < box.position.z or z > box.end.z:
+				continue
+			var tm: TriangleMesh = mi.mesh.generate_triangle_mesh()
 			var hit := tm.intersect_ray(Vector3(x, 100000.0, z), Vector3(0, -1, 0))
 			if not hit.is_empty():
-				return float(hit["position"].y)
-	return -1e9
+				best = maxf(best, float(hit["position"].y))
+	return best
 
 
 # Windowed: a camera, a sun and a sky, a few seconds of frames; reports frame rate and draw calls and can save the picture.
@@ -324,7 +554,9 @@ func _fps(root: Node, opts: Dictionary) -> void:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-27, -60, 0)  # toward the sun at azimuth 150, elevation 27 (the alpine style)
 	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 400.0
+	# what a game ships with in a forest: shadows to 150 m in two cascades (every cascade draws the casters again)
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_max_distance = float(opts.get("shadow_m", "150"))
 	root.add_child(sun)
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY

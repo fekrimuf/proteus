@@ -1,0 +1,482 @@
+{
+  "assets": [
+    {
+      "attribution": "3DEP data courtesy of the U.S. Geological Survey. USGS: \"USGS-authored or produced data and information are considered to be in the U.S. Public Domain\" (credit requested). Tiles from Terrain Tiles on AWS (Mapzen), https://registry.opendata.aws/terrain-tiles/, accessed 2026-10-10; the tile area lies inside the United States, where the source is 3DEP. Zoom 14: about 6.9 m per pixel at this latitude; 5 x 5 tiles, about 8.8 km square (a window of up to 8 km around the centre).",
+      "category": "terrain",
+      "difficulty": "terrain",
+      "files": [
+        {
+          "path": "dem/terrarium/14/3145/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3145/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3145/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3145/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3145/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3145/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3145/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3145/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3145/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3145/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5974.png"
+        }
+      ],
+      "id": "usgs/3dep/teton-near-z14",
+      "license": "PD-USGS",
+      "license_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "main": "dem/terrarium/14/3147/5972.png",
+      "set": "dem",
+      "source": "usgs-3dep-terrarium"
+    },
+    {
+      "attribution": "3DEP data courtesy of the U.S. Geological Survey. USGS: \"USGS-authored or produced data and information are considered to be in the U.S. Public Domain\" (credit requested). Tiles from Terrain Tiles on AWS (Mapzen), https://registry.opendata.aws/terrain-tiles/, accessed 2026-10-10; the tile area lies inside the United States, where the source is 3DEP. Zoom 11: about 55 m per pixel at this latitude; 3 x 3 tiles, about 42 km square.",
+      "category": "terrain",
+      "difficulty": "terrain",
+      "files": [
+        {
+          "path": "dem/terrarium/11/392/745.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/392/745.png"
+        },
+        {
+          "path": "dem/terrarium/11/393/745.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/393/745.png"
+        },
+        {
+          "path": "dem/terrarium/11/394/745.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/394/745.png"
+        },
+        {
+          "path": "dem/terrarium/11/392/746.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/392/746.png"
+        },
+        {
+          "path": "dem/terrarium/11/393/746.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/393/746.png"
+        },
+        {
+          "path": "dem/terrarium/11/394/746.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/394/746.png"
+        },
+        {
+          "path": "dem/terrarium/11/392/747.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/392/747.png"
+        },
+        {
+          "path": "dem/terrarium/11/393/747.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/393/747.png"
+        },
+        {
+          "path": "dem/terrarium/11/394/747.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/394/747.png"
+        }
+      ],
+      "id": "usgs/3dep/teton-far-z11",
+      "license": "PD-USGS",
+      "license_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "main": "dem/terrarium/11/393/746.png",
+      "set": "dem",
+      "source": "usgs-3dep-terrarium"
+    },
+    {
+      "attribution": "3DEP data courtesy of the U.S. Geological Survey. USGS: \"USGS-authored or produced data and information are considered to be in the U.S. Public Domain\" (credit requested). Tiles from Terrain Tiles on AWS (Mapzen), https://registry.opendata.aws/terrain-tiles/; the tile area lies inside the United States, where the source is 3DEP. Zoom 14: about 6.9 m per pixel at this latitude; 6 x 7 tiles for a window of 10000 m around 43.7646 N, -110.8077 E (tile numbers computed by `pt dem-manifest`).",
+      "category": "terrain",
+      "difficulty": "terrain",
+      "files": [
+        {
+          "path": "dem/terrarium/14/3146/5969.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5969.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3146/5975.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3146/5975.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5969.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5969.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3147/5975.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3147/5975.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5969.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5969.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3148/5975.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3148/5975.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5969.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5969.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3149/5975.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3149/5975.png"
+        },
+        {
+          "path": "dem/terrarium/14/3150/5969.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3150/5969.png"
+        },
+        {
+          "path": "dem/terrarium/14/3150/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3150/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3150/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3150/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3150/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3150/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3150/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3150/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3150/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3150/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3150/5975.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3150/5975.png"
+        },
+        {
+          "path": "dem/terrarium/14/3151/5969.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3151/5969.png"
+        },
+        {
+          "path": "dem/terrarium/14/3151/5970.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3151/5970.png"
+        },
+        {
+          "path": "dem/terrarium/14/3151/5971.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3151/5971.png"
+        },
+        {
+          "path": "dem/terrarium/14/3151/5972.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3151/5972.png"
+        },
+        {
+          "path": "dem/terrarium/14/3151/5973.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3151/5973.png"
+        },
+        {
+          "path": "dem/terrarium/14/3151/5974.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3151/5974.png"
+        },
+        {
+          "path": "dem/terrarium/14/3151/5975.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/3151/5975.png"
+        }
+      ],
+      "id": "usgs/3dep/cascade-mid-z14",
+      "license": "PD-USGS",
+      "license_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "main": "dem/terrarium/14/3148/5972.png",
+      "set": "dem",
+      "source": "usgs-3dep-terrarium"
+    },
+    {
+      "attribution": "3DEP data courtesy of the U.S. Geological Survey. USGS: \"USGS-authored or produced data and information are considered to be in the U.S. Public Domain\" (credit requested). Tiles from Terrain Tiles on AWS (Mapzen), https://registry.opendata.aws/terrain-tiles/; the tile area lies inside the United States, where the source is 3DEP. Zoom 12: about 27.6 m per pixel at this latitude; 5 x 6 tiles for a window of 30000 m around 43.7646 N, -110.8077 E (tile numbers computed by `pt dem-manifest`).",
+      "category": "terrain",
+      "difficulty": "terrain",
+      "files": [
+        {
+          "path": "dem/terrarium/12/785/1490.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/785/1490.png"
+        },
+        {
+          "path": "dem/terrarium/12/785/1491.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/785/1491.png"
+        },
+        {
+          "path": "dem/terrarium/12/785/1492.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/785/1492.png"
+        },
+        {
+          "path": "dem/terrarium/12/785/1493.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/785/1493.png"
+        },
+        {
+          "path": "dem/terrarium/12/785/1494.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/785/1494.png"
+        },
+        {
+          "path": "dem/terrarium/12/785/1495.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/785/1495.png"
+        },
+        {
+          "path": "dem/terrarium/12/786/1490.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/786/1490.png"
+        },
+        {
+          "path": "dem/terrarium/12/786/1491.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/786/1491.png"
+        },
+        {
+          "path": "dem/terrarium/12/786/1492.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/786/1492.png"
+        },
+        {
+          "path": "dem/terrarium/12/786/1493.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/786/1493.png"
+        },
+        {
+          "path": "dem/terrarium/12/786/1494.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/786/1494.png"
+        },
+        {
+          "path": "dem/terrarium/12/786/1495.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/786/1495.png"
+        },
+        {
+          "path": "dem/terrarium/12/787/1490.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/787/1490.png"
+        },
+        {
+          "path": "dem/terrarium/12/787/1491.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/787/1491.png"
+        },
+        {
+          "path": "dem/terrarium/12/787/1492.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/787/1492.png"
+        },
+        {
+          "path": "dem/terrarium/12/787/1493.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/787/1493.png"
+        },
+        {
+          "path": "dem/terrarium/12/787/1494.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/787/1494.png"
+        },
+        {
+          "path": "dem/terrarium/12/787/1495.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/787/1495.png"
+        },
+        {
+          "path": "dem/terrarium/12/788/1490.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/788/1490.png"
+        },
+        {
+          "path": "dem/terrarium/12/788/1491.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/788/1491.png"
+        },
+        {
+          "path": "dem/terrarium/12/788/1492.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/788/1492.png"
+        },
+        {
+          "path": "dem/terrarium/12/788/1493.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/788/1493.png"
+        },
+        {
+          "path": "dem/terrarium/12/788/1494.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/788/1494.png"
+        },
+        {
+          "path": "dem/terrarium/12/788/1495.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/788/1495.png"
+        },
+        {
+          "path": "dem/terrarium/12/789/1490.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/789/1490.png"
+        },
+        {
+          "path": "dem/terrarium/12/789/1491.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/789/1491.png"
+        },
+        {
+          "path": "dem/terrarium/12/789/1492.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/789/1492.png"
+        },
+        {
+          "path": "dem/terrarium/12/789/1493.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/789/1493.png"
+        },
+        {
+          "path": "dem/terrarium/12/789/1494.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/789/1494.png"
+        },
+        {
+          "path": "dem/terrarium/12/789/1495.png",
+          "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/789/1495.png"
+        }
+      ],
+      "id": "usgs/3dep/cascade-far-z12",
+      "license": "PD-USGS",
+      "license_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "main": "dem/terrarium/12/787/1492.png",
+      "set": "dem",
+      "source": "usgs-3dep-terrarium"
+    }
+  ],
+  "note": "US elevation tiles (Terrarium PNG: height in metres = R*256 + G + B/256 - 32768) for the Teton valley world (W1). Centre 43.765 N, -110.8406 E: a glacial valley in Grand Teton National Park, Wyoming; all inside the United States, where the source is USGS 3DEP.",
+  "version": 1
+}

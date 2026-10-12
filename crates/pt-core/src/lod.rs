@@ -33,18 +33,58 @@ pub struct LodPolicy {
     pub max_level0_triangles: usize,
     /// Content-addressed disk cache for decimated levels (None = no cache).
     pub cache_dir: Option<PathBuf>,
+    /// The last level of a plant (a prototype that is mostly foliage) is a SHELL: about a hundred triangles with the plant's
+    /// outline, see [`shell`]. A forest a kilometre deep is then drawn with a hundred triangles per distant tree.
+    pub shell: bool,
+    /// Linear colour of a shell (it carries no texture).
+    pub shell_color: [f32; 3],
+    /// GROUND COVER (grass, ferns, pebbles: a prototype no taller than this many metres; 0 = no such class) is what a world has
+    /// most of and what a viewer looks at least: it gets its own, much lower level-0 cap and a short draw distance, and an
+    /// engine should not let it cast shadows.
+    pub cover_height: f32,
+    pub cover_level0_triangles: usize,
+    pub cover_cull: f32,
+    /// Ground cover gets at most this many levels (0 = as many as everything else): full, reduced, and a last one.
+    pub cover_levels: usize,
+    /// A prototype this tall (metres) or taller gets the full level-0 cap; a shorter one a share in proportion to its height,
+    /// down to a tenth (a bush is not worth a tree's triangles). 0 = every prototype gets the full cap.
+    pub full_detail_height: f32,
+}
+
+impl LodPolicy {
+    /// Is this prototype ground cover under this policy?
+    pub fn is_cover(&self, g: &Geometry) -> bool {
+        self.cover_height > 0.0 && hinted_cull(g).is_none() && g.bounds().is_some_and(|(lo, hi)| hi[1] - lo[1] <= self.cover_height)
+    }
 }
 
 impl Default for LodPolicy {
     fn default() -> Self {
-        LodPolicy { ratios: vec![1.0, 0.25, 0.07, 0.02], switch_factors: vec![0.0, 3.0, 8.0, 20.0], cull_factor: 120.0, min_cull: 60.0, max_cull: 1500.0, min_triangles: 2000, max_level0_triangles: 0, cache_dir: None }
+        LodPolicy { ratios: vec![1.0, 0.25, 0.07, 0.02], switch_factors: vec![0.0, 3.0, 8.0, 20.0], cull_factor: 120.0, min_cull: 60.0, max_cull: 1500.0, min_triangles: 2000, max_level0_triangles: 0, cache_dir: None, shell: false, shell_color: [0.035, 0.06, 0.03], cover_height: 0.0, cover_level0_triangles: 0, cover_cull: 0.0, cover_levels: 0, full_detail_height: 0.0 }
     }
 }
 
 impl LodPolicy {
-    /// What a game engine can ship: no level above about 200 000 triangles, then steep steps and an earlier switch to the cheap levels.
+    /// What a game engine can ship. Sized for a forest, not a courtyard: a square kilometre holds tens of thousands of trees and
+    /// thousands of patches of grass, so no level is above about 24 000 triangles, the steps are steep, the last level of a plant
+    /// is a shell of a hundred triangles, a prototype shorter than 12 m gets a share of the cap in proportion to its height, and
+    /// ground cover (under 2 m) is capped at 6 000 triangles and drawn to 90 m. (The first engine
+    /// profile capped level 0 at 200 000 and ended at 4 percent; it measured well on a sparse valley and came to 240 million
+    /// triangles in one frame once every instance was really drawn.)
     pub fn engine() -> LodPolicy {
-        LodPolicy { ratios: vec![1.0, 0.35, 0.12, 0.04], switch_factors: vec![0.0, 2.0, 5.0, 12.0], max_level0_triangles: 200_000, ..Default::default() }
+        LodPolicy {
+            ratios: vec![1.0, 0.2, 0.04, 0.01],
+            switch_factors: vec![0.0, 1.3, 3.5, 8.0],
+            max_level0_triangles: 24_000,
+            cull_factor: 60.0,
+            shell: true,
+            cover_height: 2.0,
+            cover_level0_triangles: 6_000,
+            cover_cull: 90.0,
+            cover_levels: 3,
+            full_detail_height: 12.0,
+            ..Default::default()
+        }
     }
 }
 
@@ -55,6 +95,19 @@ pub struct LodLevel {
     /// Metres (before instance scaling) where this level starts and stops being drawn.
     pub begin: f32,
     pub end: f32,
+}
+
+/// Detail key written by the `lod_hint` node: `{"cull_m": metres (0 = by size), "merge": bool}`.
+pub const LOD_HINT: &str = "lod_hint";
+
+/// The draw distance a prototype asks for (`lod_hint`), if any.
+pub fn hinted_cull(g: &Geometry) -> Option<f32> {
+    g.detail.get(LOD_HINT).and_then(|h| h.get("cull_m")).and_then(serde_json::Value::as_f64).map(|c| c as f32).filter(|c| *c > 0.0)
+}
+
+/// Does the prototype ask for one merged mesh in offline render exports (`lod_hint`)?
+pub fn hinted_merge(g: &Geometry) -> bool {
+    g.detail.get(LOD_HINT).and_then(|h| h.get("merge")).and_then(serde_json::Value::as_bool).unwrap_or(false)
 }
 
 fn diagonal(g: &Geometry) -> f32 {
@@ -101,6 +154,12 @@ fn hash01(x: u32) -> f32 {
 
 /// A copy of `g` with about `ratio` of its triangles (triangles only; vertex attributes and material names are kept).
 pub fn decimate(g: &Geometry, ratio: f32) -> Geometry {
+    decimate_scaled(g, ratio, 4.0)
+}
+
+/// [`decimate`] with a limit on how much a surviving foliage card may grow. A canopy keeps its coverage when its remaining
+/// cards quadruple; a patch of grass thinned to a seventh must not become grass three times as tall.
+pub fn decimate_scaled(g: &Geometry, ratio: f32, max_scale: f32) -> Geometry {
     let g = g.realize();
     let ratio = ratio.clamp(0.001, 1.0);
     let mats = g.prim_materials();
@@ -211,7 +270,7 @@ pub fn decimate(g: &Geometry, ratio: f32) -> Geometry {
             card_units.push(u);
         }
         if ratio < 0.999 {
-            scale = (1.0 / (kept as f32 / total as f32).sqrt()).min(4.0);
+            scale = (1.0 / (kept as f32 / total as f32).sqrt()).min(max_scale.max(1.0));
         }
     }
 
@@ -274,14 +333,98 @@ pub fn decimate(g: &Geometry, ratio: f32) -> Geometry {
     out
 }
 
+/// Words in a material name that mark foliage when the material is not alpha-cut (some scans model every needle).
+const FOLIAGE_WORDS: [&str; 9] = ["twig", "leaf", "leaves", "needle", "foliage", "frond", "grass", "fern", "petal"];
+
+/// A far-distance stand-in for a plant: a closed six-sided shell that follows the outline of its foliage (the radius that
+/// holds 80 percent of the foliage at each of six heights), about a hundred triangles, one flat colour carried as the point
+/// colour `Cd` under the material `lod_shell`. `None` if less than 40 percent of the triangles are foliage (a rock, a log, a
+/// building: those are simplified, not replaced). Deterministic.
+pub fn shell(g: &Geometry, color: [f32; 3]) -> Option<Geometry> {
+    const RINGS: usize = 6;
+    const SIDES: usize = 6;
+    let g = g.realize();
+    let mats = g.prim_materials();
+    let cutout = cutout_materials(&g);
+    let leafy = |m: Option<&str>| {
+        m.is_some_and(|m| {
+            let l = m.to_ascii_lowercase();
+            cutout.contains(m) || FOLIAGE_WORDS.iter().any(|w| l.contains(w))
+        })
+    };
+    let src = g.p();
+    let (mut pts, mut leafy_tris, mut all_tris): (Vec<[f32; 3]>, usize, usize) = (vec![], 0, 0);
+    for (i, m) in mats.iter().enumerate() {
+        let pr = g.prim_points(i);
+        let t = pr.len().saturating_sub(2);
+        all_tris += t;
+        if leafy(*m) {
+            leafy_tris += t;
+            pts.extend(pr.iter().map(|&q| src[q as usize]));
+        }
+    }
+    if all_tris == 0 || (leafy_tris as f32) < 0.4 * all_tris as f32 || pts.len() < 12 {
+        return None;
+    }
+    let (ylo, yhi) = pts.iter().fold((f32::MAX, f32::MIN), |(l, h), q| (l.min(q[1]), h.max(q[1])));
+    if yhi - ylo < 1e-4 {
+        return None;
+    }
+    let n = pts.len() as f64;
+    let (cx, cz) = ((pts.iter().map(|q| q[0] as f64).sum::<f64>() / n) as f32, (pts.iter().map(|q| q[2] as f64).sum::<f64>() / n) as f32);
+    let step = (yhi - ylo) / RINGS as f32;
+    let mut radius = [0.0f32; RINGS + 1];
+    for (k, r) in radius.iter_mut().enumerate() {
+        let y = ylo + step * k as f32;
+        let mut d: Vec<f32> = pts.iter().filter(|q| (q[1] - y).abs() <= step * 0.75).map(|q| ((q[0] - cx).powi(2) + (q[2] - cz).powi(2)).sqrt()).collect();
+        if !d.is_empty() {
+            d.sort_by(f32::total_cmp);
+            *r = d[((d.len() - 1) as f32 * 0.8) as usize];
+        }
+    }
+    let widest = radius.iter().fold(0.0f32, |a, &b| a.max(b));
+    if widest < 1e-4 {
+        return None;
+    }
+    radius[RINGS] = radius[RINGS].min(0.15 * widest);
+    for r in radius.iter_mut() {
+        *r = r.max(0.04 * widest); // no ring collapses to a line
+    }
+    let (mut out_pts, mut normals) = (Vec::with_capacity((RINGS + 1) * SIDES), Vec::with_capacity((RINGS + 1) * SIDES));
+    for k in 0..=RINGS {
+        let (below, above) = (radius[k.saturating_sub(1)], radius[(k + 1).min(RINGS)]);
+        let lean = (below - above) / (2.0 * step); // the shell narrows upward: its normal tips up
+        for s in 0..SIDES {
+            let (sn, cs) = crate::math::sin_cos(2.0 * std::f32::consts::PI * s as f32 / SIDES as f32);
+            out_pts.push([cx + radius[k] * cs, ylo + step * k as f32, cz + radius[k] * sn]);
+            normals.push(crate::math::normalize([cs, lean, sn]));
+        }
+    }
+    let at = |k: usize, s: usize| (k * SIDES + s % SIDES) as u32;
+    let mut polys: Vec<Vec<u32>> = Vec::with_capacity(RINGS * SIDES + 2);
+    for k in 0..RINGS {
+        for s in 0..SIDES {
+            polys.push(vec![at(k, s), at(k + 1, s), at(k + 1, s + 1), at(k, s + 1)]);
+        }
+    }
+    polys.push((0..SIDES).map(|s| at(0, s)).collect()); // faces down
+    polys.push((0..SIDES).rev().map(|s| at(RINGS, s)).collect()); // faces up
+    let count = out_pts.len();
+    let mut out = Geometry::from_polys(out_pts, &polys);
+    out.point.set("N", Column::from_v3(normals));
+    out.point.set("Cd", Column::from_v3(vec![color; count]));
+    out.assign_material("lod_shell", &vec![true; polys.len()]);
+    Some(out)
+}
+
 /// Bump when `decimate` changes, so cached levels from an older algorithm are never reused.
 const LOD_ALGORITHM: &str = "a3";
 
-fn cache_path(policy: &LodPolicy, g: &Geometry, ratio: f32) -> Option<PathBuf> {
+fn cache_path(policy: &LodPolicy, g: &Geometry, ratio: f32, tag: &str) -> Option<PathBuf> {
     let dir = policy.cache_dir.as_ref()?;
     let h = g.content_hash();
     let hex: String = h.iter().take(12).map(|b| format!("{b:02x}")).collect();
-    Some(dir.join(format!("{hex}_{ratio:.4}_{LOD_ALGORITHM}.ptgeo")))
+    Some(dir.join(format!("{hex}_{ratio:.4}_{LOD_ALGORITHM}{tag}.ptgeo")))
 }
 
 /// The levels of one prototype: the original, then decimated copies, each with its distance range.
@@ -289,20 +432,38 @@ pub fn lod_chain(g: &Geometry, policy: &LodPolicy) -> Vec<LodLevel> {
     let real = g.realize();
     let tris = real.triangles().len();
     let diag = diagonal(&real);
-    let cull = (diag * policy.cull_factor).clamp(policy.min_cull, policy.max_cull);
+    let cover = policy.is_cover(&real);
+    let cull = hinted_cull(g).unwrap_or_else(|| if cover { policy.cover_cull.max(1.0) } else { (diag * policy.cull_factor).clamp(policy.min_cull, policy.max_cull) });
     let n_levels = if tris >= policy.min_triangles { policy.ratios.len().min(policy.switch_factors.len()) } else { 1 };
-    let base = if policy.max_level0_triangles > 0 && tris > policy.max_level0_triangles { policy.max_level0_triangles as f32 / tris as f32 } else { 1.0 };
+    let n_levels = if cover && policy.cover_levels > 0 { n_levels.min(policy.cover_levels) } else { n_levels };
+    let stand_in = if policy.shell && n_levels >= 2 { shell(&real, policy.shell_color) } else { None };
+    // ground cover that is thinned must not grow tall to make up for it (see `decimate_scaled`)
+    let (grow, tag) = if cover { (1.25f32, "c") } else { (4.0f32, "") };
+    let height = real.base_bounds().map_or(0.0, |(lo, hi)| hi[1] - lo[1]);
+    let cap = if cover && policy.cover_level0_triangles > 0 {
+        policy.cover_level0_triangles
+    } else if policy.full_detail_height > 0.0 && policy.max_level0_triangles > 0 {
+        (policy.max_level0_triangles as f32 * (height / policy.full_detail_height).clamp(0.1, 1.0)) as usize
+    } else {
+        policy.max_level0_triangles
+    };
+    let base = if cap > 0 && tris > cap { cap as f32 / tris as f32 } else { 1.0 };
     let mut geos: Vec<(Arc<Geometry>, usize)> = Vec::new();
     for l in 0..n_levels {
+        if let (true, Some(s)) = (l + 1 == n_levels, &stand_in) {
+            let t = s.triangles().len();
+            geos.push((Arc::new(s.clone()), t));
+            continue;
+        }
         let ratio = base * policy.ratios[l];
         if l == 0 && base >= 1.0 {
             geos.push((Arc::new(real.clone()), tris));
             continue;
         }
-        let cached = cache_path(policy, &real, ratio).and_then(|p| std::fs::read(p).ok()).and_then(|b| crate::io::from_bytes(&b).ok());
+        let cached = cache_path(policy, &real, ratio, tag).and_then(|p| std::fs::read(p).ok()).and_then(|b| crate::io::from_bytes(&b).ok());
         let level = cached.unwrap_or_else(|| {
-            let d = decimate(&real, ratio);
-            if let Some(p) = cache_path(policy, &real, ratio) {
+            let d = decimate_scaled(&real, ratio, grow);
+            if let Some(p) = cache_path(policy, &real, ratio, tag) {
                 if let Some(dir) = p.parent() {
                     let _ = std::fs::create_dir_all(dir);
                 }
@@ -431,7 +592,7 @@ mod tests {
     #[test]
     fn the_engine_profile_caps_level_zero() {
         let g = sphere(64, 96); // 12 288 triangles
-        let policy = LodPolicy { max_level0_triangles: 3000, ..LodPolicy::engine() };
+        let policy = LodPolicy { max_level0_triangles: 3000, full_detail_height: 0.0, cover_height: 0.0, ..LodPolicy::engine() };
         let chain = lod_chain(&g, &policy);
         let t: Vec<usize> = chain.iter().map(|l| l.triangles).collect();
         assert!(t[0] <= 3600 && t[0] >= 2400, "level 0 is reduced to about the cap, got {t:?}");
@@ -439,6 +600,22 @@ mod tests {
         // below the cap nothing changes: level 0 is the original
         let small = lod_chain(&sphere(32, 48), &LodPolicy { max_level0_triangles: 250_000, ..LodPolicy::engine() });
         assert_eq!(small[0].triangles, 32 * 48 * 2);
+        // the full engine profile: the sphere is 2 m tall, so it is ground cover: capped at 6 000 and drawn to 90 m
+        let cover = lod_chain(&g, &LodPolicy::engine());
+        assert!(cover[0].triangles <= 7200 && cover[0].triangles >= 4800, "{}", cover[0].triangles);
+        assert_eq!(cover.last().unwrap().end, 90.0);
+        // taller than cover but shorter than 12 m: a share of the cap in proportion to its height (6 m of 12 m: half of 40 000 > 12 288)
+        let mut tall = g.clone();
+        for q in tall.p_mut() {
+            *q = [q[0], q[1] * 3.0, q[2]];
+        }
+        let chain = lod_chain(&tall, &LodPolicy { max_level0_triangles: 12_000, ..LodPolicy::engine() });
+        assert!(chain[0].triangles <= 7200 && chain[0].triangles >= 4800, "half the cap for a 6 m object: {}", chain[0].triangles);
+        // a hinted far stand-in keeps its own draw distance
+        let mut hinted = g.clone();
+        hinted.detail.insert(LOD_HINT.into(), json!({"cull_m": 4200.0, "merge": true}));
+        assert_eq!(lod_chain(&hinted, &LodPolicy::engine()).last().unwrap().end, 4200.0);
+        assert!(hinted_merge(&hinted) && !hinted_merge(&g));
     }
 
     #[test]
@@ -452,6 +629,59 @@ mod tests {
         assert!(chain.last().unwrap().end >= 60.0, "draw distance has a floor");
         // a small mesh is one level only
         assert_eq!(lod_chain(&sphere(8, 8), &LodPolicy::default()).len(), 1);
+    }
+
+    /// A conifer: a thin trunk (not foliage) and needle cards whose spread narrows from 3 m at the foot to nothing at 12 m.
+    fn conifer(cards: usize) -> Geometry {
+        let mut pts = vec![[-0.1, 0.0, 0.0], [0.1, 0.0, 0.0], [0.0, 12.0, 0.0]];
+        let mut polys = vec![vec![0u32, 1, 2]];
+        for k in 0..cards {
+            let (h, a, d) = (hash01(k as u32 * 3), hash01(k as u32 * 3 + 1) * 6.283, hash01(k as u32 * 3 + 2));
+            let y = 1.0 + 11.0 * h;
+            let r = 3.0 * (1.0 - h) * d.sqrt();
+            let (s, c) = crate::math::sin_cos(a);
+            let b = pts.len() as u32;
+            pts.extend([[r * c, y, r * s], [r * c + 0.1, y, r * s], [r * c, y + 0.1, r * s]]);
+            polys.push(vec![b, b + 1, b + 2]);
+        }
+        let mut g = Geometry::from_polys(pts, &polys);
+        let twig: Vec<bool> = (0..g.n_prims()).map(|i| i > 0).collect();
+        g.assign_material("fir__twig", &twig);
+        g.assign_material("fir__bark", &twig.iter().map(|t| !t).collect::<Vec<_>>());
+        g
+    }
+
+    #[test]
+    fn a_plant_gets_a_shell_that_follows_its_outline_and_a_rock_does_not() {
+        let tree = conifer(4000);
+        let s = shell(&tree, [0.03, 0.06, 0.03]).expect("mostly foliage: gets a shell");
+        assert_eq!(s.triangles().len(), 6 * 6 * 2 + 4 + 4, "six rings of six quads and two caps");
+        assert_eq!(s.material_names(), ["lod_shell"]);
+        assert_eq!(s.point.get("Cd").and_then(Column::as_v3).unwrap()[0], [0.03, 0.06, 0.03]);
+        assert!(pt_validate_finite(&s));
+        // the outline: as tall as the foliage, wide at the foot, narrow at the tip, and inside the foliage's own spread
+        let (lo, hi) = s.base_bounds().unwrap();
+        assert!((lo[1] - 1.0).abs() < 0.2 && (hi[1] - 12.0).abs() < 0.2, "{lo:?} {hi:?}");
+        let width = |y0: f32, y1: f32| s.p().iter().filter(|q| q[1] >= y0 && q[1] <= y1).map(|q| (q[0] * q[0] + q[2] * q[2]).sqrt()).fold(0.0f32, f32::max);
+        assert!(width(0.9, 1.2) > 1.8 && width(0.9, 1.2) < 3.1, "foot radius {}", width(0.9, 1.2));
+        assert!(width(11.5, 12.5) < 0.6, "tip radius {}", width(11.5, 12.5));
+        // it faces outward: every side quad's normal points away from the axis
+        for i in 0..36 {
+            let pr = s.prim_points(i);
+            let (a, b, c) = (s.p()[pr[0] as usize], s.p()[pr[1] as usize], s.p()[pr[2] as usize]);
+            let n = crate::math::cross(crate::math::sub(b, a), crate::math::sub(c, a));
+            assert!(n[0] * a[0] + n[2] * a[2] > 0.0, "quad {i} faces inward");
+        }
+        assert_eq!(shell(&tree, [0.03, 0.06, 0.03]).unwrap().content_hash(), s.content_hash(), "deterministic");
+        assert!(shell(&sphere(16, 24), [0.0; 3]).is_none(), "a rock is simplified, not replaced");
+        // in the engine profile the shell is the plant's last level; without the flag it is an ordinary reduced mesh
+        let chain = lod_chain(&tree, &LodPolicy::engine());
+        assert_eq!(chain.last().unwrap().triangles, 80);
+        assert_eq!(chain.last().unwrap().geo.material_names(), ["lod_shell"]);
+        assert!(chain[..chain.len() - 1].iter().all(|l| l.geo.material_names().contains(&"fir__twig".to_string())));
+        let plain = lod_chain(&tree, &LodPolicy { shell: false, ..LodPolicy::engine() });
+        assert!(plain.last().unwrap().geo.material_names().contains(&"fir__twig".to_string()));
+        assert!(lod_chain(&sphere(64, 96), &LodPolicy::engine()).iter().all(|l| l.geo.material_names() == ["stone"]));
     }
 }
 

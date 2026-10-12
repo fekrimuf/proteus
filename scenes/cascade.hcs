@@ -1,0 +1,355 @@
+# Cascade Canyon: the calm reach of Cascade Creek below the forks, Grand Teton National Park, Wyoming, built from REAL elevation
+# (USGS 3DEP, public domain, fetched through the licence ledger: `pt corpus fetch corpus/dem_manifest.json`; tile lists made by
+# `pt dem-manifest`). Mount Owen and the Grand Teton stand 2 to 2.6 km south of the creek and 1.6 to 1.85 km above it.
+#
+# The terrain is four nested levels that meet without a crack (hf_fit / hf_hole / hf_refine):
+#   far   28 km square at 40 m    the skyline
+#   mid   9.6 km square at 10 m   the canyon walls and the peaks above them, at the full detail of the survey
+#   near  1.6 km square at 2.5 m  the canyon floor that is dressed with plants and rocks
+#   hero  240 x 130 m at 0.5 m    the reach of the creek the eye-level cameras stand in
+# Units are metres, +Y up, +X east, +Z south. y = 0 is DATUM, about the creek at the centre; absolute elevation is the point attribute `elev`.
+LAT = 43.7646
+LON = -110.8077
+DATUM = 2346.0
+NEAR = 1600.0
+MID = 9600.0
+FAR = 28000.0
+TREE_LINE = 2950.0   # absolute elevation (m) where forest gives way to meadow and rock
+SNOW_LINE = 2920.0   # early summer: snow lies above this, lower on north faces
+HX = 80.0            # hero patch: centre and size
+HZ = 62.5
+HW = 240.0
+HD = 130.0
+
+far_full = dem(zoom=12, lat=LAT, lon=LON, size=[FAR, FAR], rows=700, cols=700, datum=DATUM)
+mid_full = dem(zoom=14, lat=LAT, lon=LON, size=[MID, MID], rows=960, cols=960, datum=DATUM)
+near_raw = dem(zoom=14, lat=LAT, lon=LON, size=[NEAR, NEAR], rows=640, cols=640, datum=DATUM)
+mid_fit = hf_fit(mid_full, far_full, blend=400.0)
+near_fit = hf_fit(near_raw, mid_fit, blend=80.0)
+
+# ---- hydrology: fill basins, drain and accumulate on a 4 km window, give the streams a channel, copy the result onto the near level ----
+hydro_dem = dem(zoom=14, lat=LAT, lon=LON, size=[4000.0, 4000.0], rows=1600, cols=1600, datum=DATUM)
+hyd = hf_flow(hydro_dem, stream_area=150000.0, lake_depth=0.6, river_width=2.5, river_width_max=11.0, river_bank=3.5, river_freeboard=0.35)
+wet = attribute_transfer(normals(near_fit), hyd, attribs="flow_acc twi stream lake river river_sd river_w water_y")
+
+# Cliffs get the relief the survey is too coarse for; then the channel is cut: where the ground is gentle and away from the level's
+# edge, the bed drops below the water level (on steep ground a creek is a cascade over rock, not a channel).
+shaped = wrangle(wet, code="""
+float slope = degrees(acos(clamp(@N.y, 0.0, 1.0)));
+float inner = 1.0 - smoothstep(690.0, 780.0, max(abs(@P.x), abs(@P.z)));
+float cliff = smoothstep(24.0, 44.0, slope) * inner;
+@P.y += cliff * (fbm(@P * 0.30, 4.0) * 1.6 + fbm(@P * 1.1, 3.0) * 0.5);
+@y0 = @P.y;
+@chan = inner * (1.0 - smoothstep(9.0, 17.0, slope));
+float bed = @water_y - (0.50 + 0.35 * noise(@P * 0.21));
+@P.y = mix(@P.y, min(@P.y, bed), @river * @chan);
+""")
+
+# ---- material layers: soft weights from slope, elevation, aspect and noise (each layer takes what the ones before left) ----
+MASKS = """
+float slope = degrees(acos(clamp(@N.y, 0.0, 1.0)));
+@slope_deg = slope;
+float n1 = noise(@P * ch("f1"));
+float n2 = noise(@P * ch("f2"));
+float north = clamp(0.0 - @N.z, 0.0, 1.0);
+float sl = ch("snow_line") - 150.0 * north + 120.0 * noise(@P * 0.0025 + vec3(4.0, 0.0, 8.0));
+float snow = smoothstep(sl - 150.0, sl + 200.0, @elev) * (1.0 - smoothstep(50.0, 63.0, slope));
+float rock = clamp(smoothstep(40.0, 48.0, slope + 5.0 * n2) + smoothstep(ch("tree_line") + 60.0, ch("tree_line") + 240.0, @elev) * smoothstep(16.0, 28.0, slope), 0.0, 1.0);
+float scree = smoothstep(27.0, 33.0, slope + 4.0 * n2) * smoothstep(ch("tree_line") - 380.0, ch("tree_line") + 40.0, @elev + 160.0 * n1);
+float forest = smoothstep(-0.45, -0.1, n1) * (1.0 - smoothstep(36.0, 43.0, slope)) * (1.0 - smoothstep(ch("tree_line") - 140.0, ch("tree_line") + 20.0, @elev));
+float dirt = smoothstep(0.40, 0.52, noise(@P * ch("f3") + vec3(7.0, 0.0, 3.0))) * (1.0 - smoothstep(6.0, 14.0, slope));
+float rem = 1.0;
+"""
+STACK = """
+@w_ground_snow = snow * rem;
+rem = rem * (1.0 - snow);
+@w_ground_rock = rock * rem;
+rem = rem * (1.0 - rock);
+@w_ground_gravel = scree * rem;
+rem = rem * (1.0 - scree);
+"""
+NEAR_WATER = """
+float bedw = smoothstep(0.35, 0.75, @river * @chan);
+float shore = (1.0 - smoothstep(0.5, 3.5, @river_sd)) * @chan * (1.0 - smoothstep(0.2, 0.8, @P.y - @water_y));
+@w_ground_bed = bedw;
+rem = rem * (1.0 - bedw);
+@w_ground_bank = shore * rem;
+rem = rem * (1.0 - shore);
+"""
+NEAR_REST = """
+@w_ground_forest = forest * rem;
+rem = rem * (1.0 - forest);
+@w_ground_dirt = dirt * rem;
+rem = rem * (1.0 - dirt);
+@w_ground_flat = rem;
+@hero = 1.0 - smoothstep(70.0, 170.0, length(vec3(@P.x - ch("hx"), 0.0, (@P.z - ch("hz")) * 1.5)));
+@Nc = @N;
+"""
+# The mid and far levels have their own roles: seen from kilometres away a forest is its canopy, not its floor, and rock is a
+# face a hundred metres across, not a boulder. The style gives these roles aerial scans and relief at that scale.
+FAR_STACK = """
+@w_far_snow = snow * rem;
+rem = rem * (1.0 - snow);
+@w_far_rock = rock * rem;
+rem = rem * (1.0 - rock);
+@w_far_scree = scree * rem;
+rem = rem * (1.0 - scree);
+@w_far_forest = forest * rem;
+rem = rem * (1.0 - forest);
+@w_far_meadow = rem;
+"""
+NEAR_LAYERS = MASKS + NEAR_WATER + STACK + NEAR_REST
+FAR_LAYERS = MASKS + FAR_STACK
+near_w = wrangle(normals(shaped), code=NEAR_LAYERS, channels={"tree_line": TREE_LINE, "snow_line": SNOW_LINE, "f1": 0.011, "f2": 0.05, "f3": 0.03, "hx": HX, "hz": HZ})
+
+def distant(terrain, name, f1, f2):
+    w = wrangle(normals(terrain), code=FAR_LAYERS, channels={"tree_line": TREE_LINE, "snow_line": SNOW_LINE, "f1": f1, "f2": f2, "f3": 0.008})
+    return blend_materials(w, name=name, layers="far_meadow far_forest far_scree far_rock far_snow")
+
+mid_w = distant(mid_fit, "terrain_mid", 0.006, 0.03)
+land_mid = hf_hole(mid_w, size=[NEAR, NEAR], center=[0.0, 0.0])
+land_far = hf_hole(distant(far_full, "terrain_far", 0.0035, 0.012), size=[MID, MID], center=[0.0, 0.0])
+
+# ---- hero patch: the same ground at 0.5 m, with what a 2.5 m grid cannot hold: a crisp bank, gravel bars in the bed, lumps and hollows ----
+patch_raw = hf_refine(near_w, size=[HW, HD], center=[HX, HZ], cell=0.5, blend=8.0)
+patch_cut = wrangle(patch_raw, code="""
+float fade = smoothstep(0.0, 8.0, @edge);
+float sdn = @river_sd + noise(@P * 0.18 + vec3(3.0, 0.0, 9.0)) * 1.3 + noise(@P * 0.9) * 0.3;
+float inch = (1.0 - smoothstep(-0.3, 1.3, sdn)) * @chan;
+float bar = smoothstep(0.25, 0.6, noise(@P * 0.085 + vec3(5.0, 0.0, 1.0))) * (1.0 - smoothstep(-3.6, -1.0, sdn));
+float bed = @water_y - (0.50 + 0.35 * noise(@P * 0.21)) + bar * 0.72 + fbm(@P * 1.7, 2.0) * 0.07;
+float lump = fbm(@P * 0.33, 3.0) * 0.24 + fbm(@P * 1.4, 2.0) * 0.05;
+float ground = @y0 + lump * (1.0 - inch);
+@P.y = mix(@P.y, mix(ground, min(ground, bed), inch), fade);
+float bedw = smoothstep(0.4, 0.8, inch);
+float shore = (1.0 - smoothstep(0.1, 2.4, sdn)) * @chan * (1.0 - smoothstep(0.12, 0.55, @P.y - @water_y));
+float nb = mix(@w_ground_bed, bedw, fade);
+float nk = mix(@w_ground_bank, shore * (1.0 - bedw), fade);
+float k = (1.0 - nb - nk) / max(1.0 - @w_ground_bed - @w_ground_bank, 0.001);
+@w_ground_forest = @w_ground_forest * k;
+@w_ground_dirt = @w_ground_dirt * k;
+@w_ground_flat = @w_ground_flat * k;
+@w_ground_gravel = @w_ground_gravel * k;
+@w_ground_rock = @w_ground_rock * k;
+@w_ground_snow = @w_ground_snow * k;
+@w_ground_bed = nb;
+@w_ground_bank = nk;
+""")
+# normals from the fine surface, turned back to the coarse level's normals at the edge so the shading has no seam
+patch = wrangle(normals(patch_cut), code="""
+float t = smoothstep(0.0, 5.0, @edge);
+@N = normalize(@Nc + (@N - @Nc) * t);
+""")
+ring = hf_hole(near_w, size=[HW, HD], center=[HX, HZ])
+LAYERS = "ground_bed ground_bank ground_flat ground_forest ground_dirt ground_gravel ground_rock ground_snow"
+# its own material name (same roles): the engine export bakes every layered material to a texture through its mesh, and the patch
+# needs its own texture at its own resolution
+land_hero = blend_materials(patch, name="terrain_hero", layers=LAYERS)
+land_near = merge(blend_materials(ring, name="terrain_blend", layers=LAYERS), land_hero)
+
+# ---- water: a surface at the creek's level over the carved bed, cut to the channel and its banks; the ground hides its edge ----
+water_cells = group_by_expression(wrangle(near_w, code="@P.y = @water_y;"), name="wet", expression="@river_sd < 7.0 && @chan > 0.02")
+water = set_material(normals(blast(water_cells, group="wet", keep_selected=1)), name="stream_water")
+
+# ---- assets: CC0 scans (Poly Haven) with their authored materials ----
+M = "polyhaven/models/"
+def scan(name, part, h, size):
+    return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, height=h, size=size)
+
+def scaled(name, part, s):
+    return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, scale=s)
+
+# Scanned trees are two million triangles each; a forest of them does not fit in the memory of a desktop, so each is reduced
+# on import (needle cards thinned and enlarged, trunks simplified). The reduced trees are cached on disk.
+def tree(name, part, cap):
+    return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, max_triangles=cap)
+
+fir_a = tree("fir_tree_01", "fir_tree_01_a", 700000)
+fir_b = tree("fir_tree_01", "fir_tree_01_b", 600000)
+fir_c = tree("fir_tree_01", "fir_tree_01_c", 600000)
+young_a = tree("fir_sapling_medium", "fir_sapling_medium_a", 300000)
+young_b = tree("fir_sapling_medium", "fir_sapling_medium_b", 300000)
+young_c = tree("fir_sapling_medium", "fir_sapling_medium_c", 250000)
+pine_a = tree("pine_sapling_medium", "pine_sapling_medium_a", 450000)
+pine_b = tree("pine_sapling_medium", "pine_sapling_medium_b", 400000)
+pine_c = tree("pine_sapling_medium", "pine_sapling_medium_c", 350000)
+seedling_a = scaled("fir_sapling", "fir_sapling_a", 1.6)
+seedling_b = scaled("fir_sapling", "fir_sapling_b", 1.6)
+seedling_c = scaled("pine_sapling_small", "pine_sapling_small_b", 1.0)
+fern_a = scan("fern_02", "fern_02_a", 0.0, 1.3)
+fern_b = scan("fern_02", "fern_02_c", 0.0, 1.1)
+fern_c = scan("fern_02", "fern_02_d", 0.0, 1.2)
+bush_a = scan("searsia_lucida", "searsia_lucida_a", 0.0, 2.6)
+bush_b = scan("searsia_lucida", "searsia_lucida_d", 0.0, 2.2)
+bush_c = scan("othonna_cerarioides", "othonna_cerarioides_b", 0.0, 2.0)
+shrub = scan("shrub_04", "", 0.0, 1.0)
+weed_a = scan("weed_plant_02", "weed_plant_02_a", 0.0, 0.9)
+nettle_a = scan("nettle_plant", "nettle_plant_medium_a", 0.0, 0.7)
+flower_a = scan("flower_empodium", "flower_empodium_a", 0.0, 0.9)
+flower_b = scan("flower_empodium", "flower_empodium_d", 0.0, 0.8)
+dandelion = scan("dandelion_01", "", 0.0, 1.6)
+rock_a = scan("rock_moss_set_01", "rock_moss_set_01_rock01", 0.0, 2.2)
+rock_b = scan("rock_moss_set_01", "rock_moss_set_01_rock04", 0.0, 1.8)
+rock_c = scan("rock_moss_set_02", "rock_moss_set_02_rock09", 0.0, 2.4)
+rock_d = scan("rock_moss_set_01", "rock_moss_set_01_rock02", 0.0, 1.4)
+rock_e = scan("rock_moss_set_02", "rock_moss_set_02_rock12", 0.0, 1.1)
+rock_f = scan("rock_moss_set_01", "rock_moss_set_01_rock06", 0.0, 0.8)
+boulder = scan("boulder_01", "", 0.0, 2.6)
+boulder_b = scan("namaqualand_boulder_03", "", 0.0, 3.2)
+cobble_a = scan("rock_moss_set_01", "rock_moss_set_01_rock06", 0.0, 0.5)
+cobble_b = scan("rock_moss_set_02", "rock_moss_set_02_rock12", 0.0, 0.38)
+cobble_c = scan("rock_moss_set_01", "rock_moss_set_01_rock02", 0.0, 0.3)
+log_a = scan("dead_tree_trunk", "", 0.0, 3.6)
+log_b = scan("dead_tree_trunk_02", "", 0.0, 4.6)
+stump_a = scan("tree_stump_01", "", 0.0, 1.2)
+stump_b = scan("tree_stump_02", "", 0.0, 1.3)
+branches = scan("dry_branches_medium_01", "", 0.0, 1.4)
+roots = scan("pine_roots", "pine_roots_a", 0.0, 1.9)
+
+# A grass tile: a 4 m square of clumps as ONE mesh, so a meadow is thousands of tiles and not millions of clumps.
+def clump(part, s):
+    return import_asset(path=M + "grass_medium_01/grass_medium_01_1k.gltf", part=part, scale=s)
+
+def grass_tile(seed, count, a, b, c):
+    # a round patch that thins toward its rim: square tiles show as squares from above, and round ones overlap into a meadow
+    pts = scatter(grid(size=[5.2, 5.2], rows=1, cols=1), count=count, seed=seed, pscale_min=0.7, pscale_max=1.5)
+    inside = group_by_expression(pts, name="disc", expression="length(@P) < 1.5 + 1.1 * @pscale * @pscale * 0.5")
+    return realize(copy_variants(blast(inside, group="disc", keep_selected=1), a, b, c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=seed))
+
+tall_a = clump("grass_medium_01_tall_a", 2.8)
+tall_b = clump("grass_medium_01_tall_b", 2.8)
+tall_c = clump("grass_medium_01_tall_c", 3.1)
+large_a = clump("grass_medium_01_large_a", 2.6)
+large_b = clump("grass_medium_01_large_b", 2.4)
+mid_a = clump("grass_medium_01_mid_a", 2.8)
+tile_a = grass_tile(71, 760, tall_a, large_b, mid_a)
+tile_b = grass_tile(72, 700, large_a, tall_b, large_b)
+tile_c = grass_tile(73, 640, mid_a, tall_c, large_a)
+
+# ---- placement on the near level. Rules read the soft masks, the slope, the distance to the channel's edge (river_sd, metres,
+# negative in the water) and absolute elevation. `hero` is 1 around the hero reach and 0 far from it. ----
+ATTRS = "slope_deg elev river_sd chan hero w_ground_forest w_ground_flat w_ground_dirt w_ground_gravel w_ground_rock w_ground_snow w_ground_bed w_ground_bank"
+def spots_on(surface, count, min_dist, seed, smin, smax):
+    p = scatter_poisson(surface, count=count, min_dist=min_dist, seed=seed, pscale_min=smin, pscale_max=smax)
+    return attribute_transfer(p, surface, attribs=ATTRS)
+
+def spots(count, min_dist, seed, smin, smax):
+    return spots_on(land_near, count, min_dist, seed, smin, smax)
+
+def close(count, min_dist, seed, smin, smax):
+    return spots_on(land_hero, count, min_dist, seed, smin, smax)
+
+def keep(points, name, expr):
+    g = group_by_expression(points, name=name, expression=expr)
+    return blast(g, group=name, keep_selected=1)
+
+def three(points, a, b, c, seed):
+    return copy_variants(points, a, b, c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=seed)
+
+DRY = " && @river_sd > 4.5"
+# Three scatters, each mixing one tall fir, one young fir and one pine, so no kind of tree stands in a clump of its own: nine
+# prototypes share the forest evenly, which is what keeps one tree from repeating in view.
+tall_pts = keep(spots(24000, 6.8, 21, 0.8, 1.45), "t1", "@w_ground_forest > 0.3 && @slope_deg < 35.0 && @elev < 2930.0" + DRY)
+young_pts = keep(spots(24000, 6.8, 22, 0.8, 1.45), "t2", "@w_ground_forest > 0.22 && @slope_deg < 36.0 && @elev < 2960.0 && @river_sd > 3.2")
+pine_pts = keep(spots(24000, 6.8, 23, 0.8, 1.45), "t3", "@w_ground_forest > 0.3 && @slope_deg < 38.0 && @elev < 2960.0" + DRY)
+bush_pts = keep(spots(16000, 4.6, 28, 0.7, 1.3), "t4", "(@w_ground_forest > 0.2 || @w_ground_gravel > 0.25) && @slope_deg < 34.0 && @river_sd > 2.0")
+seedling_pts = keep(spots(22000, 3.2, 24, 0.7, 1.6), "t5", "@w_ground_forest > 0.3 && @slope_deg < 30.0 && @river_sd > 1.5")
+fern_pts = keep(spots(22000, 2.6, 25, 0.7, 1.3), "t6", "@w_ground_forest > 0.35 && @slope_deg < 28.0 && @river_sd > 1.0 && @hero < 0.6")
+meadow_pts = keep(spots(40000, 2.8, 26, 0.8, 1.3), "t7", "(@w_ground_flat > 0.3 || @w_ground_dirt > 0.3) && @slope_deg < 30.0 && @river_sd > 0.6 && @hero < 0.55")
+flower_pts = keep(spots(12000, 3.0, 27, 0.7, 1.3), "t8", "@w_ground_flat > 0.55 && @slope_deg < 16.0 && @river_sd > 2.0")
+rock_pts = keep(spots(9000, 5.0, 31, 0.6, 1.7), "t9", "@w_ground_gravel > 0.25 || (@w_ground_rock > 0.1 && @slope_deg < 44.0 && @w_ground_snow < 0.3)")
+shore_rock_pts = keep(spots(9000, 3.4, 32, 0.6, 1.8), "ta", "@river_sd > -3.0 && @river_sd < 4.0 && @chan > 0.5 && @hero < 0.7")
+deadwood_pts = keep(spots(3000, 13.0, 33, 0.8, 1.2), "tb", "@w_ground_forest > 0.45 && @slope_deg < 22.0 && @river_sd > 0.5")
+
+# the hero reach, dressed at the density an eye-level camera needs
+h_tile_pts = keep(close(6000, 2.1, 41, 0.85, 1.25), "h1", "@river_sd > 0.3 && @slope_deg < 42.0 && @w_ground_bed < 0.15 && @w_ground_bank < 0.6")
+h_fern_pts = keep(close(5000, 1.5, 42, 0.7, 1.4), "h2", "(@w_ground_forest > 0.25 || @slope_deg > 18.0) && @river_sd > 1.6 && @slope_deg < 42.0")
+h_weed_pts = keep(close(5000, 1.4, 43, 0.7, 1.3), "h3", "@river_sd > 0.8 && @river_sd < 16.5 && @slope_deg < 42.0")
+h_cobble_pts = keep(close(26000, 0.42, 44, 0.35, 1.5), "h4", "@river_sd > -3.2 && @river_sd < 2.2 && (@w_ground_bank > 0.15 || @w_ground_bed > 0.3)")
+h_rock_pts = keep(close(1500, 2.6, 45, 0.4, 1.1), "h5", "@river_sd > -4.5 && @river_sd < 5.0 && abs(@P.x - 72.0) > 9.0")
+h_log_pts = keep(close(160, 9.0, 46, 0.8, 1.3), "h6", "@river_sd > -1.0 && @river_sd < 9.0")
+
+tall = three(tall_pts, fir_a, young_a, pine_a, 51)
+young = three(young_pts, fir_b, young_b, pine_b, 52)
+pines = three(pine_pts, fir_c, young_c, pine_c, 53)
+bushes = three(bush_pts, bush_a, bush_b, bush_c, 54)
+seedlings = three(seedling_pts, seedling_a, seedling_b, seedling_c, 55)
+ferns = three(fern_pts, fern_a, fern_b, fern_c, 56)
+meadow = copy_variants(meadow_pts, tile_a, tile_b, tile_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, orient_to_normal=1, seed=57)
+flowers = three(flower_pts, flower_a, flower_b, dandelion, 58)
+rocks = three(rock_pts, rock_a, rock_b, rock_c, 59)
+shore_rocks = three(shore_rock_pts, rock_d, rock_e, rock_f, 60)
+deadwood = three(deadwood_pts, log_a, stump_a, stump_b, 61)
+h_tiles = copy_variants(h_tile_pts, tile_a, tile_b, tile_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, orient_to_normal=1, seed=62)
+h_ferns = three(h_fern_pts, fern_a, fern_b, fern_c, 63)
+h_weeds = three(h_weed_pts, weed_a, nettle_a, shrub, 64)
+h_cobbles = three(h_cobble_pts, cobble_a, cobble_b, cobble_c, 65)
+h_rocks = three(h_rock_pts, rock_d, rock_e, rock_a, 66)
+h_logs = three(h_log_pts, log_b, branches, roots, 67)
+
+# ---- the forest beyond the near level: low conifer shapes on the mid level out to 3.4 km. At that distance a tree is a dark spike
+# with a lit and a shaded side; twenty triangles each instead of two million. The hint keeps them visible for kilometres in an
+# engine (as instanced tiles it can cull) and has an offline render read them as one merged mesh, not 200 000 objects. ----
+spike = lod_hint(set_material(merge(tube(radius=1.9, radius_top=0.0, height=9.0, cols=5, caps=0, center=[0.0, 4.5, 0.0]), tube(radius=1.25, radius_top=0.0, height=6.0, cols=5, caps=0, center=[0.0, 9.5, 0.0])), name="far_tree"), cull=4200.0, merge=1)
+forest_cells = group_by_expression(mid_w, name="fc", expression="@w_far_forest > 0.45 && length(vec3(@P.x, 0.0, @P.z)) < 3400.0 && max(abs(@P.x), abs(@P.z)) > 790.0")
+far_tree_pts = scatter(blast(forest_cells, group="fc", keep_selected=1), count=200000, seed=81, pscale_min=0.75, pscale_max=1.7)
+far_forest = copy_to_points(spike, far_tree_pts, rot_y_random=360.0, seed=82)
+
+# ---- the crossing: a timber footbridge (a CC0 pier), a thatched hut and an open woodshed on the north bank ----
+def slab(sx, sy, sz, cx, cy, cz, rz, name):
+    return set_material(transform(box(size=[sx, sy, sz]), t=[cx, cy, cz], r=[0.0, 0.0, rz]), name=name)
+
+def roof(w, d, y_eave, over, pitch_tan, pitch_deg, thick):
+    run = w * 0.5 + over
+    run_len = run * 1.0 / 0.669   # 1 / cos(48 degrees)
+    rise = w * 0.5 * pitch_tan
+    cy = y_eave + rise - run * 0.5 * pitch_tan + thick
+    east = slab(run_len, thick, d + over * 2.0, run * 0.5, cy, 0.0, 0.0 - pitch_deg, "hut_roof")
+    west = slab(run_len, thick, d + over * 2.0, 0.0 - run * 0.5, cy, 0.0, pitch_deg, "hut_roof")
+    ridge = slab(0.28, 0.24, d + over * 2.0 + 0.3, 0.0, y_eave + rise + thick + 0.1, 0.0, 0.0, "hut_wood")
+    return merge(east, west, ridge)
+
+def hut(w, d, h):
+    # the stone footing runs a metre into the ground, so the hut sits right on a slope
+    base = slab(w + 0.4, 1.6, d + 0.4, 0.0, -0.4, 0.0, 0.0, "hut_stone")
+    walls = slab(w, h, d, 0.0, 0.4 + h * 0.5, 0.0, 0.0, "hut_wall")
+    gable = set_material(wrangle(box(size=[w, w * 0.555, d * 0.98], center=[0.0, 0.4 + h + w * 0.2775, 0.0]), code="""@P.x = @P.x * clamp(1.0 - (@P.y - ch("y0")) / ch("gh"), 0.0, 1.0);""", channels={"y0": 0.4 + h, "gh": w * 0.555}), name="hut_wall")
+    post_a = slab(0.24, h + 0.5, 0.24, w * 0.5, 0.25 + h * 0.5, d * 0.5, 0.0, "hut_wood")
+    post_b = slab(0.24, h + 0.5, 0.24, 0.0 - w * 0.5, 0.25 + h * 0.5, d * 0.5, 0.0, "hut_wood")
+    post_c = slab(0.24, h + 0.5, 0.24, w * 0.5, 0.25 + h * 0.5, 0.0 - d * 0.5, 0.0, "hut_wood")
+    post_d = slab(0.24, h + 0.5, 0.24, 0.0 - w * 0.5, 0.25 + h * 0.5, 0.0 - d * 0.5, 0.0, "hut_wood")
+    plate_a = slab(w + 0.5, 0.22, 0.26, 0.0, 0.4 + h, d * 0.5, 0.0, "hut_wood")
+    plate_b = slab(w + 0.5, 0.22, 0.26, 0.0, 0.4 + h, 0.0 - d * 0.5, 0.0, "hut_wood")
+    door = slab(1.0, 1.95, 0.12, 0.0 - w * 0.18, 0.4 + 0.975, d * 0.5 + 0.03, 0.0, "hut_door")
+    window = slab(0.8, 0.7, 0.1, w * 0.24, 0.4 + h * 0.62, d * 0.5 + 0.02, 0.0, "hut_dark")
+    frame = merge(merge(post_a, post_b, post_c, post_d), plate_a, plate_b, merge(door, window))
+    return merge(merge(base, walls, gable), frame, roof(w, d, 0.4 + h, 0.7, 1.1106, 48.0, 0.22))
+
+def shed(w, d, h):
+    post_a = slab(0.22, h + 1.0, 0.22, w * 0.5, h * 0.5 - 0.5, d * 0.5, 0.0, "hut_wood")
+    post_b = slab(0.22, h + 1.0, 0.22, 0.0 - w * 0.5, h * 0.5 - 0.5, d * 0.5, 0.0, "hut_wood")
+    post_c = slab(0.22, h + 1.0, 0.22, w * 0.5, h * 0.5 - 0.5, 0.0 - d * 0.5, 0.0, "hut_wood")
+    post_d = slab(0.22, h + 1.0, 0.22, 0.0 - w * 0.5, h * 0.5 - 0.5, 0.0 - d * 0.5, 0.0, "hut_wood")
+    beam_a = slab(w + 0.4, 0.2, 0.22, 0.0, h, d * 0.5, 0.0, "hut_wood")
+    beam_b = slab(w + 0.4, 0.2, 0.22, 0.0, h, 0.0 - d * 0.5, 0.0, "hut_wood")
+    pile = slab(w * 0.7, h * 0.42, d * 0.6, 0.0, h * 0.21, 0.0, 0.0, "hut_wall")
+    return merge(merge(post_a, post_b, post_c, post_d), merge(beam_a, beam_b, pile), roof(w, d, h, 0.5, 1.1106, 48.0, 0.18))
+
+def placed(building, x, z, turn):
+    seat = drop_to_surface(transform(grid(size=[0.2, 0.2], rows=1, cols=1), t=[x, 400.0, z]), land_near)
+    spot = blast(group_by_expression(seat, name="one", expression="""@P.x < ch("x") && @P.z < ch("z")""", channels={"x": x, "z": z}), group="one", keep_selected=1)
+    return copy_to_points(transform(building, r=[0.0, turn, 0.0]), spot)
+
+bridge = transform(import_asset(path=M + "modular_wooden_pier/modular_wooden_pier_1k.gltf"), t=[72.0, -3.26, 60.0])
+village = merge(bridge, placed(hut(6.2, 4.6, 2.5), 61.0, 42.0, 8.0), placed(shed(3.4, 2.6, 2.3), 48.0, 46.5, -16.0))
+
+trees = merge(tall, young, pines, bushes)
+ground_cover = merge(seedlings, ferns, meadow, flowers)
+props = merge(rocks, shore_rocks, deadwood)
+hero_cover = merge(merge(h_tiles, h_ferns, h_weeds), merge(h_cobbles, h_rocks, h_logs))
+terrain = merge(land_near, land_mid, land_far, water)
+world = merge(merge(terrain, far_forest, village), trees, merge(ground_cover, props), hero_cover)
+
+spec(world, "finite")
+spec(world, "instances", min=500)
+out(world)

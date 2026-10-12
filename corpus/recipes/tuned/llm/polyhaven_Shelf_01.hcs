@@ -1,0 +1,22 @@
+# polyhaven/Shelf_01 (llm-recipe, run llm)
+# polyhaven/Shelf_01: a tall bookcase: two uprights, a back panel, a plinth, a top cap and seven shelves (repair: the first fit had no shelves)
+W = 0.99062            # width
+H = 2.08732             # height
+D = 0.25062            # depth
+SIDE = 0.014          # upright width
+TOP = 0.06843           # top cap thickness
+KICK = 0.14006          # plinth height
+BACK = 0.0268          # back panel thickness
+SHELVES = 7
+SHELF_T = 0.09572
+FIRST = 0.364         # height of the lowest shelf
+GAP = 0.22461          # spacing between shelves
+
+left = box(size=[SIDE, H - TOP, D], center=[-W / 2 + SIDE / 2, (H - TOP) / 2, D / 2])
+sides = mirror(left, axis="x", offset=0)
+back = box(size=[W - 2 * SIDE, H - TOP, BACK], center=[0, (H - TOP) / 2, BACK / 2])
+plinth = box(size=[W - 2 * SIDE, KICK, D - BACK], center=[0, KICK / 2, D / 2 + BACK / 2])
+top = box(size=[W, TOP, D], center=[0, H - TOP / 2, D / 2])
+boards = array(box(size=[W - 2 * SIDE, SHELF_T, D - BACK], center=[0, FIRST, D / 2 + BACK / 2]), count=SHELVES, offset=[0, GAP, 0])
+shelf = merge(merge(sides, back, plinth), top, boards)
+out(shelf)

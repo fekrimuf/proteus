@@ -1,5 +1,6 @@
 {
  "style": "styles/alpine_meadow.json",
+ "brief": "A realistic alpine valley on a clear morning: a green meadow floor, scattered trees and boulders, forested slopes and rocky snow-topped mountains.",
  "cameras": [
   {"name": "hero", "location": [-420, 520, 600], "look_at": [0, 60, 0], "lens": 32},
   {"name": "valley", "location": [-400, 40, 60], "look_at": [0, 40, -20], "lens": 24},

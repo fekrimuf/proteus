@@ -6,7 +6,7 @@
 //!   attribution. `id` is the file's path relative to the corpus root.
 //! * `pt corpus fetch` downloads with the system `curl` (sequentially, never running anything it downloads), reads
 //!   zip members in memory (only the named member is written, under a name we choose), hashes and records them.
-//! * `pt corpus verify` re-hashes every ledger row and refuses anything that is not CC0.
+//! * `pt corpus verify` re-hashes every ledger row and refuses anything that is not CC0 or US-government public domain (`PD-USGS`).
 
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -16,12 +16,13 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub const LEDGER_COLUMNS: [&str; 8] = ["id", "source", "url", "license", "license_url", "sha256", "fetched_at", "attribution"];
-/// Licences accepted into the trial set (public-domain dedication only).
+/// Licences accepted: CC0 (a public-domain dedication) and `PD-USGS` (data released by the US Geological Survey into the public domain:
+/// "All 3DEP products available through The National Map are in the public domain and may be used without restriction"; credit requested).
 /// Tests that point `PT_CORPUS` at a temporary directory hold this lock so they cannot race.
 #[cfg(test)]
 pub static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-pub const ALLOWED_LICENSES: [&str; 1] = ["CC0-1.0"];
+pub const ALLOWED_LICENSES: [&str; 2] = ["CC0-1.0", "PD-USGS"];
 
 pub fn root() -> PathBuf {
     if let Ok(p) = std::env::var("PT_CORPUS") {
@@ -291,7 +292,7 @@ pub fn verify(manifest: &Path, ledger_path: &Path) -> Result<VerifyReport, Strin
     let mut problems = Vec::new();
     for (id, r) in &ledger.rows {
         if !ALLOWED_LICENSES.contains(&r[3].as_str()) {
-            problems.push(format!("{id}: licence '{}' is not CC0", r[3]));
+            problems.push(format!("{id}: licence '{}' is not allowed (CC0-1.0 or PD-USGS only)", r[3]));
         }
         match std::fs::read(root.join(id)) {
             Ok(b) if sha256_hex(&b) == r[5] => {}
@@ -352,7 +353,13 @@ mod tests {
         let mut l = Ledger::load(&lp).unwrap();
         l.rows.get_mut("src/a.bin").unwrap()[3] = "CC-BY-4.0".into();
         l.save(&lp).unwrap();
-        assert!(verify(&manifest, &lp).unwrap().problems.iter().any(|p| p.contains("not CC0")));
+        assert!(verify(&manifest, &lp).unwrap().problems.iter().any(|p| p.contains("not allowed")));
+        // US public-domain elevation data is accepted next to CC0
+        let mut l = Ledger::load(&lp).unwrap();
+        l.rows.get_mut("src/a.bin").unwrap()[3] = "PD-USGS".into();
+        l.rows.get_mut("src/a.bin").unwrap()[5] = sha256_hex(b"tampered");
+        l.save(&lp).unwrap();
+        assert!(verify(&manifest, &lp).unwrap().problems.is_empty());
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

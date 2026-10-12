@@ -38,8 +38,8 @@
   ],
   "cost": {
     "baseline_cpu_s": 484.7257052000001,
-    "llm_cpu_s": 144.7571697,
-    "llm_turns": 46.0
+    "llm_cpu_s": 173.45139329999998,
+    "llm_turns": 51.0
   },
   "failures": {
     "extra_material": 14,
@@ -62,16 +62,16 @@
     "kenney/platformer-kit/crate-strong"
   ],
   "llm": {
-    "attempted": 41,
-    "better_than_baseline": 23,
-    "solved": 12,
+    "attempted": 46,
+    "better_than_baseline": 28,
+    "solved": 17,
     "tiers": [
-      2,
-      10,
+      5,
+      12,
       17,
       12
     ],
-    "turns": 46.0
+    "turns": 51.0
   },
   "models": 50,
   "stack": {
@@ -85,8 +85,8 @@
     ],
     "solved": 24,
     "tiers": [
-      4,
-      20,
+      6,
+      18,
       20,
       6
     ],

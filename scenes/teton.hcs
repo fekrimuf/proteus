@@ -1,0 +1,166 @@
+# Teton valley: a glacial valley in Grand Teton National Park, Wyoming, built from REAL elevation (USGS 3DEP, public domain, fetched through the
+# licence ledger: `pt corpus fetch corpus/dem_manifest.json`). A near window at about 2.5 m per cell is blended at its edge into a far ring
+# (a 24 km square at 25 m per cell, with the near window left out) so the view runs to real ridgelines instead of a flat plane.
+# Units are metres, +Y up, +X east, +Z south. y = 0 is DATUM, the valley floor at the centre; the absolute elevation is the point attribute `elev`.
+LAT = 43.7722
+LON = -110.8232
+DATUM = 2469.0
+NEAR = 1600.0        # near window, metres square
+FAR = 24000.0        # far ring, metres square
+TREE_LINE = 3000.0   # absolute elevation (m) where forest gives way to meadow and rock
+SNOW_LINE = 3300.0
+
+near = dem(zoom=14, lat=LAT, lon=LON, size=[NEAR, NEAR], rows=640, cols=640, datum=DATUM, far_zoom=11, blend=120.0)
+far = dem(zoom=11, lat=LAT, lon=LON, size=[FAR, FAR], rows=960, cols=960, datum=DATUM, hole=[NEAR, NEAR])
+
+# ---- material layers: soft weights from slope, elevation and noise (each layer takes what the ones before left) ----
+def layered(terrain, far):
+    # layer noise: patches of 90 m near the camera; the far ring's 25 m cells cannot show features that small, so it uses broader ones
+    f1 = 0.011
+    f2 = 0.05
+    f3 = 0.03
+    if far:
+        f1 = 0.0035
+        f2 = 0.012
+        f3 = 0.008
+    shaped = normals(terrain)
+    w = wrangle(shaped, code="""
+float slope = degrees(acos(clamp(@N.y, 0.0, 1.0)));
+@slope_deg = slope;
+float n1 = noise(@P * ch("f1"));
+float n2 = noise(@P * ch("f2"));
+float rock = clamp(smoothstep(41.0, 49.0, slope + 5.0 * n2) + smoothstep(ch("tree_line") + 80.0, ch("tree_line") + 260.0, @elev) * smoothstep(18.0, 30.0, slope), 0.0, 1.0);
+float patch = smoothstep(0.05, 0.45, noise(@P * 0.006 + vec3(2.0, 0.0, 6.0)) + 0.5 * noise(@P * 0.02));
+float snow = smoothstep(ch("snow_line") - 200.0, ch("snow_line") + 100.0, @elev + 40.0 * noise(@P * 0.004)) * patch * (1.0 - smoothstep(48.0, 58.0, slope));
+float scree = smoothstep(27.0, 33.0, slope + 4.0 * n2) * smoothstep(ch("tree_line") - 250.0, ch("tree_line") + 50.0, @elev);
+float forest = smoothstep(-0.45, -0.1, n1) * (1.0 - smoothstep(37.0, 44.0, slope)) * (1.0 - smoothstep(ch("tree_line") - 120.0, ch("tree_line") + 30.0, @elev));
+float dirt = smoothstep(0.40, 0.52, noise(@P * ch("f3") + vec3(7.0, 0.0, 3.0))) * (1.0 - smoothstep(6.0, 14.0, slope));
+float water = max(@lake, @stream * (1.0 - smoothstep(10.0, 18.0, slope)));
+float rem = 1.0;
+@w_ground_water = water * rem;
+rem = rem * (1.0 - water);
+@w_ground_rock = rock * rem;
+rem = rem * (1.0 - rock);
+@w_ground_snow = snow * rem;
+rem = rem * (1.0 - snow);
+@w_ground_gravel = scree * rem;
+rem = rem * (1.0 - scree);
+@w_ground_forest = forest * rem;
+rem = rem * (1.0 - forest);
+@w_ground_dirt = dirt * rem;
+rem = rem * (1.0 - dirt);
+@w_ground_flat = rem;
+""", channels={"tree_line": TREE_LINE, "snow_line": SNOW_LINE, "f1": f1, "f2": f2, "f3": f3})
+    layers = "ground_water ground_flat ground_forest ground_dirt ground_gravel ground_rock ground_snow"
+    name = "terrain_blend"
+    if far:
+        # seen from kilometres away a forest is its canopy, not its floor: the far ring paints forest as a dark conifer green
+        w = wrangle(w, code="@w_far_forest = @w_ground_forest; @w_ground_forest = 0.0;")
+        layers = "ground_water ground_flat far_forest ground_dirt ground_gravel ground_rock ground_snow"
+        name = "terrain_far"
+    return blend_materials(w, name=name, layers=layers)
+
+rough = wrangle(normals(near), code="""
+float slope = degrees(acos(clamp(@N.y, 0.0, 1.0)));
+float inner = 1.0 - smoothstep(680.0, 790.0, max(abs(@P.x), abs(@P.z)));
+float cliff = smoothstep(24.0, 44.0, slope) * inner;
+@P.y += cliff * (fbm(@P * 0.30, 4.0) * 1.6 + fbm(@P * 1.1, 3.0) * 0.5);
+""")
+# ---- hydrology: fill basins, drain and accumulate on a 4 km window, then copy the masks onto the near window ----
+hydro_dem = dem(zoom=14, lat=LAT, lon=LON, size=[4000.0, 4000.0], rows=1600, cols=1600, datum=DATUM)
+hyd = hf_flow(hydro_dem, stream_area=25000.0, lake_depth=0.6)
+wet = attribute_transfer(rough, hyd, attribs="flow_acc twi stream lake")
+land_near = layered(wet, 0)
+
+# The far ring is 50 m per cell, so ridges and gullies finer than that are missing: add ridged relief that grows with slope, so distant
+# mountains show rock ribs and couloirs instead of smooth clay. Wavelengths are 80 m and up, which the mesh can carry.
+far_rough = wrangle(normals(far), code="""
+float slope = degrees(acos(clamp(@N.y, 0.0, 1.0)));
+float rib = 1.0 - abs(fbm(vec3(@P.x * 0.012, 0.0, @P.z * 0.012), 4.0) * 2.2);
+float seam = smoothstep(900.0, 1500.0, max(abs(@P.x), abs(@P.z)));
+@P.y += seam * smoothstep(10.0, 35.0, slope) * (pow(clamp(rib, 0.0, 1.0), 2.0) * 48.0 + fbm(@P * 0.035, 3.0) * 11.0);
+""")
+land_far = layered(wrangle(far_rough, code="@stream = 0.0; @lake = 0.0; @twi = 0.0;"), 1)
+
+# ---- vegetation: CC0 scans (Poly Haven) scattered by rules on the soft masks, keeping their authored materials ----
+M = "polyhaven/models/"
+def scan(name, part, h, size):
+    return import_asset(path=M + name + "/" + name + "_1k.gltf", part=part, height=h, size=size)
+
+jacaranda = scan("jacaranda_tree", "", 14.0, 0.0)
+pine_a = scan("pine_sapling_small", "pine_sapling_small_a", 5.0, 0.0)
+pine_b = scan("pine_sapling_small", "pine_sapling_small_b", 5.0, 0.0)
+pine_c = scan("pine_sapling_small", "pine_sapling_small_c", 5.0, 0.0)
+fern_a = scan("fern_02", "fern_02_a", 0.0, 1.3)
+fern_b = scan("fern_02", "fern_02_c", 0.0, 1.1)
+fern_c = scan("fern_02", "fern_02_d", 0.0, 1.2)
+shrub = scan("shrub_04", "", 0.0, 1.0)
+bush_a = scan("searsia_lucida", "searsia_lucida_a", 0.0, 3.0)
+bush_b = scan("searsia_lucida", "searsia_lucida_d", 0.0, 2.6)
+bush_c = scan("searsia_lucida", "searsia_lucida_f", 0.0, 3.4)
+bush_d = scan("othonna_cerarioides", "othonna_cerarioides_b", 0.0, 2.4)
+bush_e = scan("othonna_cerarioides", "othonna_cerarioides_e", 0.0, 2.0)
+bush_f = scan("othonna_cerarioides", "othonna_cerarioides_g", 0.0, 2.8)
+weed_a = scan("weed_plant_02", "weed_plant_02_a", 0.0, 0.9)
+weed_b = scan("weed_plant_02", "weed_plant_02_c", 0.0, 0.8)
+weed_c = scan("weed_plant_02", "weed_plant_02_e", 0.0, 1.0)
+nettle_a = scan("nettle_plant", "nettle_plant_medium_a", 0.0, 0.7)
+nettle_b = scan("nettle_plant", "nettle_plant_tall_a", 0.0, 0.9)
+flower_a = scan("flower_empodium", "flower_empodium_a", 0.0, 0.9)
+flower_b = scan("flower_empodium", "flower_empodium_d", 0.0, 0.8)
+flower_c = scan("flower_empodium", "flower_empodium_b", 0.0, 0.85)
+rock_a = scan("rock_moss_set_01", "rock_moss_set_01_rock01", 0.0, 2.2)
+rock_b = scan("rock_moss_set_01", "rock_moss_set_01_rock04", 0.0, 1.8)
+rock_c = scan("rock_moss_set_02", "rock_moss_set_02_rock09", 0.0, 2.4)
+rock_d = scan("rock_moss_set_01", "rock_moss_set_01_rock02", 0.0, 2.0)
+rock_e = scan("rock_moss_set_02", "rock_moss_set_02_rock12", 0.0, 2.6)
+rock_f = scan("rock_moss_set_01", "rock_moss_set_01_rock06", 0.0, 1.6)
+boulder = scan("namaqualand_boulder_03", "", 0.0, 3.2)
+log = scan("dead_tree_trunk", "", 0.0, 3.5)
+stump = scan("tree_stump_01", "", 0.0, 1.2)
+
+# Scatter on the NEAR window only (the far ring carries its forest as a painted layer). Counts are per 2.56 km2, about 3.2 times the
+# steel-thread valley. Rules are in height above the valley floor (@P.y) and absolute elevation (@elev, metres above sea level).
+def spots(count, min_dist, seed, smin, smax):
+    p = scatter_poisson(land_near, count=count, min_dist=min_dist, seed=seed, pscale_min=smin, pscale_max=smax)
+    return attribute_transfer(p, land_near, attribs="slope_deg elev stream lake twi w_ground_forest w_ground_flat w_ground_dirt w_ground_gravel w_ground_rock w_ground_snow w_ground_water")
+
+def keep(points, name, expr):
+    g = group_by_expression(points, name=name, expression=expr)
+    return blast(g, group=name, keep_selected=1)
+
+DRY = " && @stream < 0.12 && @lake < 0.5"
+forest_ok = "@w_ground_forest > 0.3 && @slope_deg < 32.0" + DRY
+broadleaf_pts = keep(spots(9000, 14.0, 21, 0.9, 1.3), "tb", "@w_ground_forest > 0.5 && @slope_deg < 16.0 && @P.y < 60.0" + DRY)
+conifer_pts = keep(spots(52000, 5.0, 22, 1.8, 3.4), "tc", "@w_ground_forest > 0.3 && @slope_deg < 36.0 && @elev < 3050.0" + DRY)
+bush_pts_1 = keep(spots(18000, 4.0, 28, 0.8, 1.4), "tb1", forest_ok)
+bush_pts_2 = keep(spots(18000, 4.0, 29, 0.8, 1.4), "tb2", "(@w_ground_forest > 0.2 || @w_ground_gravel > 0.2) && @slope_deg < 34.0" + DRY)
+understory_pts = keep(spots(40000, 1.9, 23, 0.7, 1.3), "tu", "@w_ground_forest > 0.35 && @slope_deg < 28.0" + DRY)
+meadow_pts_1 = keep(spots(21000, 2.4, 24, 0.7, 1.3), "tm1", "@w_ground_flat > 0.55 && @slope_deg < 16.0" + DRY)
+meadow_pts_2 = keep(spots(21000, 2.4, 30, 0.7, 1.3), "tm2", "@w_ground_flat > 0.55 && @slope_deg < 16.0" + DRY)
+rock_pts_1 = keep(spots(8000, 5.0, 25, 0.7, 1.7), "tr1", "@w_ground_gravel > 0.25 || (@w_ground_rock > 0.1 && @slope_deg < 44.0 && @w_ground_snow < 0.3)")
+rock_pts_2 = keep(spots(8000, 5.0, 31, 0.7, 1.7), "tr2", "@w_ground_gravel > 0.25 || (@w_ground_rock > 0.1 && @slope_deg < 44.0 && @w_ground_snow < 0.3)")
+deadwood_pts = keep(spots(2800, 14.0, 26, 0.8, 1.2), "td", "@w_ground_forest > 0.5 && @slope_deg < 20.0" + DRY)
+
+broadleaf = copy_variants(broadleaf_pts, jacaranda, jacaranda, jacaranda, weights=[1.0, 0.0, 0.0], rot_y_random=360.0, seed=31)
+conifer = copy_variants(conifer_pts, pine_a, pine_b, pine_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=32)
+bushes_1 = copy_variants(bush_pts_1, bush_a, bush_b, bush_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=40)
+bushes_2 = copy_variants(bush_pts_2, bush_d, bush_e, bush_f, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=41)
+ferns = copy_variants(understory_pts, fern_a, fern_b, fern_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=33)
+shrubs = copy_variants(understory_pts, shrub, shrub, shrub, weights=[1.0, 0.0, 0.0], rot_y_random=360.0, seed=34)
+meadow_1 = copy_variants(meadow_pts_1, flower_a, weed_a, nettle_a, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=35)
+meadow_2 = copy_variants(meadow_pts_2, flower_b, weed_b, nettle_b, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=36)
+meadow_3 = copy_variants(meadow_pts_2, flower_c, weed_c, weed_c, weights=[1.0, 1.0, 0.0], rot_y_random=360.0, seed=37)
+rocks_1 = copy_variants(rock_pts_1, rock_a, rock_b, rock_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=38)
+rocks_2 = copy_variants(rock_pts_2, rock_d, rock_e, rock_f, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=39)
+deadwood = copy_variants(deadwood_pts, log, stump, boulder, weights=[1.0, 1.0, 0.0], rot_y_random=360.0, seed=42)
+
+trees = merge(broadleaf, conifer, bushes_1, bushes_2)
+ground_cover = merge(ferns, shrubs, meadow_1, meadow_2)
+props = merge(meadow_3, rocks_1, rocks_2, deadwood)
+terrain = merge(land_near, land_far)
+world = merge(terrain, trees, ground_cover, props)
+
+spec(world, "finite")
+spec(world, "instances", min=500)
+out(world)

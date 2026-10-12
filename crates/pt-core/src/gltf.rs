@@ -665,11 +665,13 @@ impl Builder {
         self.acc(v, 5126, n, ty, minmax)
     }
 
-    /// Embed a PNG file as an image + texture (clamped, mipmapped); the file's bytes go into the buffer unchanged.
+    /// Embed a PNG or JPEG file as an image + texture (clamped, mipmapped); the file's bytes go into the buffer unchanged.
     fn texture_from_file(&mut self, path: &str) -> Option<usize> {
         let bytes = std::fs::read(path).ok()?;
         let v = self.view(&bytes, None);
-        self.images.push(json!({"bufferView": v, "mimeType": "image/png"}));
+        let lower = path.to_ascii_lowercase();
+        let mime = if lower.ends_with(".jpg") || lower.ends_with(".jpeg") { "image/jpeg" } else { "image/png" };
+        self.images.push(json!({"bufferView": v, "mimeType": mime}));
         self.samplers.push(json!({"magFilter": 9729, "minFilter": 9987, "wrapS": 33071, "wrapT": 33071}));
         self.textures.push(json!({"source": self.images.len() - 1, "sampler": self.samplers.len() - 1}));
         Some(self.textures.len() - 1)
@@ -699,18 +701,125 @@ impl Builder {
         let authored = record.and_then(|r| Some((r.get("source")?.as_str()?.to_string(), r.get("index")?.as_u64()? as usize))).and_then(|(src, idx)| self.copy_material(&src, idx, name));
         let baked_material = if authored.is_none() { self.baked_material(name, layers, baked) } else { None };
         self.materials.push(authored.or(baked_material).unwrap_or_else(|| {
-            json!({
-                "name": name,
-                "pbrMetallicRoughness": {"baseColorFactor": [0.8, 0.8, 0.8, 1.0], "metallicFactor": 0.0, "roughnessFactor": 0.8},
-                "extras": layers.map_or_else(|| json!({"proteus_material": name}), |l| json!({"proteus_material": name, "proteus_layers": l})),
-            })
+            // `lod_shell` takes its colour from the point colour; every other unknown name is a grey placeholder the renderer binds by NAME
+            let shell = name == "lod_shell";
+            let mut extras = layers.map_or_else(|| json!({"proteus_material": name}), |l| json!({"proteus_material": name, "proteus_layers": l}));
+            if shell {
+                extras["proteus_flat"] = json!(true);
+            }
+            let grey = if shell { 1.0 } else { 0.8 };
+            json!({"name": name, "pbrMetallicRoughness": {"baseColorFactor": [grey, grey, grey, 1.0], "metallicFactor": 0.0, "roughnessFactor": 0.8}, "extras": extras})
         }));
         self.material_ids.insert(name.to_string(), self.materials.len() - 1);
         self.materials.len() - 1
     }
 
+    /// A material the style gives one flat colour (`detail["flat:<name>"] = {"color": [r, g, b] linear, "roughness": x}`): water,
+    /// a far stand-in, a dark window. The engine file says the colour instead of a grey placeholder.
+    fn flat_material(&mut self, name: &str, flat: &Value) -> usize {
+        if let Some(&i) = self.material_ids.get(name) {
+            return i;
+        }
+        let c: Vec<f64> = flat.get("color").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_f64).collect()).unwrap_or_default();
+        let rgb = if c.len() >= 3 { [c[0], c[1], c[2]] } else { [0.5, 0.5, 0.5] };
+        self.materials.push(json!({
+            "name": name,
+            "pbrMetallicRoughness": {"baseColorFactor": [rgb[0], rgb[1], rgb[2], 1.0], "metallicFactor": 0.0, "roughnessFactor": flat.get("roughness").and_then(Value::as_f64).unwrap_or(0.8)},
+            "extras": {"proteus_material": name, "proteus_flat": true},
+        }));
+        self.material_ids.insert(name.to_string(), self.materials.len() - 1);
+        self.materials.len() - 1
+    }
+
+    /// A library material on geometry that has no UVs of its own (a procedural wall, a roof): the scan's colour map, tiled
+    /// (`detail["library:<name>"] = {"diff": file, "scale_m": metres per tile, "tint": [r, g, b], "roughness": x}`). The mesh
+    /// writer gives such primitives box-projected UVs, which is what the renderer's triplanar projection does per pixel.
+    fn library_material(&mut self, name: &str, lib: &Value) -> Option<usize> {
+        if let Some(&i) = self.material_ids.get(name) {
+            return Some(i);
+        }
+        let file = lib.get("diff")?.as_str()?;
+        let bytes = std::fs::read(file).ok()?;
+        let v = self.view(&bytes, None);
+        let mime = if file.to_ascii_lowercase().ends_with(".png") { "image/png" } else { "image/jpeg" };
+        self.images.push(json!({"bufferView": v, "mimeType": mime}));
+        self.samplers.push(json!({"magFilter": 9729, "minFilter": 9987, "wrapS": 10497, "wrapT": 10497}));
+        self.textures.push(json!({"source": self.images.len() - 1, "sampler": self.samplers.len() - 1}));
+        let t: Vec<f64> = lib.get("tint").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_f64).collect()).unwrap_or_default();
+        let tint = if t.len() >= 3 { [t[0], t[1], t[2]] } else { [1.0, 1.0, 1.0] };
+        self.materials.push(json!({
+            "name": name,
+            "pbrMetallicRoughness": {"baseColorTexture": {"index": self.textures.len() - 1}, "baseColorFactor": [tint[0], tint[1], tint[2], 1.0], "metallicFactor": 0.0, "roughnessFactor": lib.get("roughness").and_then(Value::as_f64).unwrap_or(0.85)},
+            "extras": {"proteus_material": name, "proteus_library": true},
+        }));
+        self.material_ids.insert(name.to_string(), self.materials.len() - 1);
+        Some(self.materials.len() - 1)
+    }
+
+    /// One primitive with its own vertices and box-projected UVs (three vertices per triangle, the face normal, and UVs from the
+    /// two axes the face lies along, in tiles of `scale` metres).
+    fn box_mapped(&mut self, g: &Geometry, idx: &[u32], scale: f32, material: usize) -> Value {
+        let p = g.p();
+        let n_v = idx.len();
+        let (mut pos, mut nrm, mut uv) = (Vec::with_capacity(n_v * 3), Vec::with_capacity(n_v * 3), Vec::with_capacity(n_v * 2));
+        let (mut lo, mut hi) = ([f32::MAX; 3], [f32::MIN; 3]);
+        for t in idx.chunks_exact(3) {
+            let (a, b, c) = (p[t[0] as usize], p[t[1] as usize], p[t[2] as usize]);
+            let n = math::normalize(math::cross(math::sub(b, a), math::sub(c, a)));
+            if n[0] * n[0] + n[1] * n[1] + n[2] * n[2] < 0.25 {
+                continue; // a collapsed triangle (the ridge of a gable) has no face to map and no normal to write
+            }
+            let (u, v) = if n[0].abs() >= n[1].abs() && n[0].abs() >= n[2].abs() {
+                (2, 1)
+            } else if n[1].abs() >= n[2].abs() {
+                (0, 2)
+            } else {
+                (0, 1)
+            };
+            for q in [a, b, c] {
+                for k in 0..3 {
+                    lo[k] = lo[k].min(q[k]);
+                    hi[k] = hi[k].max(q[k]);
+                }
+                pos.extend_from_slice(&q);
+                nrm.extend_from_slice(&n);
+                uv.extend_from_slice(&[q[u] / scale, -q[v] / scale]);
+            }
+        }
+        let n_v = pos.len() / 3;
+        let pa = self.f32_acc(&pos, "VEC3", n_v, Some(34962), Some((lo, hi)));
+        let na = self.f32_acc(&nrm, "VEC3", n_v, Some(34962), None);
+        let ua = self.f32_acc(&uv, "VEC2", n_v, Some(34962), None);
+        let seq: Vec<u32> = (0..n_v as u32).collect();
+        let view = self.view(bytemuck::cast_slice(&seq), Some(34963));
+        let ia = self.acc(view, 5125, n_v, "SCALAR", None);
+        json!({"attributes": {"POSITION": pa, "NORMAL": na, "TEXCOORD_0": ua}, "indices": ia, "material": material})
+    }
+
     /// One mesh with a primitive per material (unassigned triangles first); `None` if there is no surface.
     fn mesh(&mut self, g: &Geometry) -> Option<usize> {
+        let prims = self.primitives(g)?;
+        self.meshes.push(json!({"primitives": prims.into_iter().map(|(_, p, _)| p).collect::<Vec<_>>()}));
+        Some(self.meshes.len() - 1)
+    }
+
+    /// One mesh PER MATERIAL of the geometry (they share the vertex accessors): (material name, mesh, horizontal extent in
+    /// metres). An engine culls and shades per node, so a world's base mesh is written this way for it: the far terrain level,
+    /// the near one, the water and a hut are then separate things it can treat differently.
+    fn meshes_by_material(&mut self, g: &Geometry) -> Vec<(Option<String>, usize, f32)> {
+        let Some(prims) = self.primitives(g) else { return vec![] };
+        prims
+            .into_iter()
+            .map(|(name, p, extent)| {
+                self.meshes.push(json!({"primitives": [p]}));
+                (name, self.meshes.len() - 1, extent)
+            })
+            .collect()
+    }
+
+    /// The primitives of a geometry, one per material (unassigned triangles first), with the material's name and the horizontal
+    /// extent of its triangles; `None` if there is no surface.
+    fn primitives(&mut self, g: &Geometry) -> Option<Vec<(Option<String>, Value, f32)>> {
         let tris_of: Vec<Vec<[u32; 3]>> = (0..g.n_prims())
             .map(|i| {
                 let pr = g.prim_points(i);
@@ -735,9 +844,33 @@ impl Builder {
             let col: Vec<f32> = cd.iter().flatten().map(|v| v.clamp(0.0, 1.0)).collect();
             attributes["COLOR_0"] = json!(self.f32_acc(&col, "VEC3", cd.len(), Some(34962), None));
         }
+        let mut repaired_normals: Option<Vec<[f32; 3]>> = None;
         if let Some(n) = g.point.get("N").and_then(Column::as_v3).filter(|c| c.len() == g.n_points()) {
-            let flat: Vec<f32> = n.iter().flatten().copied().collect();
+            // A merge zero-fills `N` for the parts that had none (a procedural hut next to a terrain with normals), and a zero
+            // normal is an error in a glTF: those points get the area-weighted normal of their own faces.
+            let mut nn: Vec<[f32; 3]> = n.to_vec();
+            let short = |v: &[f32; 3]| v[0] * v[0] + v[1] * v[1] + v[2] * v[2] < 0.25;
+            if nn.iter().any(short) {
+                let p = g.p();
+                let mut acc = vec![[0.0f32; 3]; nn.len()];
+                for t in tris_of.iter().flatten() {
+                    let f = math::cross(math::sub(p[t[1] as usize], p[t[0] as usize]), math::sub(p[t[2] as usize], p[t[0] as usize]));
+                    for &v in t {
+                        for k in 0..3 {
+                            acc[v as usize][k] += f[k];
+                        }
+                    }
+                }
+                for (v, a) in nn.iter_mut().zip(&acc) {
+                    if short(v) {
+                        let u = math::normalize(*a);
+                        *v = if short(&u) { [0.0, 1.0, 0.0] } else { u };
+                    }
+                }
+            }
+            let flat: Vec<f32> = nn.iter().flatten().copied().collect();
             attributes["NORMAL"] = json!(self.f32_acc(&flat, "VEC3", n.len(), Some(34962), None));
+            repaired_normals = Some(nn);
         }
         if let Some(Column::V2(uv)) = g.point.get("uv").filter(|c| c.len() == g.n_points()) {
             let flat: Vec<f32> = uv.iter().flatten().copied().collect();
@@ -746,7 +879,8 @@ impl Builder {
         let authored = g.detail.keys().any(|k| k.starts_with(ASSET_MATERIAL_PREFIX) || k.starts_with("baked:"));
         if let (true, Some(nv), Some(Column::V2(uv))) = (authored, g.point.get("N").and_then(Column::as_v3).filter(|c| c.len() == g.n_points()), g.point.get("uv").filter(|c| c.len() == g.n_points())) {
             let all: Vec<u32> = tris_of.iter().flatten().flatten().copied().collect();
-            let flat: Vec<f32> = tangents(g.p(), nv, uv, &all).iter().flatten().copied().collect();
+            // the repaired normals, not the stored ones: a zero normal gives a zero tangent, which is an error in a glTF too
+            let flat: Vec<f32> = tangents(g.p(), repaired_normals.as_deref().unwrap_or(nv), uv, &all).iter().flatten().copied().collect();
             attributes["TANGENT"] = json!(self.f32_acc(&flat, "VEC4", g.n_points(), Some(34962), None));
         }
         for (col, attr) in [("Wt0", "_WEIGHTS_0"), ("Wt1", "_WEIGHTS_1")] {
@@ -755,8 +889,28 @@ impl Builder {
                 attributes[attr] = json!(self.f32_acc(&flat, "VEC4", w.len(), Some(34962), None));
             }
         }
-        let mut prims = Vec::new();
+        let mut prims: Vec<(Option<String>, Value, f32)> = Vec::new();
+        let extent_of = |idx: &[u32]| -> f32 {
+            let p = g.p();
+            let (mut lo, mut hi) = ([f32::MAX; 2], [f32::MIN; 2]);
+            for &i in idx {
+                let q = p[i as usize];
+                lo = [lo[0].min(q[0]), lo[1].min(q[2])];
+                hi = [hi[0].max(q[0]), hi[1].max(q[2])];
+            }
+            (hi[0] - lo[0]).max(hi[1] - lo[1]).max(0.0)
+        };
         for (m, idx) in by_mat {
+            if let Some(name) = m {
+                if let Some(lib) = g.detail.get(&format!("library:{name}")) {
+                    if let Some(mat) = self.library_material(name, lib) {
+                        let scale = lib.get("scale_m").and_then(Value::as_f64).unwrap_or(1.0).max(1e-3) as f32;
+                        let boxed = self.box_mapped(g, &idx, scale, mat);
+                        prims.push((Some(name.to_string()), boxed, extent_of(&idx)));
+                        continue;
+                    }
+                }
+            }
             let v = self.view(bytemuck::cast_slice(&idx), Some(34963));
             let ia = self.acc(v, 5125, idx.len(), "SCALAR", None);
             let mut p = json!({"attributes": attributes, "indices": ia});
@@ -764,12 +918,14 @@ impl Builder {
                 let record = g.detail.get(&format!("{ASSET_MATERIAL_PREFIX}{name}"));
                 let layers = g.detail.get(&format!("layers:{name}"));
                 let baked = g.detail.get(&format!("baked:{name}"));
-                p["material"] = json!(self.material(name, record, layers, baked));
+                p["material"] = json!(match g.detail.get(&format!("flat:{name}")) {
+                    Some(flat) if record.is_none() && baked.is_none() => self.flat_material(name, flat),
+                    _ => self.material(name, record, layers, baked),
+                });
             }
-            prims.push(p);
+            prims.push((m.map(String::from), p, extent_of(&idx)));
         }
-        self.meshes.push(json!({"primitives": prims}));
-        Some(self.meshes.len() - 1)
+        Some(prims)
     }
 }
 
@@ -834,7 +990,7 @@ pub fn build(g: &Geometry, node_limit: usize) -> (Value, Vec<u8>) {
 }
 
 /// LOD exports write one node per instance and level; above this many nodes the exporter falls back to a single level.
-pub const LOD_NODE_LIMIT: usize = 80_000;
+pub const LOD_NODE_LIMIT: usize = 400_000;
 
 /// [`build`] with levels of detail: every prototype becomes a chain of meshes (see `lod`), every instance one node per
 /// level named `inst_<i>__lod<l>` whose extras carry `proteus_lod` and `proteus_lod_range` (metres, scaled by the instance).
@@ -863,8 +1019,23 @@ pub fn build_lod(g: &Geometry, node_limit: usize, lod: Option<&crate::lod::LodPo
         for &p in inst.proto_id.iter() {
             counts[p as usize] += 1;
         }
+        // Offline exports: a prototype that asks for it (`lod_hint`, merge) is written as ONE mesh of all its instances. A stand-in
+        // forest of 200 000 tiny cones is 200 000 objects for a renderer's importer otherwise.
+        let mut merged = vec![false; inst.protos.len()];
+        if lod.is_none() {
+            for p in (0..inst.protos.len()).filter(|&p| counts[p] > 0 && crate::lod::hinted_merge(&inst.protos[p])) {
+                let xf: Vec<Mat34> = (0..inst.len()).filter(|&i| inst.proto_id[i] as usize == p).map(|i| inst.xf[i]).collect();
+                let n = xf.len();
+                let sub = Geometry { instances: Some(crate::geo::Instances { protos: vec![inst.protos[p].clone()], proto_id: Arc::new(vec![0; n]), xf: Arc::new(xf), attrs: Default::default() }), ..Geometry::new() };
+                if let Some(m) = b.mesh(&sub.realize()) {
+                    nodes.push(json!({"name": format!("merged_{p}"), "mesh": m, "extras": {"proteus_merged_instances": n}}));
+                    roots.push(nodes.len() - 1);
+                    merged[p] = true;
+                }
+            }
+        }
         let mut levels: Vec<Vec<(usize, f32, f32)>> = vec![vec![]; inst.protos.len()];
-        for p in (0..inst.protos.len()).filter(|&p| counts[p] > 0) {
+        for p in (0..inst.protos.len()).filter(|&p| counts[p] > 0 && !merged[p]) {
             match lod {
                 Some(policy) => {
                     let chain = crate::lod::lod_chain(&inst.protos[p], policy);
@@ -883,9 +1054,13 @@ pub fn build_lod(g: &Geometry, node_limit: usize, lod: Option<&crate::lod::LodPo
                 }
             }
         }
-        if inst.len() <= node_limit {
+        let placed = (0..inst.len()).filter(|&i| !merged[inst.proto_id[i] as usize]).count();
+        if placed <= node_limit {
             for (i, xf) in inst.xf.iter().enumerate() {
                 let p = inst.proto_id[i] as usize;
+                if merged[p] {
+                    continue;
+                }
                 let (_, sc) = crate::io::quat_from_cols(xf);
                 let scale = (sc[0] * sc[1] * sc[2]).abs().cbrt().max(1e-6);
                 for (l, &(m, begin, end)) in levels[p].iter().enumerate() {
@@ -953,6 +1128,207 @@ pub fn build_lod(g: &Geometry, node_limit: usize, lod: Option<&crate::lod::LodPo
         doc["buffers"] = json!([{"byteLength": b.bin.len()}]);
     }
     (doc, b.bin)
+}
+
+/// Edge (metres) of the NEAR ground tiles of a prototype with a given diagonal: about twice its size, because its levels
+/// switch at a few diagonals and a whole tile switches at once.
+pub fn tile_size_for(diagonal: f32) -> f32 {
+    let want = diagonal * 2.0;
+    [32.0f32, 64.0].into_iter().find(|&t| t >= want).unwrap_or(128.0)
+}
+
+/// Share of a batch's radius its distance ranges are pushed out by. At 1 every instance gets at least the level its own
+/// distance asks for, and a whole tile stays at full detail until its FAR edge is past the switch: measured on a forest, that
+/// doubles the triangles in a frame. At 0.5 the instances at the near edge of a tile switch a little early instead.
+pub const RANGE_PUSH: f32 = 0.5;
+
+/// A far tile is this many near tiles on a side.
+pub const HLOD_FACTOR: i32 = 4;
+
+/// One instanced batch: the accessors of its instances and what the distance ranges need.
+struct Batch {
+    attributes: Value,
+    count: usize,
+    mean_scale: f32,
+    radius: f32,
+}
+
+fn batch(b: &mut Builder, inst: &crate::geo::Instances, ids: &[usize], diag: f32) -> Batch {
+    let (mut t, mut r, mut s) = (Vec::with_capacity(ids.len() * 3), Vec::with_capacity(ids.len() * 4), Vec::with_capacity(ids.len() * 3));
+    let (mut lo, mut hi) = ([f32::MAX; 3], [f32::MIN; 3]);
+    let (mut scale_sum, mut max_scale) = (0.0f64, 0.0f32);
+    for &i in ids {
+        let xf = &inst.xf[i];
+        let ([w, x, y, z], sc) = crate::io::quat_from_cols(xf);
+        let pos = [xf[3], xf[7], xf[11]];
+        for a in 0..3 {
+            lo[a] = lo[a].min(pos[a]);
+            hi[a] = hi[a].max(pos[a]);
+        }
+        let scale = (sc[0] * sc[1] * sc[2]).abs().cbrt().max(1e-6);
+        scale_sum += scale as f64;
+        max_scale = max_scale.max(scale);
+        t.extend_from_slice(&pos);
+        r.extend_from_slice(&[x, y, z, w]);
+        s.extend_from_slice(&sc);
+    }
+    let (ta, ra, sa) = (b.f32_acc(&t, "VEC3", ids.len(), None, None), b.f32_acc(&r, "VEC4", ids.len(), None, None), b.f32_acc(&s, "VEC3", ids.len(), None, None));
+    Batch {
+        attributes: json!({"TRANSLATION": ta, "ROTATION": ra, "SCALE": sa}),
+        count: ids.len(),
+        mean_scale: (scale_sum / ids.len().max(1) as f64) as f32,
+        radius: RANGE_PUSH * (0.5 * ((hi[0] - lo[0]).powi(2) + (hi[1] - lo[1]).powi(2) + (hi[2] - lo[2]).powi(2)).sqrt() + 0.5 * diag * max_scale),
+    }
+}
+
+/// Engine export for worlds of any size. Instances are grouped by ground tile and prototype, and every group is ONE node per
+/// level of detail carrying `EXT_mesh_gpu_instancing` (an engine draws it as one instanced batch). [`build_lod`] writes a node
+/// per instance and level, which is fine for a courtyard and stops an engine's importer for a forest: a square kilometre of
+/// trees and ground cover is hundreds of thousands of nodes there and a few thousand here.
+///
+/// Two sizes of tile, the way engines build hierarchical levels of detail:
+/// * NEAR tiles (`tile_size_for`, 32 to 128 m) carry every level but the last: node `tile_<proto>_<tx>_<tz>__lod<l>`;
+/// * FAR tiles (4 x 4 near tiles) carry the last level (for a plant: the shell): node `hlod_<proto>_<bx>_<bz>__lod<l>`. One
+///   batch then draws every distant tree of one kind in a quarter of a square kilometre.
+///
+/// Nodes have no transform of their own (instances are in world space). Extras: `proteus_lod`, `proteus_instances`,
+/// `proteus_proto` and `proteus_lod_range` in metres from the batch's centre: the prototype's range scaled by the batch's
+/// mean instance scale and pushed out by [`RANGE_PUSH`] of its radius.
+/// A near tile also names its far tile in `proteus_hlod_parent`, and its last level has an open end (0): it is drawn
+/// exactly when the far tile is not, which is how the two sizes hand over without a gap or a double draw. The engine bridge
+/// turns the ranges into visibility ranges and the parent into a visibility parent.
+pub fn build_tiled(g: &Geometry, policy: &crate::lod::LodPolicy) -> (Value, Vec<u8>) {
+    let mut b = Builder::new();
+    let mut nodes: Vec<Value> = Vec::new();
+    let mut roots: Vec<usize> = Vec::new();
+    let mut lod_report: Vec<Value> = Vec::new();
+    let mut groups_written = 0usize;
+    // the base mesh, one node per material: `geometry__<material>` (plain `geometry` for unassigned triangles). A node whose
+    // triangles span more than 2.5 km is distant scenery (`proteus_distant`): an engine should not draw it into its shadow maps.
+    for (name, m, extent) in b.meshes_by_material(g) {
+        let node_name = name.as_ref().map_or_else(|| "geometry".to_string(), |n| format!("geometry__{n}"));
+        nodes.push(json!({"name": node_name, "mesh": m, "extras": {"proteus_base": true, "proteus_distant": extent > 2500.0, "proteus_extent_m": extent}}));
+        roots.push(nodes.len() - 1);
+    }
+    if let Some(inst) = &g.instances {
+        let mut counts = vec![0usize; inst.protos.len()];
+        for &p in inst.proto_id.iter() {
+            counts[p as usize] += 1;
+        }
+        for p in (0..inst.protos.len()).filter(|&p| counts[p] > 0) {
+            let chain = crate::lod::lod_chain(&inst.protos[p], policy);
+            let levels: Vec<(usize, f32, f32)> = chain.iter().filter_map(|l| b.mesh(&l.geo).map(|m| (m, l.begin, l.end))).collect();
+            if levels.is_empty() {
+                continue;
+            }
+            let n = levels.len();
+            let diag = chain[0].geo.base_bounds().map_or(1.0, |(lo, hi)| ((hi[0] - lo[0]).powi(2) + (hi[1] - lo[1]).powi(2) + (hi[2] - lo[2]).powi(2)).sqrt());
+            // one level only and visible for kilometres (a stand-in forest, `lod_hint` cull): big tiles, or it is thousands of batches
+            let tile = match crate::lod::hinted_cull(&inst.protos[p]).filter(|_| n == 1) {
+                Some(cull) => [64.0f32, 128.0, 256.0].into_iter().find(|&t| t >= cull / 8.0).unwrap_or(512.0),
+                // light prototypes (ferns, cobbles, grass) do not need fine tiles: their levels cost little, and every tile is a node
+                // ground cover with levels is what a frame holds most of: small tiles, so only the nearest patches are at full detail
+                None if n >= 2 && policy.is_cover(&inst.protos[p]) => 32.0,
+                None if chain[0].triangles < 20_000 => tile_size_for(diag).max(64.0),
+                None => tile_size_for(diag),
+            };
+            let far_tile = tile * HLOD_FACTOR as f32;
+            lod_report.push(json!({"proto": p, "triangles": chain.iter().map(|l| l.triangles).collect::<Vec<_>>(),
+                "begin": chain.iter().map(|l| l.begin).collect::<Vec<_>>(), "end": chain.iter().map(|l| l.end).collect::<Vec<_>>(), "instances": counts[p], "tile_m": tile, "far_tile_m": if n >= 2 { far_tile } else { 0.0 }}));
+            let mine: Vec<usize> = (0..inst.len()).filter(|&i| inst.proto_id[i] as usize == p).collect();
+            let cell = |i: usize, size: f32| ((inst.xf[i][3] / size).floor() as i32, (inst.xf[i][11] / size).floor() as i32);
+            // every prototype's batches hang under one node `proto_<p>`: an engine's scene tree handles a few thousand children per
+            // node far better than sixty thousand under the root (removing one child of a flat parent is linear in its siblings)
+            let mut kids: Vec<usize> = Vec::new();
+            let cover = policy.is_cover(&inst.protos[p]);
+            let mut push = |nodes: &mut Vec<Value>, name: String, mesh: usize, bt: &Batch, level: usize, range: [f32; 2], parent: Option<&String>| {
+                let mut extras = json!({"proteus_lod": level, "proteus_lod_range": range, "proteus_instances": bt.count, "proteus_proto": p});
+                if let Some(pn) = parent {
+                    extras["proteus_hlod_parent"] = json!(pn);
+                }
+                if cover {
+                    extras["proteus_cover"] = json!(true); // ground cover: an engine should not let it cast shadows
+                }
+                nodes.push(json!({"name": name, "mesh": mesh, "extensions": {"EXT_mesh_gpu_instancing": {"attributes": bt.attributes}}, "extras": extras}));
+                kids.push(nodes.len() - 1);
+            };
+            // the last level, one batch per far tile
+            let mut parents: BTreeMap<(i32, i32), String> = BTreeMap::new();
+            if n >= 2 {
+                let mut far: BTreeMap<(i32, i32), Vec<usize>> = BTreeMap::new();
+                for &i in &mine {
+                    far.entry(cell(i, far_tile)).or_default().push(i);
+                }
+                let (mesh, _, end) = levels[n - 1];
+                let near_end = levels[n - 2].2;
+                for ((bx, bz), ids) in far {
+                    let bt = batch(&mut b, inst, &ids, diag);
+                    let name = format!("hlod_{p}_{bx}_{bz}__lod{}", n - 1);
+                    push(&mut nodes, name.clone(), mesh, &bt, n - 1, [near_end * bt.mean_scale + bt.radius, end * bt.mean_scale + bt.radius], None);
+                    parents.insert((bx, bz), name);
+                    groups_written += 1;
+                }
+            }
+            // every other level, per near tile
+            let mut near: BTreeMap<(i32, i32), Vec<usize>> = BTreeMap::new();
+            for &i in &mine {
+                near.entry(cell(i, tile)).or_default().push(i);
+            }
+            let near_levels = if n >= 2 { n - 1 } else { 1 };
+            for ((tx, tz), ids) in near {
+                let bt = batch(&mut b, inst, &ids, diag);
+                let parent = parents.get(&(tx.div_euclid(HLOD_FACTOR), tz.div_euclid(HLOD_FACTOR)));
+                for (l, &(mesh, begin, end)) in levels.iter().enumerate().take(near_levels) {
+                    let from = if l == 0 { 0.0 } else { begin * bt.mean_scale + bt.radius };
+                    let to = if n >= 2 && l + 1 == near_levels { 0.0 } else { end * bt.mean_scale + bt.radius };
+                    push(&mut nodes, format!("tile_{p}_{tx}_{tz}__lod{l}"), mesh, &bt, l, [from, to], parent);
+                }
+                groups_written += 1;
+            }
+            nodes.push(json!({"name": format!("proto_{p}"), "children": kids}));
+            roots.push(nodes.len() - 1);
+        }
+    }
+    let mut doc = json!({"asset": {"version": "2.0", "generator": "proteus"}, "scene": 0, "scenes": [{"nodes": roots}]});
+    if !nodes.is_empty() {
+        let n_nodes = nodes.len();
+        doc["nodes"] = json!(nodes);
+        doc["meshes"] = json!(b.meshes);
+        doc["bufferViews"] = json!(b.views);
+        doc["accessors"] = json!(b.accs);
+        if !b.materials.is_empty() {
+            doc["materials"] = json!(b.materials);
+        }
+        if !b.textures.is_empty() {
+            doc["textures"] = json!(b.textures);
+            doc["images"] = json!(b.images);
+        }
+        if !b.samplers.is_empty() {
+            doc["samplers"] = json!(b.samplers);
+        }
+        if groups_written > 0 {
+            b.extensions_used.insert("EXT_mesh_gpu_instancing".into());
+        }
+        if !b.extensions_used.is_empty() {
+            doc["extensionsUsed"] = json!(b.extensions_used);
+        }
+        let mut extras = serde_json::Map::new();
+        if !b.warnings.is_empty() {
+            extras.insert("proteus_warnings".into(), json!(b.warnings));
+        }
+        if !lod_report.is_empty() {
+            extras.insert("proteus_lod".into(), json!(lod_report));
+        }
+        extras.insert("proteus_tiled".into(), json!({"groups": groups_written, "nodes": n_nodes}));
+        doc["asset"]["extras"] = Value::Object(extras);
+        doc["buffers"] = json!([{"byteLength": b.bin.len()}]);
+    }
+    (doc, b.bin)
+}
+
+/// Binary glTF of [`build_tiled`]: what an engine gets.
+pub fn to_glb_tiled(g: &Geometry, policy: &crate::lod::LodPolicy) -> Vec<u8> {
+    glb_bytes(build_tiled(g, policy))
 }
 
 /// Binary glTF: named materials as primitives, vertex colour `Cd` as COLOR_0, instances kept as instances.
@@ -1156,6 +1532,110 @@ mod tests {
         let (plain, _) = build(&g, INSTANCE_NODE_LIMIT);
         assert_eq!(plain["nodes"].as_array().unwrap().len(), 3);
         assert!(plain["nodes"][0].get("extras").is_none());
+    }
+
+    #[test]
+    fn library_and_flat_materials_reach_the_engine_file_as_a_tiled_texture_and_a_colour() {
+        // a wall (two triangles facing +Z, 4 m wide and 2 m tall) in a library material, and a window in a flat one
+        let pts = vec![[0.0, 0.0, 0.0], [4.0, 0.0, 0.0], [4.0, 2.0, 0.0], [0.0, 2.0, 0.0], [1.0, 0.5, 0.01], [2.0, 0.5, 0.01], [2.0, 1.5, 0.01]];
+        let mut g = Geometry::from_polys(pts, &[vec![0, 1, 2], vec![0, 2, 3], vec![4, 5, 6]]);
+        g.assign_material("hut_wall", &[true, true, false]);
+        g.assign_material("hut_dark", &[false, false, true]);
+        let file = std::env::temp_dir().join(format!("pt_lib_test_{}.jpg", std::process::id()));
+        std::fs::write(&file, b"\xff\xd8 fake jpeg bytes").unwrap();
+        g.detail.insert("library:hut_wall".into(), json!({"diff": file.to_string_lossy(), "scale_m": 2.0, "tint": [0.5, 0.6, 0.7], "roughness": 0.9}));
+        g.detail.insert("flat:hut_dark".into(), json!({"color": [0.01, 0.02, 0.03], "roughness": 0.6}));
+        let (doc, bin) = build(&g, 10);
+        let prims = doc["meshes"][0]["primitives"].as_array().unwrap();
+        let mat = |name: &str| doc["materials"].as_array().unwrap().iter().position(|m| m["name"] == name).unwrap();
+        let wall = prims.iter().find(|p| p["material"] == mat("hut_wall")).unwrap();
+        let dark = prims.iter().find(|p| p["material"] == mat("hut_dark")).unwrap();
+        // the wall has its own six vertices with UVs: 4 m at 2 m per tile is two tiles across, one up
+        let acc = |i: &Value| &doc["accessors"][i.as_u64().unwrap() as usize];
+        assert_eq!(acc(&wall["attributes"]["POSITION"])["count"], 6);
+        assert_ne!(wall["attributes"]["POSITION"], dark["attributes"]["POSITION"], "box-mapped vertices are the primitive's own");
+        let uv_acc = acc(&wall["attributes"]["TEXCOORD_0"]);
+        let view = &doc["bufferViews"][uv_acc["bufferView"].as_u64().unwrap() as usize];
+        let off = view["byteOffset"].as_u64().unwrap() as usize;
+        let uv: Vec<f32> = bin[off..off + 48].chunks(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+        let (umax, vmin) = (uv.iter().step_by(2).fold(f32::MIN, |a, &b| a.max(b)), uv.iter().skip(1).step_by(2).fold(f32::MAX, |a, &b| a.min(b)));
+        assert!((umax - 2.0).abs() < 1e-6 && (vmin + 1.0).abs() < 1e-6, "u up to {umax}, v down to {vmin}");
+        let wm = &doc["materials"][mat("hut_wall")];
+        assert_eq!(wm["pbrMetallicRoughness"]["baseColorFactor"], json!([0.5, 0.6, 0.7, 1.0]));
+        assert_eq!(wm["extras"]["proteus_library"], true);
+        let tex = &doc["textures"][wm["pbrMetallicRoughness"]["baseColorTexture"]["index"].as_u64().unwrap() as usize];
+        assert_eq!(doc["samplers"][tex["sampler"].as_u64().unwrap() as usize]["wrapS"], 10497, "the scan repeats");
+        assert_eq!(doc["images"][tex["source"].as_u64().unwrap() as usize]["mimeType"], "image/jpeg");
+        // the window says its colour and is marked flat, so nobody counts it as a missing texture
+        let dm = &doc["materials"][mat("hut_dark")];
+        assert_eq!(dm["pbrMetallicRoughness"]["baseColorFactor"], json!([0.01, 0.02, 0.03, 1.0]));
+        assert_eq!(dm["extras"]["proteus_flat"], true);
+        assert!(dm["pbrMetallicRoughness"].get("baseColorTexture").is_none());
+        let _ = std::fs::remove_file(&file);
+    }
+
+    #[test]
+    fn tiled_export_groups_instances_by_tile_and_prototype_into_instanced_nodes() {
+        // a heavy prototype (7200 triangles, about 8.5 m across) placed 400 times over 400 x 100 m, and a tiny one placed twice
+        let n = 60u32;
+        let pts: Vec<[f32; 3]> = (0..=n).flat_map(|j| (0..=n).map(move |i| [i as f32 * 0.1, (i as f32 * 0.5).sin() * 0.05, j as f32 * 0.1])).collect();
+        let polys: Vec<Vec<u32>> = (0..n).flat_map(|j| (0..n).map(move |i| vec![j * (n + 1) + i, (j + 1) * (n + 1) + i, (j + 1) * (n + 1) + i + 1, j * (n + 1) + i + 1])).collect();
+        let heavy = Geometry::from_polys(pts, &polys);
+        let tiny = Geometry::from_polys(vec![[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], &[vec![0, 1, 2]]);
+        let mut xf: Vec<Mat34> = (0..400).map(|k| math::trs([(k % 40) as f32 * 10.0 + 1.0, 0.0, (k / 40) as f32 * 10.0 + 1.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0])).collect();
+        xf.push(math::trs([5.0, 0.0, 5.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]));
+        xf.push(math::trs([-5.0, 0.0, -5.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]));
+        let mut ids = vec![0u32; 400];
+        ids.extend([1, 1]);
+        let mut g = Geometry::new();
+        g.instances = Some(crate::geo::Instances { protos: vec![Arc::new(heavy), Arc::new(tiny)], proto_id: Arc::new(ids), xf: Arc::new(xf), attrs: Default::default() });
+        let policy = crate::lod::LodPolicy::default();
+        let (doc, _) = build_tiled(&g, &policy);
+        let nodes = doc["nodes"].as_array().unwrap();
+        // the 7200-triangle prototype (under 20 000: 64 m near tiles, 7 x 2 over 400 x 100 m) with levels 0 to 2, and 256 m far tiles
+        // (2 x 1) with the last level; the tiny one: 2 near tiles, 1 level, no far tile
+        assert_eq!((tile_size_for(8.5), tile_size_for(1.4), tile_size_for(30.0), tile_size_for(70.0)), (32.0, 32.0, 64.0, 128.0));
+        let heavy_nodes: Vec<&Value> = nodes.iter().filter(|n| n["name"].as_str().is_some_and(|s| s.starts_with("tile_0_"))).collect();
+        assert_eq!(heavy_nodes.len(), 7 * 2 * 3);
+        let far_nodes: Vec<&Value> = nodes.iter().filter(|n| n["name"].as_str().is_some_and(|s| s.starts_with("hlod_0_"))).collect();
+        assert_eq!(far_nodes.len(), 2);
+        assert!(far_nodes.iter().all(|n| n["extras"]["proteus_lod"] == 3));
+        assert_eq!(far_nodes.iter().map(|n| n["extras"]["proteus_instances"].as_u64().unwrap()).sum::<u64>(), 400, "every instance is in one far tile");
+        assert_eq!(nodes.iter().filter(|n| n["name"].as_str().is_some_and(|s| s.starts_with("tile_1_"))).count(), 2);
+        assert_eq!(nodes.iter().filter(|n| n["name"].as_str().is_some_and(|s| s.starts_with("hlod_1_"))).count(), 0);
+        assert_eq!(nodes.len(), 42 + 2 + 2 + 2, "402 instances (a node per instance and level would be over 1600 nodes); two parents, one per prototype");
+        assert_eq!(doc["scenes"][0]["nodes"].as_array().unwrap().len(), 2, "the scene's roots are the two prototype parents");
+        let parent0 = nodes.iter().find(|n| n["name"] == "proto_0").unwrap();
+        assert_eq!(parent0["children"].as_array().unwrap().len(), 42 + 2);
+        // every instance is in exactly one tile: level-0 instance counts add up
+        let placed: u64 = heavy_nodes.iter().filter(|n| n["extras"]["proteus_lod"] == 0).map(|n| n["extras"]["proteus_instances"].as_u64().unwrap()).sum();
+        assert_eq!(placed, 400);
+        // an instanced node names its three accessors, and the count of each equals the instances in the tile
+        let first = heavy_nodes[0];
+        let att = &first["extensions"]["EXT_mesh_gpu_instancing"]["attributes"];
+        let count = |k: &str| doc["accessors"][att[k].as_u64().unwrap() as usize]["count"].as_u64().unwrap();
+        assert_eq!((count("TRANSLATION"), count("ROTATION"), count("SCALE")), (first["extras"]["proteus_instances"].as_u64().unwrap(), first["extras"]["proteus_instances"].as_u64().unwrap(), first["extras"]["proteus_instances"].as_u64().unwrap()));
+        assert_eq!(doc["accessors"][att["ROTATION"].as_u64().unwrap() as usize]["type"], "VEC4");
+        assert!(first.get("matrix").is_none(), "instances are in world space; the node has no transform");
+        // ranges: level 0 starts at 0, each level starts where the one before ends, pushed out by the tile's radius
+        let range = |l: usize| {
+            let nd = heavy_nodes.iter().find(|n| n["name"].as_str().unwrap().ends_with(&format!("_0_0__lod{l}"))).unwrap();
+            (nd["extras"]["proteus_lod_range"][0].as_f64().unwrap(), nd["extras"]["proteus_lod_range"][1].as_f64().unwrap())
+        };
+        assert_eq!(range(0).0, 0.0);
+        assert!((range(1).0 - range(0).1).abs() < 1e-3 && range(1).1 > range(1).0, "{:?} {:?}", range(0), range(1));
+        assert!(range(1).0 > policy.switch_factors[1] as f64 * 8.4, "pushed out by the tile radius: {}", range(1).0);
+        // hand-over to the far tile: the last near level has an open end and names its far tile, which starts where that level would end
+        assert_eq!(range(2).1, 0.0);
+        let near0 = heavy_nodes.iter().find(|n| n["name"] == "tile_0_5_1__lod2").unwrap();
+        assert_eq!(near0["extras"]["proteus_hlod_parent"], "hlod_0_1_0__lod3", "near tile (5, 1) lies in far tile (1, 0)");
+        let far0 = far_nodes.iter().find(|n| n["name"] == "hlod_0_1_0__lod3").unwrap();
+        assert!(far0["extras"]["proteus_lod_range"][0].as_f64().unwrap() > 8.0 * 8.4 && far0["extras"]["proteus_lod_range"][1].as_f64().unwrap() > far0["extras"]["proteus_lod_range"][0].as_f64().unwrap());
+        assert!(far0.get("extras").unwrap().get("proteus_hlod_parent").is_none());
+        assert_eq!(doc["extensionsUsed"], json!(["EXT_mesh_gpu_instancing"]));
+        assert_eq!(doc["asset"]["extras"]["proteus_tiled"]["groups"], 14 + 2 + 2);
+        // same world, same file
+        assert_eq!(to_glb_tiled(&g, &policy), to_glb_tiled(&g, &policy));
     }
 
     #[test]

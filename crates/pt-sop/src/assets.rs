@@ -12,7 +12,16 @@ type Res = Result<Geometry, String>;
 type Inputs<'a> = &'a [Option<Arc<Geometry>>];
 
 pub fn schemas() -> Vec<NodeSchema> {
-    vec![sch(
+    vec![
+        sch(
+            "lod_hint",
+            "Tell the exporters how a prototype is used at scale (put it on the prototype, before copy_to_points). `cull` (metres, 0 = by size): how far it stays visible in an engine: a stand-in for a distant forest must be seen for kilometres, where a prop of its size would be dropped at a few hundred metres. `merge` = 1: an offline render gets ONE merged mesh of all its instances instead of an object per instance (hundreds of thousands of tiny objects stall a renderer's importer), while an engine still gets instanced tiles it can cull.",
+            1,
+            D::None,
+            G::Whole,
+            vec![ps("cull", json!(0.0), "Draw distance in metres in an engine (0 = from the prototype's size)."), ps("merge", json!(0), "1 = offline renders get one merged mesh of all instances.")],
+        ),
+        sch(
         "import_asset",
         "Read a glTF/GLB from the corpus (a CC0 asset with a ledger row) as geometry with UVs, normals and its authored materials. Materials become prim groups `mat:<name>__<material>` and are written back with their textures on export, so scattering it with copy_to_points keeps the real look. Set `height` to fit it to a size in metres; `ground` puts its lowest point on y=0 and centres it on x/z.",
         0,
@@ -27,13 +36,20 @@ pub fn schemas() -> Vec<NodeSchema> {
             ps("scale", json!(1.0), "Extra uniform scale applied after `height`."),
             ps("ground", json!(1), "1 = lowest point to y=0 and centre on x/z; 0 = keep the file's origin."),
             ps("materials", json!(1), "1 = keep authored materials and UVs; 0 = geometry only."),
+            ps("max_triangles", json!(0), "If > 0 and the asset has more triangles, reduce it to about this many: solid parts by edge collapse that respects UVs and normals, leaf and needle cards by keeping a share of them and enlarging the rest so the canopy stays as full. Scanned trees are millions of triangles each; a forest of them does not fit in memory otherwise. The reduced asset is cached on disk."),
         ],
-    )]
+        ),
+    ]
 }
 
-pub fn cook(kind: &str, p: &Params, _inputs: Inputs) -> Option<Res> {
+pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Option<Res> {
     match kind {
         "import_asset" => Some(import_asset(p)),
+        "lod_hint" => Some(inputs.first().and_then(|g| g.as_deref()).ok_or_else(|| "lod_hint: input 0 is not connected".to_string()).map(|g| {
+            let mut out = g.clone();
+            out.detail.insert(pt_core::lod::LOD_HINT.into(), json!({"cull_m": p.f("cull").max(0.0), "merge": p.i("merge") != 0}));
+            out
+        })),
         _ => None,
     }
 }
@@ -80,6 +96,13 @@ fn import_asset(p: &Params) -> Res {
         g.prim_groups.retain(|k, _| !k.starts_with(pt_core::geo::MATERIAL_PREFIX));
         g.detail.retain(|k, _| !k.starts_with(pt_core::gltf::ASSET_MATERIAL_PREFIX));
         g.point.remove("uv");
+    }
+    let cap = p.i("max_triangles").max(0) as usize;
+    if cap > 0 && g.triangles().len() > cap {
+        let policy = pt_core::lod::LodPolicy { ratios: vec![1.0], switch_factors: vec![0.0], max_level0_triangles: cap, min_triangles: 0, cache_dir: Some(corpus_root().join("_cache").join("lod")), ..Default::default() };
+        if let Some(level) = pt_core::lod::lod_chain(&g, &policy).into_iter().next() {
+            g = (*level.geo).clone();
+        }
     }
     let (lo, hi) = g.base_bounds().ok_or("import_asset: empty geometry")?;
     let (height, size) = (p.f("height"), p.f("size"));
@@ -191,5 +214,5 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    static ENV: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    use crate::CORPUS_ENV as ENV;
 }

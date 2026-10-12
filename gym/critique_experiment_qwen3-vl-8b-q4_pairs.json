@@ -1,0 +1,26 @@
+{
+  "candidates_per_task": 4,
+  "judge": "qwen3-vl-8b-q4 + order swap",
+  "order_contradictions": {
+    "contradictory": 21,
+    "pairs": 48
+  },
+  "results": {
+    "generic_critique": {
+      "pairwise_accuracy": 0.5208333333333334,
+      "picks_best": 0.38333333333333336,
+      "spearman": 0.09696974311830672
+    },
+    "judge": {
+      "pairwise_accuracy": 0.7916666666666666,
+      "picks_best": 0.5,
+      "spearman": 0.6197112152478835
+    },
+    "ssim_to_oracle": {
+      "pairwise_accuracy": 0.75,
+      "picks_best": 1.0,
+      "spearman": 0.5424097834877409
+    }
+  },
+  "tasks": 10.0
+}
