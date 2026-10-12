@@ -123,6 +123,58 @@ at most 6000 bodies per node (settle the hero piles, scatter the rest), convex h
   pinned strap, not a polyline.)
 * A settled body that lies on terrain passes `pt ground-check` by construction: it touches the ground and does not float.
 
+## Placement that keeps its identity, and the owner's decisions (`scatter_stable`, `apply_edits`, `pt edit`)
+
+A scatter that draws N points in order changes every object when anything upstream changes, so a world the owner approved is a
+different world after the next rebuild. Use `scatter_stable` for everything that is placed:
+
+```python
+at = scatter_stable(land, min_dist=3.2, seed=11, density=0.7, pscale_min=0.8, pscale_max=1.4)   # blue noise, stable ids
+mine = keep(at, "t1", "@slope_deg < 30.0")                                                       # masks as before
+final = apply_edits(settle(mine, ...), land, edits=edits_of("edits/world.json", "trees"))         # the owner's decisions, by id
+trees = copy_variants(final, a, b, c)                                                            # turns and variants follow the id
+```
+
+* A point belongs to a CELL of the world (`min_dist / 1.5` m) and is decided by the cell and the seed alone. Change the terrain's height,
+  a mask, the density or anything elsewhere, and every surviving point is exactly where it was (xz) with the same integer `pid`
+  (the packed cell coordinates: unique, never reused for another place). Spacing is measured on the map (x, z), so height never
+  decides who stays. Lowering `density` only removes points. A hole in the surface changes only the points near it.
+* `count` is not a parameter: the density thins the saturated set. To aim at a number use `density = min(1, count / (0.6 * area / min_dist^2))`
+  (what `spots_on` in `scenes/cascade.hcs` does).
+* `copy_to_points` and `copy_variants` key their randomness (turn, variant) on `pid` when the points have one, so removing or adding
+  an object changes no other object's look.
+* **The loop with the owner.** `pt pick ... x y` names an object and its `pid` and scope node; the decision is one command:
+  `pt edit edits/cascade.json rocks 123456 remove` (also `move DX DY DZ [--to]`, `scale F`, `add X Y Z [PSCALE]`), then rebuild:
+  the world is identical except that object. The edits file is `{ "scope": [edit, ...] }`, read in the recipe by
+  `edits_of(path, scope)` (a missing file or scope is an empty list) and replayed by `apply_edits` (put it after the filters and
+  `settle`, before the copy). Moved and added points are put back on the surface (`snap`, second input). Edits whose id no longer
+  exists are ignored and reported on stderr. `apply_edits` also edits instances that carry a `pid` (remove, move, scale).
+* Points are placed on what the sky sees (the first surface under a ray from above): a roof or a floor under a roof is not a place.
+
+## One world, many looks and many studios: knobs and the world file (`knob`, `pt world`)
+
+A world is layers: the BASE (a recipe), the SCENE (cameras), a STYLE (materials, light, render settings and **knobs**) and the OWNER
+layer (`edits/*.json`, the decisions about single objects). A world file names them, and a **variant** picks a style, adds knobs
+and may point at another owner layer. The same creek on a grey day with a thicker forest and more fallen wood is a variant, not a copy.
+
+```python
+FOREST = knob("forest_density", 1.0)            # in the recipe: ask the active style; the default is what a final recipe means
+EDITS  = knob("edits", "edits/cascade.json")     # even the owner layer is a knob, so a studio can have its own
+tall_pts = keep(spots(24000 * FOREST, 6.8, 21, 0.8, 1.45), ...)
+```
+
+* A style file (and the scene file, which wins key by key) may carry `"knobs": {"forest_density": 1.2, ...}`. `knob(name, default)` returns
+  the style's value when there is one (it must be the same kind as the default: number, string, list) and the default otherwise. Every
+  command that cooks a scene (`render-scene`, `ground-check`, `pick`, `scorecard`) sets the knobs first, so they all see the same world.
+  Knobs are also how a style changes SHAPE (tree morphology, building proportions) once the generators exist, not only colour and light.
+* The world file `worlds/<name>.world.json`: `{recipe, scene, default_variant, variants: {name: {style, knobs, edits}}}`.
+  `pt world worlds/cascade.world.json info|scene|check|render OUT.png|pick CAMERA X Y [--variant NAME]` expands the variant into a scene file
+  under `out/world/` and runs the usual command on it (`--only`, `--lookdev`, `--radius`, `--frame`... pass through).
+* Because placement is stable (`scatter_stable`), two variants differ only where their knobs differ: the rocks stand where they stood.
+  Measured on the creek: evening 256 109 instances, overcast 262 015 (more trees and logs), same ids elsewhere.
+* The cooked-world cache of `render-scene` is keyed by the knobs and by everything under `edits/`, so a changed decision or variant is
+  never rendered from a stale world.
+
 ## What is at this pixel? (`pick`)
 
 When the owner (or you) points at a frame ("that moss floats", "this rock is orange"), do not hunt for the object: ask.

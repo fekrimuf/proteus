@@ -9,27 +9,27 @@ Numbers (tests, recipes, gym, ledger, scorecard runs) are not written here: they
 ## State
 
 * **Engine and tools:** the kernel, language, simulation, gym, vision judges (local Qwen3-VL-8B), Blender Cycles renderer, Godot engine referee and the `pt scorecard` all work end to end. Cross-OS determinism holds in CI.
-* **Capabilities built (B18):** 1 geometry queries (a wrangle's second input answers `near_*`, `surf_*`, `ray_*` questions), 2 pixel pick (`pt pick`, MCP `pick`: a frame pixel to prototype, instance, creating node, ground verdict), 3 set dressing by physics (`rbd_settle` onto any mesh, draped cloth, hanging rope). Guides: AGENT_GUIDE.
-* **Worlds:** `scenes/valley`, `scenes/teton`, and `scenes/cascade` (the eye-level creek for the owner's target picture; engine rows measured 106 fps, 97.2% walkable ground, validator clean). The east frame has been re-rendered with the placement and rock-colour fixes and the black-card fix, and reviewed (full frame and tiles): nothing floats, rocks are grey, the grass is clean. The `village` camera now stands on the lit side of the hut, not yet rendered.
-* **Look-development renders** of the creek world fit this machine only with the lighter preview recipe, `--cull 60` and a 10 GB job cap (ENVIRONMENT.md); the owner-grade frames at full quality do not fit yet: this is capability 4.
-* **Assets:** Checkpoint 1 on the strict reading is 21 of 50; asset rebuilding is off the critical path (B17).
-* **Visual bar:** the owner's reference is a Skyrim-style creek with a timber mill (path in ENVIRONMENT.md), compared by eye. Against it the east frame is cleaner but flat: no light shafts, smooth bank and slope surfaces without stones and gravel, no mill (the building kit is capability 9, surfaces are capability 8).
+* **Capabilities built (B18, guides in AGENT_GUIDE):** 1 geometry queries in the language; 2 pixel pick (`pt pick`: frame pixel to prototype, instance, `pid`, creating node, ground verdict); 3 set dressing by physics (`rbd_settle`, draped cloth); 4 fast pictures (the look-development tier `lookdev()` and `--lookdev`, a view crop, a cache of the cooked world: a repeat render takes 31 s); 5 stable identity (`scatter_stable`, ids survive rebuilds) and the owner's decisions (`pt edit`, `apply_edits`, `edits/*.json`); 6 the layered world file (`worlds/*.world.json`, variants of style, knobs and owner layer, `pt world`), without the USD export.
+* **Worlds:** `scenes/valley`, `scenes/teton`, and `scenes/cascade` (the eye-level creek; engine rows measured 106 fps, 97.2% walkable ground, validator clean; placement now stable, two variants: evening and overcast). The east frame was re-rendered after the fixes (placement, rock colour, black cards from JPEG-cut-out plants), reviewed in full and in tiles, and again on the stable placement. The `village` camera stands on the lit side of the hut and renders.
+* **Look-development renders** of the creek world fit this machine with `--lookdev --only CAMERA` and a 10 GB job cap; the owner-grade frames at full quality (all recipe assets at full size) do not fit yet.
+* **Visual bar:** the owner's reference is a Skyrim-style creek with a timber mill (path in ENVIRONMENT.md), compared by eye. Against it our frames are clean but flat: no light shafts, smooth bank and slope surfaces without stones and gravel, a hut roof that reads as planks not thatch, no mill (surfaces are capability 8, the building kit capability 9).
 
 ## Open items (in this order; two in progress at most)
 
-1. **In progress:** capability 4, fast pictures (B18): the look-development tier made first-class (`lookdev()` in recipes instead of a hand-edited copy, a cache of the cooked world so a material change does not recook for three minutes, view-dependent levels of detail so owner-grade frames fit in memory) and then a render session that stays open.
-2. Render the creek world's four cameras for the owner's 10 blind pairs (our world against a hand-built baseline): the stage 1 gate, target 2026-10-17; it needs item 1's frames at owner quality, so say before the render (it takes the machine) and ask the owner for the baseline pairs when the frames exist.
-3. Optional delivery check for the creek world, light by default: `pt scorecard scenes/cascade.hcs scenes/cascade.scene.json --out out/steelthread_v5 --samples 128 --baseline corpus/results/steelthread/v4/scorecard.json`; the terrain bake is `--bake` and the vision judge `--judge`; both take the machine, so say so before using them.
-4. Give `run_godot` a timeout: a stalled Godot import blocked the scorecard once; the timeout removes the class.
-5. Buried objects: `pt ground-check` finds 2 043 instances more than 60% under the ground world-wide (103 in the east view); they are invisible, so they cost memory and nothing else: drop them in the placement rules (`settle` limit) instead of exporting them.
+1. **In progress:** the owner's blind pairs (stage 1 gate, target 2026-10-17): frames of the creek world at owner quality against a hand-built baseline. The render of the four cameras takes the machine (about ten minutes each at the 10 GB cap, then low priority), so say before it starts; ask the owner for the baseline pairs once the frames exist.
+2. **In progress:** capability 7, nature that grows: size-aware spacing, an ecology pass (seeds compete for light, water and slope, grow and die; clumps, saplings under parents, logs by dead trees) and the tree and ground-cover family on morphology knobs (DECISIONS B16a). It builds on 1, 3, 5 and 6.
+3. The USD export of the layer stack (base geometry with the owner's edits, one sublayer per variant for materials and light), the last part of capability 6; do it before an engine handoff.
+4. Optional delivery check for the creek world, light by default: `pt scorecard scenes/cascade.hcs scenes/cascade.scene.json --out out/steelthread_v5 --samples 128 --baseline corpus/results/steelthread/v4/scorecard.json`; the terrain bake is `--bake` and the vision judge `--judge`; both take the machine, so say so before using them.
+5. Give `run_godot` a timeout: a stalled Godot import blocked the scorecard once; the timeout removes the class.
+6. Buried objects: `pt ground-check` finds about 1 900 instances more than 60% under the ground (invisible: they cost memory and nothing else); drop them in the placement rules (the `settle` limit) instead of exporting them.
 
 ## Capability track (DECISIONS.md B18, targets are plan dates)
 
-Done: 1 geometry queries, 2 pixel pick, 3 set dressing by physics. Next: 4 fast pictures (10-19), 5 stable identity and overrides (10-21), 6 layered world file with style variants (10-24), 7 nature that grows and the tree family (11-03), 8 procedural materials (11-10), 9 building and layout grammars (11-24). Each is finished and verified before the next starts.
+Done: 1 to 5, and 6 except the USD export. Next: 7 nature that grows and the tree family (11-03), 8 procedural materials (11-10), 9 building and layout grammars (11-24). Each is finished and verified before the next starts.
 
 ## Next after the track
 
-The scene composer that picks camera, sun and building sites by rule (stage 5; the pick tool already compares candidate viewpoints by casting rays); the engine look closer to the render; then systems (stage 4). Roadmap and dates: PRO_QUALITY_PLAN B12.6.
+The scene composer that picks camera, sun and building sites by rule (stage 5; `pt pick` already compares candidate viewpoints by casting rays); the engine look closer to the render; then systems (stage 4). Roadmap and dates: PRO_QUALITY_PLAN B12.6.
 
 Later, only when the owner can no longer look at every world (rung A3): light automatic checks in place of the vision judge; sparse volumes as a first-class `Geometry` attribute; pyro and FLIP through Blender; Alembic/FBX. After any numeric change keep `recipes/golden.json` and `gym/baseline.json` in sync (`pt recipes --update`, `pt gym-baseline`).
 
