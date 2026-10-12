@@ -13,15 +13,14 @@ Numbers (tests, recipes, gym, ledger, scorecard runs) are not written here: they
 * **Assets:** Checkpoint 1 on the strict reading is 21 of 50 (development 17 of 40, hold-out 4 of 10); open repairs are the cactus arms, bench scrolls and tower score.
 * **Visual bar:** the owner's reference is a Skyrim-style creek with a timber mill (path in ENVIRONMENT.md). Frames are compared with it by eye; the valley is not close.
 
-## Open items from the 2026-10-11 wrap-up (in this order)
+## Open items (in this order)
 
-1. Run the full scorecard for the creek world: `pt scorecard scenes/cascade.hcs scenes/cascade.scene.json --out out/steelthread_v5 --samples 128 --baseline corpus/results/steelthread/v4/scorecard.json` (it had rendered four frames and was baking terrain when the session ended). Then copy frames and `scorecard.json` to `corpus/results/steelthread/v5/`, add the entry to LOG.md, and update the published "Readiness Scorecard" page.
-2. Render one frame with `tune_authored` in `corpus/tools/render_scene.py` and the two `rock_moss_set_*` style entries (they grey the scanned rocks that render orange in direct sun in `frame_east.png`).
-3. Move the `village` camera onto the lit side of the hut.
-4. Triangles in one frame were 20.6 million against a bar of 20; one more trim went in after that measurement and is not measured yet.
-5. Give `run_godot` a timeout: a stalled Godot import blocked the scorecard once (the 270 000-node import). The tiled exporter removed that cause; the timeout removes the class.
+1. Render one frame with `tune_authored` in `corpus/tools/render_scene.py` and the two `rock_moss_set_*` style entries (they grey the scanned rocks that render orange in direct sun in `frame_east.png`), then move the `village` camera onto the lit side of the hut. The look is judged by the owner's eye against the reference (DECISIONS.md B17), so these come first.
+2. Ask the owner for the 10 blind pairs (our creek world against a hand-built baseline): the stage 1 gate.
+3. Optional delivery check for the creek world, light by default: `pt scorecard scenes/cascade.hcs scenes/cascade.scene.json --out out/steelthread_v5 --samples 128 --baseline corpus/results/steelthread/v4/scorecard.json`. The terrain bake is `--bake` and the vision judge `--judge`; both take the machine, so say so before using them. Triangles in one frame were 20.6 million against a bar of 20; one more trim went in after that measurement.
+4. Give `run_godot` a timeout: a stalled Godot import blocked the scorecard once (the 270 000-node import). The tiled exporter removed that cause; the timeout removes the class.
 
-Verified on 2026-10-12: `cargo check -p pt-cli` compiles the `scorecard --reuse` and bake-cache edits that were written but never compiled; the full test run is recorded in the log entry of that date. Everything up to this update is committed (CLAUDE.md: commit on your own judgement, locally).
+Verified on 2026-10-12: `cargo check -p pt-cli` compiles the `scorecard --reuse` and bake-cache edits that had never been compiled. Heavy child programs (Blender, Godot, the validator, the judge server) now start at low priority, under a memory cap, and die with `pt` (`pt_cli::lowload`); a test proves the cap stops a runaway child.
 
 ## Next after the open items
 
@@ -29,9 +28,9 @@ Verified on 2026-10-12: `cargo check -p pt-cli` compiles the `scorecard --reuse`
 2. A scene composer that picks camera, sun and building sites by rule (they were picked by hand).
 3. A look-development version of a scene that renders in under a minute.
 4. A building kit beyond the one hut; the engine look (terrain detail, water, grass) closer to the render.
-5. Terrain statistics as a scorecard row, then the owner's blind pairs against a hand-built baseline (the W1 gate), then Phase 1 mining on 150 more assets and a fresh 50.
+5. Stage 3 appearance depth (procedural materials and sky) beside stage 2; then systems (stage 4). Roadmap and dates: PRO_QUALITY_PLAN B12.6.
 
-Later, in this order: a stronger local judge only if the fresh-50 test shows misses (Qwen3-VL-30B-A3B with expert offload to CPU); the DINOv2 embedding judge for style distinctness (DECISIONS.md B16); `render_compare` as a gym observation; multi-step conversation edits and reference-similarity gym tasks; sparse volumes as a first-class `Geometry` attribute; compositing (COP-lite), pyro/FLIP, Alembic/FBX. After any numeric change keep `recipes/golden.json` and `gym/baseline.json` in sync (`pt recipes --update`, `pt gym-baseline`).
+Later, only when the owner can no longer look at every world (rung A3): light automatic checks in place of the vision judge; `render_compare` as a gym observation; multi-step conversation edits and reference-similarity gym tasks; sparse volumes as a first-class `Geometry` attribute; compositing (COP-lite), pyro/FLIP, Alembic/FBX. After any numeric change keep `recipes/golden.json` and `gym/baseline.json` in sync (`pt recipes --update`, `pt gym-baseline`).
 
 ## How this documentation stays healthy
 

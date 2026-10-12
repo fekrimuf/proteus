@@ -18,6 +18,8 @@ Section numbers (B11, B15, B15a, B16, B16a) are kept from the plan so references
 
 ## B15. Approach review (2026-10-10, after Checkpoint 1): same project, faster route
 
+*Rows 6 and 9 are superseded by B17 (2026-10-12).*
+
 **Project: unchanged** (an autonomous system that makes a finished AAA world). **Approach: re-sequenced.** Evidence: Checkpoint 1 proved the
 loop (oracle, recipes, measured referee, tuned numbers; B14). It also showed that five of the six scorecard families (visual, art
 coherence, world function, performance, delivery) have no implementation yet, while all effort so far went into content breadth at the
@@ -135,3 +137,16 @@ repeat the flaw.
 
 **Effect on order of work (B15):** unchanged order (vision judges, real elevation, tree and ground-cover generators, recipe repairs, mining). Content
 change: the judges take two briefs from the start, and the tree family is designed on morphology knobs with the two-brief gate as its pass condition.
+
+## B17. The owner's eye is the quality gate; machine judges and the scorecard are on demand (decision, 2026-10-12)
+
+**Evidence.** The creek world the owner loved on 2026-10-11 was made from real elevation, scanned CC0 assets and a Cycles render, compared by eye with the reference picture; no judge score and no scorecard took part in making it. The vision judge scored the Teton valley 4.7 to 6.0 of 10 while the owner judged it far from the target, so its number did not track the owner's taste. The scorecard's terrain bake held about 10 GB and made the owner's PC lag for a period, even after the session ended. Where the machinery did earn its place: the scorecard found the engine failures (2.1 fps to 93 to 173 fps, 1.42 billion to 18.5 million triangles in frame) and the part judge found three defects in rebuilt props that the eye missed.
+
+**Course change (supersedes B15 rows 6 and 9).**
+1. How a world looks is judged by the owner's eye: side-by-side frames with the reference, and blind pairs. Nothing blocks on a judge score.
+2. The scorecard becomes an on-demand delivery check (validator, navigation, frame rate, repetition counts), run at milestones. The terrain bake (`--bake`) and the vision judge (`--judge`) are opt-in because they take the machine.
+3. Asset rebuilding for its own sake (Phase 1 mining on 150 more assets, the fresh 50, the part judge as a gate) leaves the critical path: worlds use CC0 scans directly and generators supply variety and uniqueness.
+4. The photo-distance judge (FD_DINOv2, gate W2) and the 7 of 10 judge bar are retired as gates. Light automatic checks return at rungs A3 and A4, when the owner cannot look at every world.
+5. Every heavy child program starts at low priority, under a memory cap, and is killed when `pt` exits (`pt_cli::lowload`; `PT_HEAVY_MEM_GB`, `PT_HEAVY_THREADS`). A job that would swap the machine fails by itself instead.
+
+**Effect:** about three weeks off the timeline (B12.6) and no GPU-heavy step in the normal loop.
