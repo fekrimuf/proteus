@@ -101,6 +101,16 @@ pub struct LodLevel {
 /// Detail key written by the `lod_hint` node: `{"cull_m": metres (0 = by size), "merge": bool}`.
 pub const LOD_HINT: &str = "lod_hint";
 
+/// Detail key: how much the surviving foliage cards of this geometry have been enlarged so far, in all passes together
+/// (1 = they are the scan's own size). Every decimation pass reads it and writes it back, so a cap on card growth is a cap on the
+/// whole chain: the import cap and the engine's level 0 used to enlarge the same cards one after the other (2.3 x 4 = 9 times).
+pub const CARD_GROWTH: &str = "card_growth";
+
+/// The enlargement already applied to the cards of `g` (1 when none).
+pub fn card_growth(g: &Geometry) -> f32 {
+    g.detail.get(CARD_GROWTH).and_then(serde_json::Value::as_f64).map_or(1.0, |v| (v as f32).max(1.0))
+}
+
 /// The draw distance a prototype asks for (`lod_hint`), if any.
 pub fn hinted_cull(g: &Geometry) -> Option<f32> {
     g.detail.get(LOD_HINT).and_then(|h| h.get("cull_m")).and_then(serde_json::Value::as_f64).map(|c| c as f32).filter(|c| *c > 0.0)
@@ -158,8 +168,9 @@ pub fn decimate(g: &Geometry, ratio: f32) -> Geometry {
     decimate_scaled(g, ratio, 4.0)
 }
 
-/// [`decimate`] with a limit on how much a surviving foliage card may grow. A canopy keeps its coverage when its remaining
-/// cards quadruple; a patch of grass thinned to a seventh must not become grass three times as tall.
+/// [`decimate`] with a limit on how much a surviving foliage card may grow, counted from the scan's own size across every pass
+/// (`CARD_GROWTH`). A canopy keeps its coverage when its remaining cards quadruple; a patch of grass thinned to a seventh must
+/// not become grass three times as tall; a geometry already enlarged by an earlier pass may grow only up to the same total.
 pub fn decimate_scaled(g: &Geometry, ratio: f32, max_scale: f32) -> Geometry {
     let g = g.realize();
     let ratio = ratio.clamp(0.001, 1.0);
@@ -240,6 +251,7 @@ pub fn decimate_scaled(g: &Geometry, ratio: f32, max_scale: f32) -> Geometry {
     const CHUNK: usize = 48;
     let cards: Vec<usize> = (0..tris.len()).filter(|&t| is_cutout(t)).collect();
     let mut card_units: Vec<Vec<usize>> = Vec::new();
+    let had = card_growth(&g);
     let mut scale = 1.0f32;
     if !cards.is_empty() {
         let mut dsu = Dsu((0..np as u32).collect());
@@ -272,7 +284,7 @@ pub fn decimate_scaled(g: &Geometry, ratio: f32, max_scale: f32) -> Geometry {
             card_units.push(u);
         }
         if ratio < 0.999 {
-            scale = (1.0 / (kept as f32 / total as f32).sqrt()).min(max_scale.max(1.0));
+            scale = (1.0 / (kept as f32 / total as f32).sqrt()).min((max_scale / had).max(1.0));
         }
     }
 
@@ -328,6 +340,9 @@ pub fn decimate_scaled(g: &Geometry, ratio: f32, max_scale: f32) -> Geometry {
     }
     out.point_groups = gather_groups(&g.point_groups, &old_ids);
     out.detail = g.detail.clone();
+    if had * scale > 1.0001 {
+        out.detail.insert(CARD_GROWTH.into(), serde_json::json!(had * scale));
+    }
     let names: BTreeSet<&str> = tri_mats.iter().filter_map(|m| m.as_deref()).collect();
     for n in names {
         out.prim_groups.insert(format!("{MATERIAL_PREFIX}{n}"), Arc::new(tri_mats.iter().map(|m| m.as_deref() == Some(n)).collect()));
@@ -420,7 +435,7 @@ pub fn shell(g: &Geometry, color: [f32; 3]) -> Option<Geometry> {
 }
 
 /// Bump when `decimate` changes, so cached levels from an older algorithm are never reused.
-const LOD_ALGORITHM: &str = "a3";
+const LOD_ALGORITHM: &str = "a4";
 
 fn cache_path(policy: &LodPolicy, g: &Geometry, ratio: f32, tag: &str) -> Option<PathBuf> {
     let dir = policy.cache_dir.as_ref()?;
@@ -573,6 +588,33 @@ mod tests {
         assert_eq!(d.material_names(), ["tree__leaves"]);
     }
 
+
+    /// Width of the first surviving card of a canopy level (each card keeps its own four points).
+    fn card_width(g: &Geometry) -> f32 {
+        g.p().chunks(4).next().map(|c| c[1][0] - c[0][0]).unwrap()
+    }
+
+    #[test]
+    fn needle_cards_are_never_enlarged_past_the_cap_however_many_passes_cut_them() {
+        // The creek's fir sapling was cut twice: by the import cap (about 2.3 x) and again by the engine's level 0 (4 x), so its
+        // needles came out 9 times their real length in the survey's village frame. The growth is now counted over all passes.
+        let scan = canopy(4000); // cards 0.05 wide
+        let imported = decimate(&scan, 0.25); // the import cap's pass
+        assert!((card_growth(&imported) - 2.0).abs() < 0.01, "the pass records its growth: {}", card_growth(&imported));
+        let policy = LodPolicy { max_level0_triangles: 500, min_triangles: 0, cover_height: 0.0, full_detail_height: 0.0, shell: false, ..LodPolicy::engine() };
+        let chain = lod_chain(&imported, &policy);
+        assert!(chain[0].triangles < imported.triangles().len() / 2, "level 0 is cut again: {}", chain[0].triangles);
+        for (l, level) in chain.iter().enumerate() {
+            let cap = 4.0f32;
+            let width = card_width(&level.geo);
+            assert!(width <= 0.05 * cap * 1.001, "level {l}: a card is {:.2} x its scan size, the cap is {cap}", width / 0.05);
+            assert!(card_growth(&level.geo) <= cap * 1.001, "level {l} records {}", card_growth(&level.geo));
+        }
+        // a geometry no pass has touched still grows to the cap and no further
+        let alone = lod_chain(&scan, &policy);
+        let w0 = card_width(&alone[0].geo);
+        assert!((w0 - 0.05 * 4.0).abs() < 0.002, "level 0 of a fresh scan grows to its cap: {}", w0 / 0.05);
+    }
     #[test]
     fn welded_canopies_are_cut_into_chunks_and_small_plants_never_vanish() {
         // one connected canopy: a 100 x 100 grid of triangles (20 000) in a cutout material, ONE component

@@ -454,7 +454,7 @@ mod tests {
     use std::sync::Arc;
 
     fn camera() -> Camera {
-        Camera { name: "c".into(), x: 0.0, z: 0.0, yaw_deg: 90.0, half_fov_deg: 32.0, pitch_deg: 0.0, eye_height: 1.7, lens: 28.0, sensor: 36.0 }
+        Camera { name: "c".into(), x: 0.0, z: 0.0, yaw_deg: 90.0, half_fov_deg: 32.0, pitch_deg: 0.0, eye_height: 1.7, lens: 28.0, sensor: 36.0, subject: None }
     }
 
     /// A flat ground at y = 0 and two boxes standing on it, 10 m and 20 m in front of a camera that looks along +z.

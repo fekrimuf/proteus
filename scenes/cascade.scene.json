@@ -5,7 +5,7 @@
  "cameras": [
   {"name": "hero", "eye": {"at": [103, 61.5], "height": 1.8, "yaw": 181, "pitch": 4}, "lens": 28},
   {"name": "east", "eye": {"at": [12, 58], "height": 1.85, "yaw": 4, "pitch": 5}, "lens": 28},
-  {"name": "village", "eye": {"at": [56, 27], "height": 1.8, "yaw": 72, "pitch": 4}, "lens": 28},
+  {"name": "village", "eye": {"at": [56, 27], "height": 1.8, "yaw": 72, "pitch": 4}, "lens": 28, "subject": {"at": [61, 42], "height": 2.2}},
   {"name": "valley", "eye": {"at": [-330, -40], "height": 45, "yaw": 15, "pitch": -3}, "lens": 28}
  ]
 }

@@ -118,7 +118,7 @@ pub fn check_scene(s: &Value) -> Vec<String> {
     }
     for (sec, c) in cams {
         if let Some(o) = c.as_object() {
-            unknown_keys(o, &["name", "location", "look_at", "eye", "lens", "sensor", "clip_end", "dof"], sec, &mut e);
+            unknown_keys(o, &["name", "location", "look_at", "eye", "lens", "sensor", "clip_end", "dof", "subject"], sec, &mut e);
         }
         range(c, "lens", 8.0, 300.0, sec, &mut e);
         if c.get("location").is_some_and(|v| !vec_n(v, 3)) || c.get("look_at").is_some_and(|v| !vec_n(v, 3)) {
@@ -148,11 +148,19 @@ pub fn knobs_of(scene: &Value) -> Result<BTreeMap<String, Value>, String> {
     let mut s = scene.clone();
     resolve_style(&mut s)?;
     let mut knobs: BTreeMap<String, Value> = s.get("knobs").and_then(Value::as_object).map(|m| m.iter().map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default();
-    // the standing cameras go to the recipe as [[x, z, eye_height], ...], so placement keeps objects out of arm's reach of every
-    // lens (`knob("cameras", [])` and the `seat` node's `cameras`); a style or world variant may set the knob itself
+    // the standing cameras go to the recipe as [[x, z, eye_height, (subject_x, subject_z, subject_height)], ...], so placement keeps objects out of arm's reach of every
+    // lens and out of the line of sight to the camera's subject (`knob("cameras", [])` and the `seat` node's `cameras`); a style or world variant may set the knob itself
     let cams = crate::grounding::cameras_of(&s);
     if !cams.is_empty() {
-        knobs.entry("cameras".to_string()).or_insert_with(|| json!(cams.iter().map(|c| json!([c.x, c.z, c.eye_height])).collect::<Vec<_>>()));
+        knobs.entry("cameras".to_string()).or_insert_with(|| {
+            json!(cams
+                .iter()
+                .map(|c| match c.subject {
+                    Some(s) => json!([c.x, c.z, c.eye_height, s[0], s[1], s[2]]),
+                    None => json!([c.x, c.z, c.eye_height]),
+                })
+                .collect::<Vec<_>>())
+        });
     }
     Ok(knobs)
 }

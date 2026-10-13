@@ -86,7 +86,7 @@ impl View {
 
     /// The same camera as `pt pick` and the ground check use, so a pixel of this view means the same thing everywhere.
     pub fn camera(&self) -> Camera {
-        Camera { name: self.name.clone(), x: self.eye[0], z: self.eye[2], yaw_deg: self.yaw, half_fov_deg: math::atan(18.0 / self.lens).to_degrees(), pitch_deg: self.pitch, eye_height: 0.0, lens: self.lens, sensor: 36.0 }
+        Camera { name: self.name.clone(), x: self.eye[0], z: self.eye[2], yaw_deg: self.yaw, half_fov_deg: math::atan(18.0 / self.lens).to_degrees(), pitch_deg: self.pitch, eye_height: 0.0, lens: self.lens, sensor: 36.0, subject: None }
     }
 
     /// Where a world point lands in a `w` x `h` picture of this view; `None` outside it.

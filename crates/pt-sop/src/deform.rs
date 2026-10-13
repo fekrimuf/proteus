@@ -70,6 +70,7 @@ pub fn schemas() -> Vec<NodeSchema> {
             ps("wade", json!(0.45), "Most of an object's height that may lie under the creek's water (needs the water on input 2). Land plants and stones that would stand deeper are removed; wood that floats (`draft`) is not counted. 1 = no limit. `pt ground-check` fails a world on more than half."),
             ps("cameras", json!([]), "Standing cameras as [[x, z, eye_height], ...]: the recipe gets them from `knob(\"cameras\", [])`. An object whose nearest vertex comes within `clearance` metres of a camera's eye is removed (a sapling's branches in the lens)."),
             ps("clearance", json!(pt_core::seat::CAMERA_CLEARANCE), "Metres of clear air around every camera's eye, measured to the object's real extent, not its pivot."),
+            ps("sight", json!(pt_core::seat::SIGHT_CLEARANCE), "Metres of clear air around the line of sight from a camera to its subject (an entry of `cameras` with a subject is [x, z, eye_height, subject_x, subject_z, subject_height]), measured to the object's real extent. The line ends at the subject, so what stands behind it stays. 0 = off. Ground cover (`soft`) is exempt."),
             ps("soft", json!(0), "1 = ground cover (grass tiles, flowers): exempt from `clearance`, since it is the ground the camera stands in. Recorded per instance as `seat_soft`, which `pt ground-check` reads. Wood put in the water line is recorded as `seat_float`: the check does not call it drowned."),
         ]),
         sch("point_jitter", "Random per-point displacement in [-amount, amount] per axis (scaled by `scale`).", 1, D::None, G::PerPoint, vec![
@@ -493,6 +494,20 @@ fn seat(src: &Geometry, ground: &Geometry, water: Option<&Geometry>, p: &Params)
             .collect(),
         _ => Vec::new(),
     };
+    // the line of sight of every camera that has a subject: from its eye to the subject
+    let sight = p.f("sight").max(0.0);
+    let lines: Vec<([f32; 3], [f32; 3])> = match p.get("cameras").and_then(|v| v.as_array()) {
+        Some(list) if !soft && sight > 0.0 => list
+            .iter()
+            .filter_map(|c| {
+                let c = c.as_array()?;
+                let n = |i: usize| c.get(i).and_then(|v| v.as_f64()).map(|v| v as f32);
+                let (x, z, h, sx, sz, sh) = (n(0)?, n(1)?, n(2)?, n(3)?, n(4)?, n(5)?);
+                Some(([x, land.at(x, z).unwrap_or(0.0) + h, z], [sx, land.at(sx, sz).unwrap_or(0.0) + sh, sz]))
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
     let bounds: Vec<Option<([f32; 3], [f32; 3])>> = inst.protos.iter().map(|g| g.bounds()).collect();
     let (mut keep, mut xf, mut moved, mut floating) = (Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()));
     for (k, m) in inst.xf.iter().enumerate() {
@@ -503,7 +518,8 @@ fn seat(src: &Geometry, ground: &Geometry, water: Option<&Geometry>, p: &Params)
         };
         let Some((to, floated)) = seated else { continue };
         let in_face = bounds[pid].is_some_and(|b| eyes.iter().any(|e| pt_core::seat::nearest_vertex(&inst.protos[pid], b, &to, *e, clearance).is_some()));
-        if in_face {
+        let in_sight = bounds[pid].is_some_and(|b| lines.iter().any(|(a, s)| !pt_core::seat::is_subject(&to, *s) && pt_core::seat::nearest_to_segment(&inst.protos[pid], b, &to, *a, *s, sight).is_some()));
+        if in_face || in_sight {
             continue;
         }
         keep.push(k as u32);

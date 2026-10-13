@@ -107,6 +107,8 @@ pub struct Camera {
     pub eye_height: f32,
     pub lens: f32,
     pub sensor: f32,
+    /// What the frame is of, as [x, z, height above the ground]: the line from the eye to it must stay clear (`sight_blocked`).
+    pub subject: Option<[f32; 3]>,
 }
 
 impl Camera {
@@ -153,6 +155,10 @@ pub fn cameras_of(scene: &Value) -> Vec<Camera> {
                 eye_height: e.get("height").and_then(Value::as_f64).unwrap_or(1.7) as f32,
                 lens: lens as f32,
                 sensor: sensor as f32,
+                subject: c.get("subject").and_then(|s| {
+                    let at = s.get("at")?.as_array()?;
+                    Some([at.first()?.as_f64()? as f32, at.get(1)?.as_f64()? as f32, s.get("height").and_then(Value::as_f64).unwrap_or(2.0) as f32])
+                }),
             })
         })
         .collect()
@@ -288,6 +294,40 @@ pub fn in_face(geo: &Geometry, terrain: &Surface, cams: &[Camera], clearance: f3
     out
 }
 
+/// Every placed object whose real extent comes within `clearance` metres of the line of sight from a camera's eye to the subject its
+/// frame is of (the scene camera's `subject`), nearest first. The lens can be clear (`in_face`) while a crown hides the subject:
+/// the sapling nine metres out that covered the cottage in the `village` frame. Ground cover marked `soft` is exempt.
+pub fn sight_blocked(geo: &Geometry, terrain: &Surface, cams: &[Camera], clearance: f32) -> Vec<InFace> {
+    let mut out = Vec::new();
+    let Some(inst) = &geo.instances else { return out };
+    let bounds: Vec<Option<([f32; 3], [f32; 3])>> = inst.protos.iter().map(|p| p.bounds()).collect();
+    let soft = inst.attrs.get("seat_soft").and_then(pt_core::Column::as_f32);
+    let lines: Vec<(usize, [f32; 3], [f32; 3])> = cams
+        .iter()
+        .enumerate()
+        .filter_map(|(i, c)| {
+            let s = c.subject?;
+            Some((i, [c.x, terrain.height(c.x, c.z).unwrap_or(0.0) + c.eye_height, c.z], [s[0], terrain.height(s[0], s[1]).unwrap_or(0.0) + s[2], s[1]]))
+        })
+        .collect();
+    for (k, xf) in inst.xf.iter().enumerate() {
+        let pid = inst.proto_id[k] as usize;
+        let Some(b) = bounds[pid] else { continue };
+        if soft.is_some_and(|s| s.get(k).is_some_and(|v| *v > 0.5)) || pt_core::lod::hinted_cull(&inst.protos[pid]).is_some() {
+            continue;
+        }
+        for (ci, eye, subject) in &lines {
+            if pt_core::seat::is_subject(xf, *subject) {
+                continue;
+            }
+            if let Some(distance) = pt_core::seat::nearest_to_segment(&inst.protos[pid], b, xf, *eye, *subject, clearance) {
+                out.push(InFace { camera: cams[*ci].name.clone(), proto: pid as u32, index: k, pos: [xf[3], xf[7], xf[11]], distance });
+            }
+        }
+    }
+    out
+}
+
 fn in_view(c: &Camera, pos: [f32; 3], radius: f32) -> bool {
     let (dx, dz) = (pos[0] - c.x, pos[2] - c.z);
     let d = (dx * dx + dz * dz).sqrt();
@@ -351,7 +391,7 @@ fn widths(g: &Geometry, s: &pt_core::seat::Sole) -> Vec<[f32; 2]> {
 /// Report as JSON: totals per kind, per camera the flagged objects in view (with their pixel position in a 1920 x 1080 frame), and
 /// the failing verdict. With `frames`, a copy of every camera's `frame_<camera>.png` with the flagged objects boxed is written
 /// to `annotate_to` (red float, orange overhang, yellow shallow, magenta buried).
-pub fn report(geo: &Geometry, scene: &Value, radius: f32, clearance: f32, frames: Option<&std::path::Path>, annotate_to: Option<&std::path::Path>) -> Result<Value, String> {
+pub fn report(geo: &Geometry, scene: &Value, radius: f32, clearance: f32, sight: f32, frames: Option<&std::path::Path>, annotate_to: Option<&std::path::Path>) -> Result<Value, String> {
     let terrain = Surface::from_geometry(geo, |m| m.starts_with("terrain"));
     if terrain.is_empty() {
         return Err("no terrain material (a name starting with 'terrain') in the cooked world".into());
@@ -410,9 +450,13 @@ pub fn report(geo: &Geometry, scene: &Value, radius: f32, clearance: f32, frames
     let mut faces = in_face(geo, &terrain, &cams, clearance);
     faces.sort_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap_or(std::cmp::Ordering::Equal));
     let in_face_json: Vec<Value> = faces.iter().take(40).map(|f| json!({"camera": f.camera, "what": label(f.proto), "distance_m": (f.distance * 100.0).round() / 100.0, "at": f.pos})).collect();
+    // objects across the line of sight from a camera to its subject
+    let mut blocked = sight_blocked(geo, &terrain, &cams, sight);
+    blocked.sort_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap_or(std::cmp::Ordering::Equal));
+    let blocked_json: Vec<Value> = blocked.iter().take(40).map(|f| json!({"camera": f.camera, "what": label(f.proto), "distance_m": (f.distance * 100.0).round() / 100.0, "at": f.pos})).collect();
     // a world also fails on what is mostly under its ground or its water, anywhere: invisible or flat lids that cost memory
     let (buried, drowned) = (by_kind.get("buried").copied().unwrap_or(0), by_kind.get("shallow").copied().unwrap_or(0));
-    failing |= !faces.is_empty() || buried > 0 || drowned > 0;
+    failing |= !faces.is_empty() || !blocked.is_empty() || buried > 0 || drowned > 0;
     // where the world's triangles are: per material, triangles, points used and the horizontal extent in metres
     let mut mats: std::collections::BTreeMap<String, (usize, f32, f32, f32, f32)> = Default::default();
     {
@@ -447,6 +491,9 @@ pub fn report(geo: &Geometry, scene: &Value, radius: f32, clearance: f32, frames
         "clearance_m": clearance,
         "in_face": in_face_json,
         "in_face_count": faces.len(),
+        "sight_clearance_m": sight,
+        "sight_blocked": blocked_json,
+        "sight_blocked_count": blocked.len(),
         "fail": failing,
     }))
 }
@@ -463,6 +510,7 @@ pub const GROUND_CHECK: crate::registry::Command = {
             Param::pos("scene", Kind::Str, "the scene .json file that holds the cameras"),
             Param::flag("radius", Kind::Num, "metres around a camera that count as in view (default 45)"),
             Param::flag("clearance", Kind::Num, "metres of clear air around every standing camera's eye (default 1.5): fails on a placed object whose nearest vertex is closer, naming camera, object and distance"),
+            Param::flag("sight", Kind::Num, "metres of clear air around the line from a camera to its scene `subject` (default 2.5): fails on a placed object whose nearest vertex is closer, naming camera, object and distance"),
             Param::flag("frames", Kind::Str, "folder holding the rendered frames to draw on"),
             Param::flag("annotate", Kind::Str, "folder to write the annotated frames to"),
             Param::flag("lookdev", Kind::Bool, "cook in the look-development tier (the tier the frame was rendered in)"),
@@ -498,13 +546,17 @@ pub fn ground_check_cmd(args: &[String]) -> Result<(), String> {
     drop(g);
     let (frames, out) = (flag("--frames").map(std::path::PathBuf::from), flag("--annotate").map(std::path::PathBuf::from));
     let clearance = flag("--clearance").and_then(|s| s.parse().ok()).unwrap_or(pt_core::seat::CAMERA_CLEARANCE);
-    let r = report(&geo, &scene, radius, clearance, frames.as_deref(), out.as_deref())?;
+    let sight = flag("--sight").and_then(|s| s.parse().ok()).unwrap_or(pt_core::seat::SIGHT_CLEARANCE);
+    let r = report(&geo, &scene, radius, clearance, sight, frames.as_deref(), out.as_deref())?;
     println!("{}", serde_json::to_string_pretty(&r).map_err(|e| e.to_string())?);
     if r["fail"] == true {
         // say what failed, naming the worst of each class, so the line alone is enough to act on
         let mut why = Vec::new();
         if let Some(f) = r["in_face"].as_array().and_then(|a| a.first()) {
             why.push(format!("{} object(s) within {clearance} m of a camera's eye (nearest: {} at {} m from camera {})", r["in_face_count"], f["what"].as_str().unwrap_or("?"), f["distance_m"], f["camera"].as_str().unwrap_or("?")));
+        }
+        if let Some(f) = r["sight_blocked"].as_array().and_then(|a| a.first()) {
+            why.push(format!("{} object(s) across the line of sight to a subject (nearest: {} at {} m from the line of camera {})", r["sight_blocked_count"], f["what"].as_str().unwrap_or("?"), f["distance_m"], f["camera"].as_str().unwrap_or("?")));
         }
         for (kind, text) in [("buried", "more than half under the ground"), ("shallow", "mostly under water"), ("float", "floating"), ("overhang", "hanging")] {
             if let Some(n) = r["findings"][kind].as_u64().filter(|n| *n > 0 && (kind == "buried" || kind == "shallow")) {
@@ -741,7 +793,7 @@ mod tests {
     }
 
     fn standing_camera(x: f32, z: f32) -> Camera {
-        Camera { name: "front".into(), x, z, yaw_deg: 0.0, half_fov_deg: 33.0, pitch_deg: 0.0, eye_height: 1.0, lens: 28.0, sensor: 36.0 }
+        Camera { name: "front".into(), x, z, yaw_deg: 0.0, half_fov_deg: 33.0, pitch_deg: 0.0, eye_height: 1.0, lens: 28.0, sensor: 36.0, subject: None }
     }
 
     #[test]
@@ -763,7 +815,7 @@ mod tests {
 
     #[test]
     fn a_point_straight_ahead_lands_in_the_middle_of_the_frame() {
-        let c = Camera { name: "c".into(), x: 0.0, z: 0.0, yaw_deg: 90.0, half_fov_deg: 33.0, pitch_deg: 0.0, eye_height: 1.7, lens: 28.0, sensor: 36.0 };
+        let c = Camera { name: "c".into(), x: 0.0, z: 0.0, yaw_deg: 90.0, half_fov_deg: 33.0, pitch_deg: 0.0, eye_height: 1.7, lens: 28.0, sensor: 36.0, subject: None };
         let p = c.project(1.7, [0.0, 1.7, 10.0], 1920, 1080).unwrap();
         assert!((p[0] - 960.0).abs() < 0.5 && (p[1] - 540.0).abs() < 0.5);
         // to the camera's right is further right in the frame (yaw 90 looks along +z, so right is -x), and lower points are lower
@@ -776,7 +828,7 @@ mod tests {
 
     #[test]
     fn camera_view_cone_keeps_what_is_ahead() {
-        let c = Camera { name: "c".into(), x: 0.0, z: 0.0, yaw_deg: 0.0, half_fov_deg: 33.0, pitch_deg: 0.0, eye_height: 1.7, lens: 28.0, sensor: 36.0 };
+        let c = Camera { name: "c".into(), x: 0.0, z: 0.0, yaw_deg: 0.0, half_fov_deg: 33.0, pitch_deg: 0.0, eye_height: 1.7, lens: 28.0, sensor: 36.0, subject: None };
         assert!(in_view(&c, [10.0, 0.0, 1.0], 45.0));
         assert!(!in_view(&c, [-10.0, 0.0, 0.0], 45.0));
         assert!(!in_view(&c, [60.0, 0.0, 0.0], 45.0));

@@ -412,6 +412,66 @@ pub fn nearest_vertex(proto: &Geometry, bounds: ([f32; 3], [f32; 3]), xf: &Mat34
     (best < radius * radius).then(|| best.sqrt())
 }
 
+/// How near the line of sight from a camera to its subject a placed object may reach (m, to the object's nearest vertex). A
+/// sapling 9 m out whose needles crossed the whole `village` frame hid the cottage that frame is of: the lens was clear of it (see
+/// [`CAMERA_CLEARANCE`]) but the view was not. 2.5 m is the half-width of a crown; the line ends at the subject, so trees behind
+/// it are not touched.
+pub const SIGHT_CLEARANCE: f32 = 2.5;
+
+/// An object whose pivot stands within this many metres (on the ground plan) of a camera's subject is the subject itself (the
+/// cottage a frame is of), not something in front of it.
+pub const SUBJECT_RADIUS: f32 = 1.5;
+
+/// Is the instance placed by `xf` the subject at `subject` (its x, y, z)?
+pub fn is_subject(xf: &Mat34, subject: [f32; 3]) -> bool {
+    let (dx, dz) = (xf[3] - subject[0], xf[11] - subject[2]);
+    dx * dx + dz * dz <= SUBJECT_RADIUS * SUBJECT_RADIUS
+}
+
+/// Distance (m) from the segment `a` to `b` to the nearest vertex of an instance (prototype `proto` with its bounds, placed by `xf`),
+/// when that is under `radius`. [`nearest_vertex`] is this with `a == b`.
+pub fn nearest_to_segment(proto: &Geometry, bounds: ([f32; 3], [f32; 3]), xf: &Mat34, a: [f32; 3], b: [f32; 3], radius: f32) -> Option<f32> {
+    let (lo, hi) = bounds;
+    let (mut bl, mut bh) = ([f32::MAX; 3], [f32::MIN; 3]);
+    for c in 0..8 {
+        let q = xform_point(xf, [if c & 1 == 0 { lo[0] } else { hi[0] }, if c & 2 == 0 { lo[1] } else { hi[1] }, if c & 4 == 0 { lo[2] } else { hi[2] }]);
+        for k in 0..3 {
+            bl[k] = bl[k].min(q[k] - radius);
+            bh[k] = bh[k].max(q[k] + radius);
+        }
+    }
+    // the segment against the box grown by the radius (slab test): most objects of a world are nowhere near a line of sight
+    let (mut t0, mut t1) = (0.0f32, 1.0f32);
+    for k in 0..3 {
+        let d = b[k] - a[k];
+        if d.abs() < 1e-9 {
+            if a[k] < bl[k] || a[k] > bh[k] {
+                return None;
+            }
+        } else {
+            let (u, v) = ((bl[k] - a[k]) / d, (bh[k] - a[k]) / d);
+            t0 = t0.max(u.min(v));
+            t1 = t1.min(u.max(v));
+            if t0 > t1 {
+                return None;
+            }
+        }
+    }
+    let ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    let len2 = (ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2]).max(1e-12);
+    let best = proto
+        .p()
+        .iter()
+        .map(|v| {
+            let q = xform_point(xf, *v);
+            let t = (((q[0] - a[0]) * ab[0] + (q[1] - a[1]) * ab[1] + (q[2] - a[2]) * ab[2]) / len2).clamp(0.0, 1.0);
+            let (dx, dy, dz) = (q[0] - a[0] - t * ab[0], q[1] - a[1] - t * ab[1], q[2] - a[2] - t * ab[2]);
+            dx * dx + dy * dy + dz * dz
+        })
+        .fold(f32::MAX, f32::min);
+    (best < radius * radius).then(|| best.sqrt())
+}
+
 /// Heights of a surface (terrain, water) over x and z, with a grid so a lookup tests a handful of triangles. Where two levels
 /// of a terrain overlap (a fine patch blended into a coarse one) the finest triangle wins, as in `pt ground-check`.
 pub struct Heights {
@@ -665,6 +725,28 @@ mod tests {
         let mut far = AT;
         far[3] = -3.0;
         assert!(nearest_vertex(&sapling, bounds, &far, eye, CAMERA_CLEARANCE).is_none());
+    }
+
+    #[test]
+    fn a_crown_beside_the_line_of_sight_is_caught_by_its_real_extent_and_one_behind_the_subject_is_not() {
+        // a sapling with a skirt of branches 2.4 m across; its pivot stands 2 m off a line from a camera at the origin to a subject 20 m on
+        let sapling = boxes(&[(0.05, 0.05, 0.0, 2.5), (1.2, 1.2, 0.9, 1.2)]);
+        let bounds = sapling.base_bounds().unwrap();
+        let (cam, subject) = ([0.0, 1.7, 0.0], [20.0, 2.0, 0.0]);
+        let at = |x: f32, z: f32| {
+            let mut m = AT;
+            m[3] = x;
+            m[11] = z;
+            m
+        };
+        let d = nearest_to_segment(&sapling, bounds, &at(10.0, 2.0), cam, subject, SIGHT_CLEARANCE).expect("its branches reach into the line of sight");
+        assert!(d < 1.5, "the branch tips are {d} m from the line, the pivot is 2 m");
+        // the same tree 5 m to the side is clear, and one standing behind the subject is clear: the line ends at the subject
+        assert!(nearest_to_segment(&sapling, bounds, &at(10.0, 5.0), cam, subject, SIGHT_CLEARANCE).is_none());
+        assert!(nearest_to_segment(&sapling, bounds, &at(26.0, 0.0), cam, subject, SIGHT_CLEARANCE).is_none());
+        // a segment of no length is the old point test
+        let eye: [f32; 3] = [2.0, 1.7, 1.2];
+        assert_eq!(nearest_to_segment(&sapling, bounds, &AT, eye, eye, CAMERA_CLEARANCE), nearest_vertex(&sapling, bounds, &AT, eye, CAMERA_CLEARANCE));
     }
 
     #[test]

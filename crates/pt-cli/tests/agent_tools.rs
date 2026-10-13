@@ -353,6 +353,70 @@ fn an_object_in_a_cameras_face_is_caught_and_the_placement_rule_keeps_it_out() {
     assert_eq!(soft["output"]["in_face_count"], 0, "{soft}");
 }
 
+/// Saplings in a strip across the line of sight from the camera `front` (x = 0, z = -20) to its subject at (0, 0), some behind the
+/// subject and some 18 m to the side; `stand` is an hcs expression over `trees` and `terrain`.
+fn saplings_across_a_view(stand: &str) -> String {
+    format!(
+        r#"terrain = set_material(normals(wrangle(grid(size=[80, 80], rows=80, cols=80), code="@P.y = 0.0;")), name="terrain_test")
+CAMERAS = knob("cameras", [])
+sapling = set_material(merge(box(size=[0.1, 2.5, 0.1], center=[0.0, 1.25, 0.0]), box(size=[2.4, 0.3, 2.4], center=[0.0, 1.0, 0.0])), name="sapling_test")
+def stand_at(centre_x, centre_z, w, d, count, seed):
+    pts = scatter_poisson(transform(grid(size=[w, d]), t=[centre_x, 0.0, centre_z]), count=count, min_dist=1.5, seed=seed, pscale_min=1.0, pscale_max=1.0)
+    return copy_to_points(sapling, drop_to_surface(pts, terrain), rot_y_random=360.0, seed=seed)
+house = copy_to_points(set_material(box(size=[6.0, 3.0, 5.0], center=[0.0, 1.5, 0.0]), name="house_test"), drop_to_surface(scatter_poisson(transform(grid(size=[0.4, 0.4]), t=[0.8, 0.0, 0.6]), count=1, min_dist=1.0, seed=9, pscale_min=1.0, pscale_max=1.0), terrain))
+trees = merge(house, stand_at(0.0, -9.0, 12.0, 10.0, 24, 5), stand_at(0.0, 9.0, 12.0, 6.0, 8, 6), stand_at(18.0, -9.0, 8.0, 10.0, 8, 7))
+world = merge(terrain, {stand})
+spec(world, "instances", min=5)
+out(world)
+"#
+    )
+}
+
+const SCENE_WITH_SUBJECT: &str = r#"{"cameras": [{"name": "front", "eye": {"at": [0, -20], "height": 1.7, "yaw": 90}, "lens": 28, "subject": {"at": [0, 0], "height": 2.0}}]}"#;
+
+#[test]
+fn a_crown_across_the_line_of_sight_to_the_subject_is_caught_and_the_placement_rule_keeps_it_out() {
+    // The creek's `village` frame is of a cottage; a fir sapling nine metres out, clear of the lens, filled it with needles. A class:
+    // an object near the line from a camera's eye to its subject, judged by its real extent; what stands behind the subject, or well
+    // to the side, may stay.
+    setup();
+    let mut s = Session::new();
+    let dir = scratch("sight");
+    let (recipe, scene) = write_world(&dir, &saplings_across_a_view("trees"), SCENE_WITH_SUBJECT);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(err, "saplings across the line of sight must fail the check: {v}");
+    let report = &v["output"];
+    assert!(report["sight_blocked_count"].as_u64().unwrap_or(0) >= 3, "{report}");
+    let first = &report["sight_blocked"][0];
+    assert_eq!(first["camera"], "front", "the finding names the camera: {first}");
+    assert!(first["what"].as_str().unwrap_or("").contains("sapling_test"), "the object: {first}");
+    // the same saplings through the rule: the camera and its subject arrive as the knob `cameras`
+    let (recipe, scene) = write_world(&dir, &saplings_across_a_view("seat(trees, terrain, cameras=CAMERAS)"), SCENE_WITH_SUBJECT);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(!err, "seated with the cameras, nothing stands across the view: {v}");
+    assert_eq!(v["output"]["sight_blocked_count"], 0);
+    // the subject itself (the house the frame is of) is never taken for something in front of it, and the trees behind it and at
+    // the side stay: only the strip was cleared
+    assert!(v["output"]["instances"].as_u64().unwrap_or(0) >= 8, "trees off the line stay: {}", v["output"]["instances"]);
+    // the subject itself (a house whose pivot stands 1 m from the point the frame is of) is never taken for something in front of
+    // it: through the rule it stays, and the check does not name it
+    let house = r#"terrain = set_material(normals(wrangle(grid(size=[80, 80], rows=80, cols=80), code="@P.y = 0.0;")), name="terrain_test")
+CAMERAS = knob("cameras", [])
+house = copy_to_points(set_material(box(size=[6.0, 3.0, 5.0], center=[0.0, 1.5, 0.0]), name="house_test"), drop_to_surface(scatter_poisson(transform(grid(size=[0.4, 0.4]), t=[0.8, 0.0, 0.6]), count=1, min_dist=1.0, seed=9, pscale_min=1.0, pscale_max=1.0), terrain))
+world = merge(terrain, seat(house, terrain, cameras=CAMERAS))
+spec(world, "instances", min=1)
+out(world)
+"#;
+    let (recipe, scene) = write_world(&dir, house, SCENE_WITH_SUBJECT);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(!err, "the subject stays and is not blamed: {v}");
+    assert_eq!(v["output"]["instances"], 1);
+    // without a subject nothing is asked: a camera alone keeps only its lens clear
+    let (recipe, scene) = write_world(&dir, &saplings_across_a_view("seat(trees, terrain, cameras=CAMERAS)"), SCENE);
+    let (_, plain) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(plain["output"]["instances"].as_u64().unwrap_or(0) > v["output"]["instances"].as_u64().unwrap_or(0), "no subject, no cleared strip: {plain}");
+}
+
 /// Rocks 1.4 x 0.8 x 1.2 m on a bank: flat for x < 0, rising 1.5 m per metre (56 degrees) for x > 0. `stand` is an hcs expression
 /// over `rocks` (instances dropped by their centre) and `terrain`.
 fn rocks_on_a_bank(stand: &str) -> String {
