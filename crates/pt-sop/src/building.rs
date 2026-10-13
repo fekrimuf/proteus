@@ -32,9 +32,14 @@ const PART_FRAME: f32 = 5.0;
 const PART_FOOTING: f32 = 6.0;
 const PART_TIMBER: f32 = 7.0;
 const PART_CHIMNEY: f32 = 8.0;
+const PART_STEP: f32 = 9.0;
+/// Entrance steps: no rise above this (m), treads at least this deep (m), and none for a floor lower than the rise.
+const MAX_RISE: f32 = 0.2;
+const TREAD: f32 = 0.3;
 
 /// The meaning of the `part` attribute, also written into the `building` detail record.
-const PART_CODES: [(&str, f32); 9] = [
+const PART_CODES: [(&str, f32); 10] = [
+    ("step", PART_STEP),
     ("wall", PART_WALL),
     ("floor", PART_FLOOR),
     ("roof", PART_ROOF),
@@ -65,7 +70,7 @@ const WALL_NAMES: [&str; 4] = ["front (+Z)", "right (+X)", "back (-Z)", "left (-
 pub fn schemas() -> Vec<NodeSchema> {
     vec![sch(
         "building",
-        "A building SHELL from a floor plan, built inside out: a rectangular footprint split into rooms, outside walls and partitions with real thickness and real openings (no boolean: the faces are built around the holes), a floor per room, a stone footing, a gable roof (ridge along Z) with thickness and overhang, door frames with a door leaf that swings by `open`, window frames with a pane, corner posts, wall plates and an optional chimney. Plan view: the entrance wall is the FRONT (+Z); rooms are numbered row by row from the front-left (id = row * columns + column; columns count from -X, rows from the front towards the back). Walls are numbered 0 front (+Z), 1 right (+X), 2 back (-Z), 3 left (-X); a position along a wall is a fraction 0..1 measured left to right as seen from OUTSIDE. Output (mode 'shell'): primitive attributes `room` (the room whose air the face touches, -1 otherwise), `part` (0 wall, 1 floor, 2 roof, 3 door, 4 window, 5 frame, 6 footing, 7 timber, 8 chimney) and `opening` (the opening a frame, leaf, pane or reveal belongs to, -1 otherwise), materials hut_stone, hut_wall, hut_wood, hut_roof, hut_door, hut_dark, and the detail record `building` (rooms and openings in the node's own frame). mode 'openings' is one 2-point line per opening (centre, then one metre along the direction a person walks from room_from to room_to; outwards for the entrance and the windows) with primitive attributes opening, kind (0 entrance, 1 inner door, 2 window), wall, room_from, room_to, width, height, sill; mode 'rooms' is the floor rectangle of every room with attributes room, row, col, area, height. Lines and polygons follow any transform of the shell. A plan that cannot be walked (a room with no door to it, a door under 0.8 x 1.9 m, a window across a partition) is refused with the reason.",
+        "A building SHELL from a floor plan, built inside out: a rectangular footprint split into rooms, outside walls and partitions with real thickness and real openings (no boolean: the faces are built around the holes), a floor per room, a stone footing, a gable roof (ridge along Z) with thickness and overhang, door frames with a door leaf that swings by `open`, window frames with a pane, corner posts, wall plates and an optional chimney. Plan view: the entrance wall is the FRONT (+Z); rooms are numbered row by row from the front-left (id = row * columns + column; columns count from -X, rows from the front towards the back). Walls are numbered 0 front (+Z), 1 right (+X), 2 back (-Z), 3 left (-X); a position along a wall is a fraction 0..1 measured left to right as seen from OUTSIDE. Output (mode 'shell'): primitive attributes `room` (the room whose air the face touches, -1 otherwise), `part` (0 wall, 1 floor, 2 roof, 3 door, 4 window, 5 frame, 6 footing, 7 timber, 8 chimney, 9 entrance steps) and `opening` (the opening a frame, leaf, pane or reveal belongs to, -1 otherwise), materials hut_stone, hut_wall, hut_wood, hut_roof and hut_door, and the detail record `building` (rooms and openings in the node's own frame). mode 'openings' is one 2-point line per opening (centre, then one metre along the direction a person walks from room_from to room_to; outwards for the entrance and the windows) with primitive attributes opening, kind (0 entrance, 1 inner door, 2 window), wall, room_from, room_to, width, height, sill; mode 'rooms' is the floor rectangle of every room with attributes room, row, col, area, height. Lines and polygons follow any transform of the shell. A plan that cannot be walked (a room with no door to it, a door under 0.8 x 1.9 m, a window across a partition) is refused with the reason.",
         0,
         D::None,
         G::Whole,
@@ -89,6 +94,7 @@ pub fn schemas() -> Vec<NodeSchema> {
             ps("chimney", json!([]), "Optional outside chimney stack on a gable wall: [wall 0 or 2, position 0..1, width, depth it stands out, height above the ridge] (m). Empty = none."),
             ps("open", json!(0.0), "Swing of the entrance door leaf into the room (degrees; 0 = closed)."),
             ps("inner_open", json!(0.0), "Swing of the inner door leaves (degrees; 0 = closed)."),
+            ps("glazing", json!(0), "0 = open windows: a frame and nothing in the hole, so light and sky reach the room (the only value shipped; 1, a glass pane, is refused until the render and the engine have a glass material)."),
             ps("mode", json!("shell"), "shell | openings | rooms (see above)."),
         ],
     )]
@@ -334,7 +340,7 @@ impl Panel {
         }
     }
 
-    /// Trim boards round every opening on both faces, then the leaf of a door or the pane of a window.
+    /// Trim boards round every opening on both faces, then the leaf of a door (a window stays open: see `glazing`).
     fn fit(&self, m: &mut Mesh, h: &Hole, window: bool, swing_deg: f32) {
         let t = self.t;
         for (v, room) in [((-TRIM_OUT, 0.0), h.room), ((t, t + TRIM_OUT), h.room_hi)] {
@@ -348,10 +354,8 @@ impl Panel {
             }
         }
         let mid = 0.5 * t;
-        if window {
-            let tag = Tag { room: h.room, part: PART_WINDOW, open: h.id, mat: "hut_dark" };
-            m.solid(&self.f, (h.u0, h.u1), (mid - 0.012, mid + 0.012), (h.y0, h.y1), None, tag);
-        } else {
+        // A window is an open frame: nothing in the hole, so light and sky reach the room.
+        if !window {
             let tag = Tag { room: h.room, part: PART_DOOR, open: h.id, mat: "hut_door" };
             let hinge = h.u0 + 0.01;
             m.solid(&self.f, (hinge, h.u1 - 0.01), (mid - 0.025, mid + 0.025), (h.y0 + 0.005, h.y1 - 0.01), Some((hinge, mid, math::to_radians(swing_deg))), tag);
@@ -591,6 +595,9 @@ fn make(p: &Params) -> Result<Made, String> {
         Ok(())
     };
 
+    if p.i("glazing") != 0 {
+        return Err("building: glazing=1 (a glass pane) is not available yet: the render and the engine have no glass material, so a pane would be a black plate that keeps the light out. Windows are open frames (glazing=0)".into());
+    }
     let door = table(p, "door", 4)?;
     let Some(dr) = door.first() else {
         return Err("building: no entrance: give `door` as [wall, position, width, height]".into());
@@ -687,6 +694,19 @@ fn make(p: &Params) -> Result<Made, String> {
             m.solid(&WORLD, (sx * w * 0.5 - 0.12, sx * w * 0.5 + 0.12), (sz * d * 0.5 - 0.12, sz * d * 0.5 + 0.12), (y_base, y_e), None, timber);
         }
         m.solid(&WORLD, (sx * w * 0.5 - 0.13, sx * w * 0.5 + 0.13), (-d * 0.5 - 0.25, d * 0.5 + 0.25), (y_e - 0.16, y_e + 0.06), None, timber);
+    }
+    // entrance steps: from the ground (y = 0) up to the sill in equal rises of at most MAX_RISE, each tread TREAD deep, a little
+    // wider than the door; each block runs down to the foot of the footing so it stands on a slope, and the top tread is the landing
+    if fy >= MAX_RISE {
+        let n = ((fy / MAX_RISE) - 1e-4).ceil().max(1.0) as usize;
+        let rise = fy / n as f32;
+        if let Some((pi, hole, _)) = specs.first() {
+            let step = tag(-1, PART_STEP, "hut_stone");
+            for k in 1..=n {
+                let depth = TREAD * (n - k + 1) as f32;
+                m.solid(&panels[*pi].f, (hole.u0 - 0.2, hole.u1 + 0.2), (panels[*pi].t, panels[*pi].t + depth), (fy - foot, rise * k as f32), None, step);
+            }
+        }
     }
     // roof: two slabs meeting at the ridge, their undersides running through the tops of the walls
     let zr = d * 0.5 + over;

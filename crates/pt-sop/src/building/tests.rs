@@ -309,12 +309,12 @@ fn the_roof_closes_the_building() {
 fn rooms_and_openings_are_carried_on_the_geometry() {
     let g = shell_of(&cottage(&[]));
     let (room, part) = (attr(&g, "room"), attr(&g, "part"));
-    for code in [PART_WALL, PART_FLOOR, PART_ROOF, PART_DOOR, PART_WINDOW, PART_FRAME, PART_FOOTING, PART_TIMBER] {
+    for code in [PART_WALL, PART_FLOOR, PART_ROOF, PART_DOOR, PART_FRAME, PART_FOOTING, PART_TIMBER, PART_STEP] {
         assert!(part.contains(&code), "no primitive with part {code}");
     }
     let floors: Vec<f32> = (0..g.n_prims()).filter(|&i| part[i] == PART_FLOOR).map(|i| room[i]).collect();
     assert_eq!(floors, vec![0.0, 1.0]);
-    assert_eq!(g.material_names(), vec!["hut_dark", "hut_door", "hut_roof", "hut_stone", "hut_wall", "hut_wood"]);
+    assert_eq!(g.material_names(), vec!["hut_door", "hut_roof", "hut_stone", "hut_wall", "hut_wood"]);
     let info = &g.detail["building"];
     assert_eq!(info["rooms"].as_array().unwrap().len(), 2);
     assert_eq!(info["openings"].as_array().unwrap().len(), 7);
@@ -358,4 +358,71 @@ fn the_openings_and_rooms_outputs_say_where_things_are() {
     let r = mode_of(&cottage(&[]), "rooms");
     assert_eq!(r.n_prims(), 2);
     assert!(attr(&r, "area").iter().all(|a| *a > 4.0));
+}
+
+/// Outside openings (entrance and windows) whose line of sight from eye height at the centre of their room is blocked by a face.
+/// A door leaf is a leaf that can be opened: it blocks the line only when `leaves_count`.
+fn blocked_views(plan: &[(&str, Value)], leaves_count: bool) -> usize {
+    let g = shell_of(plan);
+    let part = attr(&g, "part");
+    let rects = room_rects(plan);
+    let mut blocked = 0;
+    for (c, _, _, kind, from, _) in read_openings(plan).iter().filter(|o| o.3 != 1.0) {
+        let _ = kind;
+        let r = &rects[*from as usize];
+        let eye = [0.5 * (r.0[0] + r.0[1]), 0.4 + 1.6, 0.5 * (r.1[0] + r.1[1])];
+        let d = math::sub(*c, eye);
+        let len = dot(d, d).sqrt();
+        let dir = [d[0] / len, d[1] / len, d[2] / len];
+        let keep = |i: usize| leaves_count || part[i] != PART_DOOR;
+        if ray(&g, eye, dir, &keep).iter().any(|h| h.0 < len + 0.6) {
+            blocked += 1;
+        }
+    }
+    blocked
+}
+
+#[test]
+fn every_room_with_an_outside_opening_sees_the_sky_through_it() {
+    for plan in plans() {
+        assert_eq!(blocked_views(&plan, false), 0, "a window or the entrance does not let the room see out");
+    }
+    // the check can fail: a closed door leaf blocks the view through the entrance
+    assert!(blocked_views(&cottage(&[]), true) >= 1);
+    // and a pane of any kind is not shipped: it would be a black plate in the hole
+    assert!(cook_with(&cottage(&[("glazing", json!(1))])).unwrap_err().contains("glazing=1"));
+}
+
+/// The height of the surface a person stands on at (x, z): the highest walking surface below head height, or the ground.
+fn walking_height(g: &Geometry, x: f32, z: f32, floor_y: f32) -> Option<f32> {
+    let part = attr(g, "part");
+    let walk = |i: usize| [PART_WALL, PART_FLOOR, PART_FOOTING, PART_STEP].contains(&part[i]);
+    let top = floor_y + 1.0;
+    match ray(g, [x, top, z], [0.0, -1.0, 0.0], &walk).first() {
+        Some(h) => Some(top - h.0),
+        None if x.abs() < 3.1 + 0.2 && z.abs() < 2.3 + 0.2 => None,
+        None => Some(0.0),
+    }
+}
+
+#[test]
+fn a_person_can_walk_in_through_the_entrance_on_any_floor_height() {
+    for floor_y in [0.1f32, 0.2, 0.4, 0.75, 1.3] {
+        let plan = cottage(&[("floor_y", json!(floor_y))]);
+        let g = shell_of(&plan);
+        let (c, dir, ..) = read_openings(&plan)[0];
+        let mut prev = 0.0f32;
+        // start on the ground, one metre in front of the foot of the steps
+        let mut s = 1.15 + 0.3 * (floor_y / 0.2).ceil();
+        while s >= -1.15 {
+            let (x, z) = (c[0] + dir[0] * s, c[2] + dir[2] * s);
+            let h = walking_height(&g, x, z, floor_y).unwrap_or_else(|| panic!("floor_y {floor_y}: a hole in the way at {s} m from the door"));
+            assert!(h - prev <= 0.2 + 1e-3, "floor_y {floor_y}: a rise of {} m at {s} m from the door", h - prev);
+            prev = h;
+            s -= 0.02;
+        }
+        assert!((prev - floor_y).abs() < 1e-3, "floor_y {floor_y}: the walk ends at {prev}");
+        let has_steps = attr(&g, "part").contains(&PART_STEP);
+        assert_eq!(has_steps, floor_y >= 0.2, "floor_y {floor_y}");
+    }
 }
