@@ -23,8 +23,9 @@ An agent-hour is one agent session's wall-clock hour, tests and guide included. 
 | 11 | **Autonomous director** (stage 5) | Art bible compiler, planner, playtest bots, repair loop not built | As B12.6 | 25 to 50 | 2027-01-15 | one square kilometre from a brief |
 | 12 | **World scale** (stage 6) | Joins, streaming, HLOD, engine bridge not built; today's walls are Blender import memory and the validator, not video memory (the creek runs at 106 fps on the 8 GB card) | As B12.6, with terrain written as tiles plus a ladder of coarser heightmaps an engine can stream (clipmap-style); this moves up when the engine row measures the card as the limit | 15 to 30 | 2027-03-01 | a 10 km walkable world |
 | 13 | **One paragraph in, finished world out** (stage 7) | Needs the data the generators produce | A locally trained proposer on that data | 25 to 50 | 2027-05-31 | the north star |
+| 14 | **Reference finder** (future, not scheduled) | The agent can only look at pictures it is given; search tested 2026-10-13: Openverse and Wikimedia Commons work, the search tool finds pages not pictures, public SearXNG does not (DECISIONS B21) | A registry command that searches both sources (Commons 'Featured pictures' and 'Quality images', Openverse large photographs), adds a picture by direct address, saves it under `out/refs/` with source, creator, licence, size and tier, and refuses AI-made, low-resolution and low-budget-game pictures with the reason | 3 to 5 | after row 6 at the earliest | references for the style tools and the art bible compiler, never built from a poor or AI-made picture |
 
-Rows 1 to 9 total about 28 to 55 agent-hours. Rows 10 to 13 keep their plan dates: nothing measured yet says they move.
+Rows 1 to 9 total about 28 to 55 agent-hours. Rows 10 to 13 keep their plan dates: nothing measured yet says they move. Row 14 is not scheduled.
 
 ## Lanes
 

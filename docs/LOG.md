@@ -271,3 +271,8 @@ Measured in the engine on the creek world (`out/sc_cascade_test`, no render): 10
 
 * The owner pointed out that the creek renders have already been seen, so pairs made from them are not blind. Decision: the pairs move to views the owner has not seen (earliest about 10-22, after ROUTE.md rows 3 to 5); stage 1 is judged by the owner's side-by-side look at owner-quality frames in the meantime.
 * The owner asked that renders never wait for permission (it collides with an autonomous system). The "say so first" rule is removed from CLAUDE.md, the tool descriptions, the generated command table, AGENT_GUIDE and STATUS; the protections stay in code (low priority, memory cap, killed with `pt`).
+
+## 2026-10-13: reference images tested and documented, not built
+
+* **Tested at the owner's request:** the web search tool has no `provider` or `categories` option and finds pages, not pictures; public SearXNG servers gave a captcha, rate limits or nothing, and a local one needs Docker or Python, which this machine lacks. Openverse and the Wikimedia Commons API work with no key and give direct image links, creators and licences; Commons "Featured pictures" and "Quality images" return 4 000 to 6 500 pixel photographs; Openverse has no marker for AI-made images. A downloaded timber-mill photograph was viewed through the file reader, so search, file and look all work.
+* **Decided (DECISIONS B21, ROUTE row 14):** build it later, as a registry command, with a quality gate: AAA-grade game environments, high-end photography and credited concept art qualify; AI-generated images, low-budget game art and low resolution are refused; no licence filter on reference search (the owner: it is only a reference), while the corpus keeps CC0. Nothing was added to the code.

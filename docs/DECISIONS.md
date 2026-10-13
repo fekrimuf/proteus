@@ -1,6 +1,6 @@
 # Decisions (design choices that stay fixed until new evidence changes them)
 
-Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
+Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20, B21) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
 
 ## B11. Decisions already made (do not re-litigate without new evidence)
 
@@ -199,3 +199,17 @@ change: the judges take two briefs from the start, and the tree family is design
 **Course change.**
 1. The stage 1 blind pairs (B12.6, protocol in ROUTE.md) are delayed until there are views the owner has not seen: new cameras, or a world that has changed a lot. The earliest such point is after rows 3 to 5 of ROUTE.md (about 2026-10-22), where the pairs also serve the stage 2 gate. Meanwhile stage 1 is judged the way B17 says: owner-quality frames (rows 1 and 2) that the owner compares with the reference by eye.
 2. Renders, the terrain bake, the vision judge and every other heavy job run without asking and without a warning first. The protections are in code (`lowload`: low priority, a memory cap, killed with the process); one heavy job runs at a time; the report says which ran; none is left running at wrap-up; if the owner reports lag, mine are stopped first.
+
+## B21. Reference images: how they are found and what qualifies (decision for later, 2026-10-13)
+
+Not built and not scheduled: ROUTE.md row 14. The decision is recorded now so the later build starts from the owner's rules.
+
+**Evidence (tested 2026-10-13).** The web search tool finds pages, not pictures (a query for a medieval watermill returned museum prints and a toy design). The tool option `provider: "searxng"` with `categories: "images"` does not exist here, and public SearXNG servers answered a captcha, rate limits or nothing; running one needs Docker or Python, which this machine lacks. Two free sources work with no key: Openverse (direct image link, creator, source page and licence per image) and the Wikimedia Commons API (image links and sizes; the categories "Featured pictures" and "Quality images" return 4 000 to 6 500 pixel photographs). A downloaded 1024 pixel photo of a timber mill with a wheel beside a waterfall was viewed through the file reader, so the whole loop (search, direct file, look) works. Openverse records carry no marker for AI-made images.
+
+**Rules.**
+1. **What a reference is for:** looking, and measuring (palette, shape and layout statistics), never copying: B11 stays, "match statistics, not copies". A reference picture is never committed or shipped. It lives under `out/refs/` (git-ignored) with a note beside it: source page, creator, licence, size, tier and why it was chosen.
+2. **No licence filter on reference search** (owner, 2026-10-13: the picture is not sold, it is only a reference). Anything that enters the asset library or the corpus keeps the CC0 and ledger rules of B15a; the CC-BY question of 2026-11-01 is unchanged.
+3. **Only high-quality references qualify:** AAA-grade game environments (official screenshots and art), high-end photography of real places, credited concept art by established artists, and anything the owner names; the owner's own reference picture is always accepted. A tier is recorded for each; the style tools and the art bible compiler (ROUTE rows 6 and stage 5) take only references above the lowest tier with a recorded provenance.
+4. **Refused, with the reason recorded:** AI-generated images; low-budget game screenshots and asset-flip art (a source that is not on the quality list); low resolution (long side under 1920 pixels); watermarked previews; pictures with no human creator or source page. The system never builds a world from a refused reference.
+5. **How AI-made images are caught** (Openverse gives no flag): the content-credentials marker where a file carries one, tags and titles such as "ai generated", "midjourney", "stable diffusion" and "dall-e", a block list of sources that publish mostly AI output, a missing human creator, and the agent's own look at the picture before it is accepted (CLAUDE.md rule 7).
+6. **Where quality comes from:** for natural scenes the Commons "Featured pictures" and "Quality images" categories and Openverse's large-photograph filter; there is no free interface for AAA game art, so those references come from the owner, or from official press pages the agent finds by search and adds by direct image address through the same gate.
