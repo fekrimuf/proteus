@@ -19,7 +19,7 @@ use crate::corpus::{sha256_hex, Ledger};
 use pt_core::ParamExt;
 use pt_graph::Graph;
 use serde_json::Value;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::path::Path;
 
 pub const CERTIFICATE: crate::registry::Command = {
@@ -193,17 +193,21 @@ pub fn certificate(recipe_name: &str, code: &str, ledger: &Ledger, materials: Op
         let mut names: BTreeSet<String> = reads.materials.clone();
         names.extend(m.scene.get("materials").and_then(Value::as_object).into_iter().flat_map(|o| o.keys().cloned()));
         names.extend(m.scene.pointer("/ground/material").and_then(Value::as_str).map(String::from));
-        let mut sets: BTreeMap<String, String> = BTreeMap::new(); // set -> the first material name that uses it
+        let mut reached = crate::blender::Reached::default(); // sets: set -> the first material name that leads to it
         for n in &names {
-            if let Some(set) = crate::blender::polyhaven_set(&m.scene, &m.lib, n) {
-                sets.entry(set).or_insert_with(|| n.clone());
-            }
-            let key = crate::blender::library_key(&m.scene, n);
-            if m.lib.pointer(&format!("/materials/{key}/kind")).and_then(Value::as_str) == Some("foliage") {
-                drawn.extend(m.lib.pointer(&format!("/materials/{key}/texture")).and_then(Value::as_str).map(String::from));
+            crate::blender::reach_material(&m.scene, &m.lib, n, &mut reached);
+        }
+        // a picture under corpus/generated is drawn by this program; any other picture a material names must be in the ledger
+        for t in &reached.textures {
+            if t.starts_with("corpus/generated/") {
+                drawn.insert(t.clone());
+            } else if ledger.rows.contains_key(t) {
+                used.insert(Used { id: t.clone(), kind: "material file" });
+            } else {
+                missing.push(format!("material picture {t}"));
             }
         }
-        for (set, name) in &sets {
+        for (set, name) in &reached.sets {
             let folder = format!("polyhaven/materials/{set}/");
             let rows = rows_under(ledger, &folder);
             if rows.is_empty() {
@@ -390,6 +394,44 @@ mod tests {
         assert!(text.contains("forest_floor_01_diff_1k.jpg") && text.contains("forest_floor_01_nor_gl_1k.jpg") && text.contains("material file"), "{text}");
         assert!(!text.contains("unused_02"), "a set no material uses is listed");
         assert!(text.contains("style `test_style`") && text.contains("needles_a.png") && text.contains("Everything else in this world is made by the recipe's rules"), "{text}");
+    }
+
+    fn world_with(scene_materials: Value, lib_materials: Value) -> Materials {
+        Materials { scene: json!({"materials": scene_materials}), lib: json!({"materials": lib_materials}) }
+    }
+
+    #[test]
+    fn a_style_entry_with_its_own_polyhaven_set_is_followed_and_wins_over_the_library() {
+        // one entry overrides the library's set, one has no library match at all; neither is reached by a library-only lookup
+        let m = world_with(json!({"ground_flat": {"use": "forest_floor", "polyhaven": "own_set_01"}, "ground_lost": {"polyhaven": "lost_set_77"}}), json!({"forest_floor": {"polyhaven": "forest_floor_01"}}));
+        let l = ledger(&[ROCK[0], "polyhaven/materials/own_set_01/own_set_01_diff_1k.jpg"]);
+        let e = certificate("w.hcs", RECIPE, &l, Some(&m), &no_corpus()).unwrap_err();
+        assert!(e.contains("lost_set_77") && !e.contains("own_set_01") && !e.contains("forest_floor_01"), "{e}");
+        let l = ledger(&[ROCK[0], "polyhaven/materials/own_set_01/own_set_01_diff_1k.jpg", "polyhaven/materials/lost_set_77/lost_set_77_diff_1k.jpg", "polyhaven/materials/forest_floor_01/forest_floor_01_diff_1k.jpg"]);
+        let text = certificate("w.hcs", RECIPE, &l, Some(&m), &no_corpus()).unwrap();
+        assert!(text.contains("own_set_01_diff_1k.jpg") && text.contains("lost_set_77_diff_1k.jpg"), "{text}");
+        assert!(!text.contains("forest_floor_01"), "the library's set is overridden, the render does not read it: {text}");
+    }
+
+    #[test]
+    fn layers_are_followed_one_level_and_nested_and_a_cycle_ends() {
+        let m = world_with(
+            json!({"ground_flat": {"layers": ["a", "b"]}, "b": {"layers": ["c"]}, "loop_a": {"layers": ["loop_b"]}, "loop_b": {"layers": ["loop_a", "a"]}}),
+            json!({"a": {"polyhaven": "set_a"}, "c": {"polyhaven": "set_c"}}),
+        );
+        let l = ledger(&[ROCK[0], "polyhaven/materials/set_a/set_a_diff_1k.jpg", "polyhaven/materials/set_c/set_c_diff_1k.jpg"]);
+        let text = certificate("w.hcs", RECIPE, &l, Some(&m), &no_corpus()).unwrap();
+        assert!(text.contains("set_a_diff_1k.jpg") && text.contains("set_c_diff_1k.jpg"), "{text}");
+        let e = certificate("w.hcs", RECIPE, &ledger(&[ROCK[0], "polyhaven/materials/set_a/set_a_diff_1k.jpg"]), Some(&m), &no_corpus()).unwrap_err();
+        assert!(e.contains("set_c"), "a nested layer's set must be named: {e}");
+    }
+
+    #[test]
+    fn a_foliage_picture_outside_the_generated_folder_needs_a_row() {
+        let m = world_with(json!({}), json!({"leaf": {"kind": "foliage", "texture": "polyhaven/textures/leaf.png"}}));
+        let code = "out(set_material(grid(), name=\"leaf\"))\n";
+        assert!(certificate("w.hcs", code, &ledger(&[]), Some(&m), &no_corpus()).unwrap_err().contains("polyhaven/textures/leaf.png"));
+        assert!(certificate("w.hcs", code, &ledger(&["polyhaven/textures/leaf.png"]), Some(&m), &no_corpus()).unwrap().contains("leaf.png"));
     }
 
     #[test]
