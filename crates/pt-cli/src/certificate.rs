@@ -337,7 +337,7 @@ mod tests {
             "forest_floor": {"polyhaven": "forest_floor_01"},
             "lost_set": {"polyhaven": "lost_set_77"},
             "water_clear": {"kind": "water", "fallback": [0.0, 0.1, 0.1]},
-            "conifer_needles": {"kind": "foliage", "texture": "corpus/generated/needles_a.png"}}});
+            "conifer_needles": {"kind": "foliage", "texture": "corpus/generated/needles_a.png", "fallback": [0.0, 0.1, 0.0]}}});
         Materials { scene: json!({"style_name": "test_style", "materials": roles}), lib }
     }
 
@@ -428,7 +428,7 @@ mod tests {
 
     #[test]
     fn a_foliage_picture_outside_the_generated_folder_needs_a_row() {
-        let m = world_with(json!({}), json!({"leaf": {"kind": "foliage", "texture": "polyhaven/textures/leaf.png"}}));
+        let m = world_with(json!({}), json!({"leaf": {"kind": "foliage", "texture": "polyhaven/textures/leaf.png", "fallback": [0.0, 0.1, 0.0]}}));
         let code = "out(set_material(grid(), name=\"leaf\"))\n";
         assert!(certificate("w.hcs", code, &ledger(&[]), Some(&m), &no_corpus()).unwrap_err().contains("polyhaven/textures/leaf.png"));
         assert!(certificate("w.hcs", code, &ledger(&["polyhaven/textures/leaf.png"]), Some(&m), &no_corpus()).unwrap().contains("leaf.png"));
