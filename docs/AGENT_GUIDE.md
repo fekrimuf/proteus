@@ -238,6 +238,12 @@ MCP:   pick(node, scene, camera, x, y, radius?, frame_size?)
 * **Placing on terrain**: `drop_to_surface(points, terrain)` lifts points onto the surface and writes
   `N`; filter with `group_by_expression("@N.y > 0.93")` to keep only flat spots. `switch` picks
   one of up to 4 variants.
+* **Seating what was placed**: `seat(instances, terrain)` after every copy node. It lowers each
+  instance by its real shape until its whole base is in the ground (a tree's root plate on a slope;
+  `bury=0.2` puts roots in the soil), lays a lying object on its body instead of its lowest stub,
+  and with `seat(instances, terrain, water, draft=0.55)` wood lies in the water line. It removes an
+  instance the ground falls away under (`limit`). What it seats passes `ground_check`, which uses the
+  same measure and prints each prototype's `soles` (base width, where the body starts).
 
 ## Tools (progressive disclosure)
 
