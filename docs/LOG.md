@@ -266,3 +266,8 @@ Measured in the engine on the creek world (`out/sc_cascade_test`, no render): 10
 ## 2026-10-13: the owner approves the three lanes
 
 * The owner said yes to three work lanes side by side (ROUTE.md "Lanes", DECISIONS B19 item 8) and asked that no work start yet. Recorded; nothing is in progress. The blind pairs were explained to the owner and their protocol written into ROUTE.md.
+
+## 2026-10-13: the blind pairs wait; renders need no permission (DECISIONS B20)
+
+* The owner pointed out that the creek renders have already been seen, so pairs made from them are not blind. Decision: the pairs move to views the owner has not seen (earliest about 10-22, after ROUTE.md rows 3 to 5); stage 1 is judged by the owner's side-by-side look at owner-quality frames in the meantime.
+* The owner asked that renders never wait for permission (it collides with an autonomous system). The "say so first" rule is removed from CLAUDE.md, the tool descriptions, the generated command table, AGENT_GUIDE and STATUS; the protections stay in code (low priority, memory cap, killed with `pt`).

@@ -34,6 +34,7 @@ Shape of a report: result vs target (one line), decision and next step (one line
 - **Finish before starting.** At most two open items at once. Done means run end to end and verified.
 - **Biggest lever first.** Before each item ask what moves the north star most for the least time, not what failed last.
 - **A fix ships with a test that fails without it,** written against the class of defect (the placement rule, not the one stone) and, where an agent can see the defect, run through the agent tools (`crates/pt-cli/tests/agent_tools.rs`). The test shows the check fails where it should.
+- **Renders, the terrain bake, the vision judge and every other heavy job need no permission and no warning.** An autonomous system cannot stop to ask. The code protects the PC (low priority, a memory cap, killed with `pt`: `lowload`); run them when the work needs them, one heavy job at a time, say in the report which ran, leave none running at wrap-up, and if the owner reports lag stop mine first.
 - **New commands go in the registry** (`crates/pt-cli/src/registry.rs`): declared once, they are on the command line, in the agent's tool list and in the generated docs.
 - **Re-examine inherited plan items.** When facts change, ask of every big plan item whether it is still needed, and tell the owner unprompted with the evidence. Being on the plan already is not a reason to keep it.
 - **Spend nothing.** The budget is near zero: free and local first (local GPU, free tiers, open-source engines); ask before any spend.
@@ -45,9 +46,9 @@ Read `docs/STATUS.md` first: it holds the current state, open items and next ste
 ## Running and looking at the product
 
 - **Build once:** `cargo build --release -p pt-cli`. The checked-in `.mcp.json` registers the `proteus` tool server (`target/release/pt.exe mcp --ui 7700`); the page at `http://127.0.0.1:7700` shows the live scene. `pt help` lists the file-level commands, and each is also an agent tool (`docs/generated/commands.md`).
-- **Look at a frame:** `pt render-scene` renders it (heavy: say so first), then `pt ground-check ... --frames DIR --annotate DIR`, `pt review-tiles`, and `pt pick` for what made a pixel. Rule 7 above applies to every frame.
+- **Look at a frame:** `pt render-scene` renders it (heavy; no permission and no warning needed, see "How you work"), then `pt ground-check ... --frames DIR --annotate DIR`, `pt review-tiles`, and `pt pick` for what made a pixel. Rule 7 above applies to every frame.
 - **Before every commit:** `cargo gate` (build, lint, docs, tests; `cargo gate --quick` leaves out the tests). It enforces the platform-independent maths rule and the ban on `unwrap`, `expect` and `panic!` in production code, and CI runs the same lint.
-- **Parallel agents:** one git worktree and one `CARGO_TARGET_DIR` per agent; one heavy job (render, bake, vision judge) at a time on this machine.
+- **Parallel agents:** one git worktree and one `CARGO_TARGET_DIR` per agent; one heavy job (render, bake, vision judge) at a time on this machine. The owner approved three lanes on 2026-10-13 (ROUTE.md); they start on the owner's word.
 
 ## Commits
 

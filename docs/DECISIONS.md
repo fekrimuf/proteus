@@ -1,6 +1,6 @@
 # Decisions (design choices that stay fixed until new evidence changes them)
 
-Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
+Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
 
 ## B11. Decisions already made (do not re-litigate without new evidence)
 
@@ -191,3 +191,11 @@ change: the judges take two briefs from the start, and the tree family is design
 8. **Three work lanes side by side** (ROUTE.md, "Lanes"): approved by the owner on 2026-10-13; each lane works in its own git worktree with its own build folder, merges only after `pt gate` passes, and the lead alone edits STATUS and LOG. Not started; they begin on the owner's word.
 
 **Effect on the plan.** The dates of B12.6 and B18 were set at one gated step per working day; the history shows capabilities 1 to 6 in about two hours of commits. [ROUTE.md](ROUTE.md) re-sets the dates from that pace and ranks all open work with its cost; the stage gates and the north star are unchanged.
+
+## B20. The blind pairs wait for views the owner has not seen; heavy jobs need no permission (decision, 2026-10-13)
+
+**Evidence.** The owner has already seen our creek renders, so a pair built from those views is not blind: the composition and the faults they know give ours away. The owner also asked that renders never wait for permission, because an autonomous system cannot stop to ask.
+
+**Course change.**
+1. The stage 1 blind pairs (B12.6, protocol in ROUTE.md) are delayed until there are views the owner has not seen: new cameras, or a world that has changed a lot. The earliest such point is after rows 3 to 5 of ROUTE.md (about 2026-10-22), where the pairs also serve the stage 2 gate. Meanwhile stage 1 is judged the way B17 says: owner-quality frames (rows 1 and 2) that the owner compares with the reference by eye.
+2. Renders, the terrain bake, the vision judge and every other heavy job run without asking and without a warning first. The protections are in code (`lowload`: low priority, a memory cap, killed with the process); one heavy job runs at a time; the report says which ran; none is left running at wrap-up; if the owner reports lag, mine are stopped first.

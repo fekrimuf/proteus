@@ -71,7 +71,7 @@ pub const WORLD: crate::registry::Command = {
     crate::registry::Command {
         name: "world",
         tool: "world",
-        summary: "Work on one variant of a layered world (worlds/*.world.json): info lists the layers and variants, scene writes the expanded scene file, check runs ground-check, pick runs pick, render runs render-scene (HEAVY: it takes the machine like render-scene; say so first).",
+        summary: "Work on one variant of a layered world (worlds/*.world.json): info lists the layers and variants, scene writes the expanded scene file, check runs ground-check, pick runs pick, render runs render-scene (HEAVY: it takes the machine like render-scene).",
         heavy: false,
         params: &[
             Param::pos("manifest", Kind::Str, "the world file (for example worlds/cascade.world.json)"),

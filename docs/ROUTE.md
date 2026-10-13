@@ -10,7 +10,7 @@ An agent-hour is one agent session's wall-clock hour, tests and guide included. 
 
 | # | Work | Evidence | Route | Hours | Plan date (was) | Unlocks |
 |---|---|---|---|---:|---|---|
-| 1 | **Owner-grade frames fit this machine** | Look-development renders fit with a crop and a 10 GB cap; the full-quality world does not fit one Cycles import ([STATUS.md](STATUS.md)) | Load far stand-ins and near detail per camera tile; finish the live render session of capability 4 so a change sends only what moved | 3 to 6 | 10-15 | the owner's 10 blind pairs (stage 1 gate) |
+| 1 | **Owner-grade frames fit this machine** | Look-development renders fit with a crop and a 10 GB cap; the full-quality world does not fit one Cycles import ([STATUS.md](STATUS.md)) | Load far stand-ins and near detail per camera tile; finish the live render session of capability 4 so a change sends only what moved | 3 to 6 | 10-15 | frames at the owner's quality for the side-by-side look against the reference (stage 1) |
 | 2 | **Light and air** | The frames against the reference have no light shafts and flat haze | Volume scatter and sun shafts in the render script, driven by style knobs | 1 to 2 | 10-15 | the largest visible gap per hour; every later frame |
 | 3 | **Nature that grows, finished** (capability 7) | Close trees show cards as leaf shapes; no ecology pass; one conifer only | Finer sprays; ecology rules on queries (saplings near mature trees, shade ferns, tree line); broadleaf and ground-cover generators; the two-brief gate | 4 to 8 | 10-16 (11-03) | stage 2 gate: a "sci-fi village" brief gets no Earth trees |
 | 4 | **Procedural materials** (capability 8) | Smooth banks without gravel; roof reads as planks, not thatch | Texture graph in the same language, curvature and occlusion masks, fitted to a reference photo by the optimizer, baked for engines; also test shipping per-vertex layer weights with the small tiling material set (the engine blends them) against today's baked JPEGs, judged by export size and by the frame | 4 to 8 | 10-18 (11-10) | the exit from scanned materials; stage 3 |
@@ -28,9 +28,9 @@ Rows 1 to 9 total about 28 to 55 agent-hours. Rows 10 to 13 keep their plan date
 
 ## Lanes
 
-Run one after another, rows 1 to 9 take about four to nine working days. Their only dependencies are 5 after 4 (buildings use the materials), 7 after 5 (the sites are for buildings) and the blind pairs after 1 and 2, so three lanes can run side by side, each in its own git worktree with its own build folder, with the gate ([TOOLS.md](TOOLS.md)) as the merge test and the command registry keeping the lanes out of each other's files:
+Run one after another, rows 1 to 9 take about four to nine working days. Their only dependencies are 5 after 4 (buildings use the materials) and 7 after 5 (the sites are for buildings), so three lanes can run side by side, each in its own git worktree with its own build folder, with the gate ([TOOLS.md](TOOLS.md)) as the merge test and the command registry keeping the lanes out of each other's files:
 
-* **Lane A (the critical path to the owner's gate):** rows 1, 2, then the blind pairs, then 8 and 9.
+* **Lane A (the critical path to the owner's side-by-side look):** rows 1, 2, then 8 and 9.
 * **Lane B (nature and style):** rows 3, then 6.
 * **Lane C (surfaces and buildings):** rows 4, then 5, then 7.
 
@@ -38,6 +38,6 @@ The longest lane is C (13 to 26 hours), so three lanes bring rows 1 to 9 to abou
 
 ## What the owner decides
 
-Decided: the three lanes (2026-10-13). Still to come: the 10 blind pairs when row 1 delivers the frames (about 10 minutes, date 10-15 to 10-17), the CC-BY yes or no by 2026-11-01 (default: CC0 only), the product name before any public release, and the word to start the lanes.
+Decided: the three lanes (2026-10-13). Still to come: the 10 blind pairs, delayed to the first views the owner has not seen (DECISIONS B20; about 10 minutes, earliest about 10-22), the CC-BY yes or no by 2026-11-01 (default: CC0 only), the product name before any public release, and the word to start the lanes.
 
-**How the blind pairs run** (stage 1 gate, [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) B12.6): ten slides, each two pictures of the same view side by side, one made by our rules and one set up by hand from the same assets, same camera and same sun; which is which is hidden and the sides are shuffled. For each slide the owner answers one question: which is closer to the reference picture. The gate is passed when the owner picks ours in at least 5 of 10. A miss changes the approach for that stage, and the owner's one-line reason per slide says what to fix.
+**How the blind pairs run** (delayed, DECISIONS B20; they use views the owner has not seen, never the creek views already shown; originally the stage 1 gate, [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) B12.6): ten slides, each two pictures of the same view side by side, one made by our rules and one set up by hand from the same assets, same camera and same sun; which is which is hidden and the sides are shuffled. For each slide the owner answers one question: which is closer to the reference picture. The gate is passed when the owner picks ours in at least 5 of 10. A miss changes the approach for that stage, and the owner's one-line reason per slide says what to fix.

@@ -447,7 +447,7 @@ Dates are plan targets from the measured pace: the project started on 2026-10-09
 
 | # | Stage (rung) | What it delivers | Gate | Target |
 |---|---|---|---|---|
-| 1 | **Creek world to the owner's picture** (A1) | rock colour fix, camera on the lit side, far ring smoothed, engine look closer to the render, one cheap delivery check | the owner picks our world over a hand-built baseline in 5 of 10 blind pairs | 2026-10-17 |
+| 1 | **Creek world to the owner's picture** (A1) | rock colour fix, camera on the lit side, far ring smoothed, engine look closer to the render, one cheap delivery check | the owner compares owner-quality frames with the reference by eye; the blind pairs (our world over a hand-built baseline in 5 of 10) move to views the owner has not seen, DECISIONS B20 | 2026-10-17 for the frames |
 | 2 | **Generators and style system** (A1) | tree, ground-cover and rock families on morphology knobs, grown by ecology rules; style files (extract, blend, mutate, apply, score); the building kit moves to the grammar of DECISIONS B18 item 9 (2026-11-24) | a "sci-fi village" brief gets no Earth trees; two studios get visibly different looks (owner's eye plus cheap palette and shape statistics); repetition under the bar | 2026-11-03 |
 | 3 | **Appearance depth** (A1, beside 2) | procedural materials, wear and procedural sky (the CC0 exit) | the owner picks the result over the scanned-material version | 2026-11-10 |
 | 4 | **Systems** (A2 groundwork) | terrain fitted to real statistics (no real tile shipped), mask operators, hierarchical scatter, biome rules, road and river carving, ecology, settlements | a second biome by parameters only; a small town passes the blind pairs | 2026-12-08 |
@@ -457,7 +457,7 @@ Dates are plan targets from the measured pace: the project started on 2026-10-09
 
 The nine agent capabilities that feed these stages (geometry queries, pixel pick, simulation as set dressing, fast pictures, stable identity, layered world file, ecology, procedural materials, building grammars) have their own order and dates in DECISIONS.md B18. Critical path: 1, 2, 4, 5, 6, 7. Stage 3 runs beside stage 2. Removed by B17: asset-rebuild mining and the fresh-50 test, the photo-distance judge, and the 7 of 10 judge bar; about three weeks saved.
 
-Needed from the owner: the 10 blind pairs by 2026-10-17 (about 10 minutes); a CC-BY yes or no by 2026-11-01 (default until then: CC0 only); the product name before any public release. Taste taps are no longer scheduled: your eye on the frames replaces them.
+Needed from the owner: the 10 blind pairs on views not yet seen (DECISIONS B20; about 10 minutes, earliest about 2026-10-22); a CC-BY yes or no by 2026-11-01 (default until then: CC0 only); the product name before any public release. Taste taps are no longer scheduled: your eye on the frames replaces them.
 
 ## B13. Track C: the autonomous world compiler and the AAA Readiness Scorecard
 
