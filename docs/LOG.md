@@ -364,3 +364,12 @@ Built and checked in the row's worktree, merged into main (the gate passes on th
 * **Survey:** `pt survey` of the creek, 66 pictures, no flagged object; sheets opened (overview and walk) and kept in `out\survey\cascade_1a\`. No object floats, hangs or lies in the water in any of them.
 * **Two items closed by evidence:** the "coarse ground triangle beside the `hero` camera" does not reproduce (`pt pick` names the fine `terrain_hero` patch on that bank). The needles across the hut in the `village` survey frame are a sapling 7.6 m away that the engine draws with oversized needle cards, so it belongs to row 2a; a tree that blocks a camera's subject from further out is the first rule of the scene composer (row 7).
 * **Unchanged:** golden hashes and the gym baseline (the `seat` defaults leave every existing recipe as it was). Guide: WORLD_GUIDE "Clear of the lens, out of the ground, out of the water".
+
+## 2026-10-13: the building shell closed and merged (row 5, first slice)
+
+Built and checked in the branch's worktree, main merged in first (clean), then merged back. Heavy jobs run: five cottage frames in Blender (look-development, 265 s), one `pt survey` of the creek (about 95 s); none left running.
+
+* **Result:** the creek's plank hut is replaced by a two-room cottage made from a floor plan: real walls with door and window openings, open windows (no pane, so the rooms see sky and ground), stone entrance steps up to the sill, thatch gable roof, stone footing, door open 25 degrees. The two faults of the first review are gone in the pictures: windows no longer black panes, and a stone step stands at the door.
+* **Pictures:** five cameras of the cottage on its own, with zoom tiles of the front and back, in `out\review\cottage\` of the branch's worktree; the creek survey (66 pictures) flags no object and shows the cottage seated on the slope, with the door side to the creek (`out\survey\cascade_cottage\`). The `village` camera is still blocked by a sapling's needles, which row 2a and the scene composer own (previous entry).
+* **Tests and numbers:** 13 of 13 building tests on the merged tree; golden hashes of the two cottage recipes updated (open windows and steps changed their shape; every other recipe unchanged); the gym baseline unchanged.
+* **Seen, not fixed here:** the rooms are near-black inside with the evening sun, since no light reaches indoors: that is indoor light, row 5a.
