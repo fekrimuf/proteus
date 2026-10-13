@@ -66,6 +66,11 @@ pub fn schemas() -> Vec<NodeSchema> {
             ps("limit", json!(0.5), "Remove an instance that must be lowered by more than this share of its size (the smaller of its height and of what it stands on); 0 keeps all."),
             ps("draft", json!(0.0), "For things that float (wood): the share of the body under the water line, e.g. 0.55; 0 = it does not float and rests on the bed. Needs the water surface on input 2."),
             ps("bury", json!(0.02), "Metres the rim of the base with the most air under it goes below the ground: 0.2 for trees, whose roots go into the soil."),
+            ps("sink", json!(0.45), "Most of an object's height that may lie under the ground (a share, 0.45 = under half). A kind buried deeper is raised to it, and removed where raising leaves its base in the air; a rock may be given 0.45, a fern 0.25. 1 = no limit. `pt ground-check` fails a world on more than half."),
+            ps("wade", json!(0.45), "Most of an object's height that may lie under the creek's water (needs the water on input 2). Land plants and stones that would stand deeper are removed; wood that floats (`draft`) is not counted. 1 = no limit. `pt ground-check` fails a world on more than half."),
+            ps("cameras", json!([]), "Standing cameras as [[x, z, eye_height], ...]: the recipe gets them from `knob(\"cameras\", [])`. An object whose nearest vertex comes within `clearance` metres of a camera's eye is removed (a sapling's branches in the lens)."),
+            ps("clearance", json!(pt_core::seat::CAMERA_CLEARANCE), "Metres of clear air around every camera's eye, measured to the object's real extent, not its pivot."),
+            ps("soft", json!(0), "1 = ground cover (grass tiles, flowers): exempt from `clearance`, since it is the ground the camera stands in. Recorded per instance as `seat_soft`, which `pt ground-check` reads. Wood put in the water line is recorded as `seat_float`: the check does not call it drowned."),
         ]),
         sch("point_jitter", "Random per-point displacement in [-amount, amount] per axis (scaled by `scale`).", 1, D::None, G::PerPoint, vec![
             ps("amount", json!(0.1), "Maximum displacement (m)."),
@@ -473,20 +478,43 @@ fn seat(src: &Geometry, ground: &Geometry, water: Option<&Geometry>, p: &Params)
     let soles: Vec<Option<Sole>> = inst.protos.iter().map(|g| Sole::of(g)).collect();
     let on_land = |x: f32, z: f32| land.at(x, z);
     let on_water = |x: f32, z: f32| wet.as_ref().and_then(|w| w.at(x, z));
-    let (mut keep, mut xf, mut moved) = (Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()));
+    let kind = pt_core::seat::Keep { sink: p.f("sink").clamp(0.0, 1.0), wade: p.f("wade").clamp(0.0, 1.0) };
+    // the eye of every standing camera, and the prototypes' boxes for the nearest-vertex test
+    let soft = p.i("soft") != 0;
+    let clearance = p.f("clearance").max(0.0);
+    let eyes: Vec<[f32; 3]> = match p.get("cameras").and_then(|v| v.as_array()) {
+        Some(list) if !soft && clearance > 0.0 => list
+            .iter()
+            .filter_map(|c| {
+                let c = c.as_array()?;
+                let (x, z, h) = (c.first()?.as_f64()? as f32, c.get(1)?.as_f64()? as f32, c.get(2)?.as_f64()? as f32);
+                Some([x, land.at(x, z).unwrap_or(0.0) + h, z])
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
+    let bounds: Vec<Option<([f32; 3], [f32; 3])>> = inst.protos.iter().map(|g| g.bounds()).collect();
+    let (mut keep, mut xf, mut moved, mut floating) = (Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()));
     for (k, m) in inst.xf.iter().enumerate() {
-        let seated = match &soles[inst.proto_id[k] as usize] {
-            Some(sole) => pt_core::seat::seat(sole, m, &on_land, &on_water, limit, draft, bury),
-            None => Some(*m),
+        let pid = inst.proto_id[k] as usize;
+        let seated = match &soles[pid] {
+            Some(sole) => pt_core::seat::place(sole, m, &on_land, &on_water, limit, draft, bury, &kind).ok(),
+            None => Some((*m, false)),
         };
-        if let Some(to) = seated {
-            keep.push(k as u32);
-            moved.push(to[7] - m[7]);
-            xf.push(to);
+        let Some((to, floated)) = seated else { continue };
+        let in_face = bounds[pid].is_some_and(|b| eyes.iter().any(|e| pt_core::seat::nearest_vertex(&inst.protos[pid], b, &to, *e, clearance).is_some()));
+        if in_face {
+            continue;
         }
+        keep.push(k as u32);
+        moved.push(to[7] - m[7]);
+        floating.push(if floated { 1.0 } else { 0.0 });
+        xf.push(to);
     }
     let mut out = src.clone();
     let mut attrs = inst.attrs.gather(&keep);
+    attrs.set("seat_soft", pt_core::Column::from_f32(vec![if soft { 1.0 } else { 0.0 }; keep.len()]));
+    attrs.set("seat_float", pt_core::Column::from_f32(floating));
     attrs.set("seat_move", pt_core::Column::from_f32(moved));
     out.instances = Some(pt_core::geo::Instances { protos: inst.protos.clone(), proto_id: Arc::new(keep.iter().map(|&k| inst.proto_id[k as usize]).collect()), xf: Arc::new(xf), attrs });
     Ok(out)

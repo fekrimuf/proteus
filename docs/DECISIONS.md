@@ -1,6 +1,6 @@
 # Decisions (design choices that stay fixed until new evidence changes them)
 
-Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20, B21, B22, B23) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
+Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20, B21, B22, B23, B24) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
 
 ## B11. Decisions already made (do not re-litigate without new evidence)
 
@@ -240,3 +240,26 @@ Not built and not scheduled: ROUTE.md row 14. The decision is recorded now so th
 5. **The route took what the survey showed** (ROUTE.md, 2026-10-13): the mill before the materials and built from the inside out (row 5), the engine look as its own row (2a), interiors (5a), three memory cuts (row 1), the shadow lift (row 2), vines (row 3), worn ground at buildings (row 4), the three-pass layout (row 7), meandering rivers (row 10) and six value features (rows 15 to 20).
 
 **The owner's judgement of the frames (2026-10-13).** The owner finds the nature and light of the hut frames high quality, near a top open-world game in a still. The claim the project makes from that is the narrow one: our best still frames of nature reach that level at a small fraction of the cost. Four things stand between it and "a world of that quality", each with its row: the picture at game speed (2a), every angle (`pt survey`, row 7), scale (rows 10 and 12), and a finished world with buildings and rooms (rows 5 and 5a).
+
+## B24. One agent, one session: the agent allowance is the limit, not the clock (approach change, 2026-10-13)
+
+**Evidence.** The lanes started at 17:06 and the plan's five-hour usage limit stopped every agent at 17:46, forty minutes later, with the owner away. Two executors were cut off in the middle of an edit with their work uncommitted, and nothing moved until the limit reset at 20:20. Measured from the session records, counted in tokens read (the bulk of the use):
+
+| When | Who | Tokens read | Steps | Read per step |
+|---|---|---:|---:|---:|
+| 15:20 to 17:06 (before the lanes) | two Opus sessions open side by side | 41 million | 162 | 190 to 310 thousand |
+| 17:06 to 17:46 (the lanes) | four Sonnet executors | 40 million | 264 | 85 to 205 thousand |
+| 17:06 to 17:46 (the lanes) | the Opus lead that coordinated them | 27 million | 75 | 353 thousand |
+
+Use per hour rose about four times, from 23 to 100 million tokens read. Three things stacked: two Opus sessions had already taken about four tenths of the window; four executors then ran at once; and the lead read its whole afternoon again at every executor message, 75 times in forty minutes, several of them only to say that a job was still running. The executors were the cheapest work of the day for what they delivered, because each started with an empty memory: the heavy-job lock cost 3 million tokens read and the certificate fix 5 million. One long session costs two to five times as much per step as a fresh one (a twelve-hour session the night before averaged 514 thousand tokens read per step).
+
+**What that shows.** The allowance is one pool shared by every session and every executor. Running agents side by side does not add work to a five-hour window: it spends the same pool faster and then stops everything at once, at a point nobody chose. Work done one row at a time would have reached the same limit that afternoon, later, with one row open instead of two.
+
+**Course change.**
+1. **One agent session works at a time, on one row of [ROUTE.md](ROUTE.md).** No executors started in the background, and no second session open in the same hours: a discussion with the owner is finished and closed before a building session starts.
+2. **A new session for every row.** It reads STATUS, the row and its brief, and nothing of the day before. A row that outgrows its session ends with a commit and a line in STATUS, and a new session picks it up.
+3. **The owner's model rule stays.** A row is built on Sonnet 5.5 at medium effort, in the session itself. Planning, research and the review of a finished row are done on Opus 5.5 in a short session of their own.
+4. **A checkpoint commit on the row's branch at every passing test run.** A session that is cut off then loses nothing, and the next one starts from a commit, not from loose files.
+5. **A row ends with its own pictures and its own wrap-up** (survey, frames, tiles, LOG, STATUS), so the next session needs no handover from a person.
+
+**What it replaces.** The three lanes of ROUTE.md become one queue of the same rows. Everything built for the lanes stays in use: the heavy-job lock, a branch and a build folder per row, the written brief, and the review before a merge. The estimate of three to six working days in lanes is withdrawn; the plan basis is the one-after-another estimate ROUTE.md already held. **The way back to lanes** is a larger allowance, which is a spend and so the owner's decision; nothing has to be rebuilt for it.

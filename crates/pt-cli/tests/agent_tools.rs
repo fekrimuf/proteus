@@ -149,10 +149,10 @@ fn rule_placed_objects_never_float_or_hang_whatever_the_seed() {
     for seed in 1..=4 {
         let dir = scratch(&format!("settle{seed}"));
         let (recipe, scene) = write_world(&dir, &rocks_on_a_hill("drop_to_surface(pts, terrain, footprint=0.5)", seed), SCENE);
-        let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
-        assert!(!err, "seed {seed}: objects dropped with a footprint must not float or hang inside the view: {v}");
+        let (_, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+        // (the world may still fail on rocks the drop buries on a steep part of the hill: that is `seat`'s `sink`, tested below)
         let report = &v["output"];
-        assert_eq!(report["fail"], false, "seed {seed}: {report}");
+        assert_eq!(report["cameras"][0]["counts"]["float"].as_u64().unwrap_or(0) + report["cameras"][0]["counts"]["overhang"].as_u64().unwrap_or(0), 0, "seed {seed}: objects dropped with a footprint must not float or hang inside the view: {report}");
         assert!(report["instances"].as_u64().unwrap() >= 20, "the world has rocks to check: {report}");
         assert!(report["findings"]["float"].is_null() && report["findings"]["overhang"].is_null(), "seed {seed}: {}", report["findings"]);
     }
@@ -205,8 +205,9 @@ out(world)
     let (recipe, scene) = write_world(&dir, recipe, SCENE);
     let mut s = Session::new();
     let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
-    assert!(!err, "drowned stones do not fail the command, they are counted: {v}");
+    assert!(err, "drowned stones fail the command: {v}");
     let report = &v["output"];
+    assert_eq!(report["fail"], true);
     assert!(report["findings"]["shallow"].as_u64().unwrap_or(0) >= 10, "stones under 0.9 m of water show only a flat lid or nothing: {}", report["findings"]);
     assert!(report["cameras"][0]["by_prototype"]["shallow rock_test"].as_u64().unwrap_or(0) >= 10, "the finding names the prototype: {}", report["cameras"]);
 }
@@ -301,6 +302,121 @@ fn seated_logs_lie_on_the_ground_and_in_the_water_line() {
         assert!(report["instances"].as_u64().unwrap() >= 10, "the logs are still there: {report}");
         assert!(report["findings"]["float"].is_null() && report["findings"]["overhang"].is_null(), "seed {seed}: {}", report["findings"]);
     }
+}
+
+/// Saplings (a thin trunk and a skirt of branches 2.4 m across at one metre) scattered over a flat patch around the camera
+/// `front` (at x = 0, z = -20, eye 1.7 m); `stand` is an hcs expression over `trees` and `terrain`. The scene's cameras reach the
+/// recipe as the knob `cameras`.
+fn saplings_around_a_camera(stand: &str) -> String {
+    format!(
+        r#"terrain = set_material(normals(wrangle(grid(size=[60, 60], rows=60, cols=60), code="@P.y = 0.0;")), name="terrain_test")
+CAMERAS = knob("cameras", [])
+pts = scatter_poisson(transform(grid(size=[8, 8]), t=[0.0, 0.0, -20.0]), count=40, min_dist=1.0, seed=5, pscale_min=1.0, pscale_max=1.0)
+sapling = set_material(merge(box(size=[0.1, 2.5, 0.1], center=[0.0, 1.25, 0.0]), box(size=[2.4, 0.3, 2.4], center=[0.0, 1.0, 0.0])), name="sapling_test")
+far = scatter_poisson(transform(grid(size=[40, 20]), t=[0.0, 0.0, 10.0]), count=20, min_dist=3.0, seed=6, pscale_min=1.0, pscale_max=1.0)
+trees = merge(copy_to_points(sapling, drop_to_surface(pts, terrain), rot_y_random=360.0, seed=2), copy_to_points(sapling, drop_to_surface(far, terrain), rot_y_random=360.0, seed=3))
+world = merge(terrain, {stand})
+spec(world, "instances", min=5)
+out(world)
+"#
+    )
+}
+
+#[test]
+fn an_object_in_a_cameras_face_is_caught_and_the_placement_rule_keeps_it_out() {
+    // The first survey of the creek: the `village` camera stood 0.8 m from a fir sapling's branches. A class: any placed object
+    // within arm's reach of a standing camera, judged by its real extent (the branches), not by where its trunk stands.
+    setup();
+    let mut s = Session::new();
+    let dir = scratch("inface");
+    let (recipe, scene) = write_world(&dir, &saplings_around_a_camera("trees"), SCENE);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(err, "saplings around the lens must fail the check: {v}");
+    let report = &v["output"];
+    assert!(report["in_face_count"].as_u64().unwrap_or(0) >= 3, "{report}");
+    let first = &report["in_face"][0];
+    assert_eq!(first["camera"], "front", "the finding names the camera: {first}");
+    assert!(first["what"].as_str().unwrap_or("").contains("sapling_test"), "the object: {first}");
+    assert!(first["distance_m"].as_f64().unwrap_or(9.0) < 1.5, "and the distance: {first}");
+    // the same saplings through the rule: the scene's camera arrives as the knob `cameras`
+    let (recipe, scene) = write_world(&dir, &saplings_around_a_camera("seat(trees, terrain, cameras=CAMERAS)"), SCENE);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(!err, "seated with the cameras, nothing stands in the lens: {v}");
+    assert_eq!(v["output"]["in_face_count"], 0);
+    assert!(v["output"]["instances"].as_u64().unwrap_or(0) >= 5, "the trees away from the lens stay: {}", v["output"]["instances"]);
+    // a wider radius is asked for on the command line and in the tool, and finds more
+    let (_, wide) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene, "clearance": 4.0}));
+    assert!(wide["output"]["in_face_count"].as_u64().unwrap_or(0) > 0, "{wide}");
+    // ground cover (`soft`) may stand in the lens: it is the ground the camera stands in
+    let (recipe, scene) = write_world(&dir, &saplings_around_a_camera("seat(trees, terrain, cameras=CAMERAS, soft=1)"), SCENE);
+    let (_, soft) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert_eq!(soft["output"]["in_face_count"], 0, "{soft}");
+}
+
+/// Rocks 1.4 x 0.8 x 1.2 m on a bank: flat for x < 0, rising 1.5 m per metre (56 degrees) for x > 0. `stand` is an hcs expression
+/// over `rocks` (instances dropped by their centre) and `terrain`.
+fn rocks_on_a_bank(stand: &str) -> String {
+    format!(
+        r#"terrain = set_material(normals(wrangle(grid(size=[40, 40], rows=160, cols=160), code="@P.y = 1.5 * max(@P.x, 0.0);")), name="terrain_test")
+pts = scatter_poisson(grid(size=[30, 30]), count=90, min_dist=1.8, seed=7, pscale_min=1.0, pscale_max=1.0)
+rock = set_material(box(size=[1.4, 0.8, 1.2], center=[0.0, 0.4, 0.0]), name="rock_test")
+rocks = copy_to_points(rock, drop_to_surface(pts, terrain), rot_y_random=360.0, seed=2)
+world = merge(terrain, {stand})
+spec(world, "instances", min=5)
+out(world)
+"#
+    )
+}
+
+#[test]
+fn rocks_sunk_deeper_than_half_into_a_bank_are_caught_and_the_rule_raises_or_removes_them() {
+    // The first survey: a mossy rock 0.5 m under the east slope and ferns 0.7 m under it, and 1,100 more that nothing sees.
+    setup();
+    let mut s = Session::new();
+    let dir = scratch("buried");
+    // `limit=0` keeps what the seat would bury, `sink=1` is the old behaviour without the rule
+    let (recipe, scene) = write_world(&dir, &rocks_on_a_bank("seat(rocks, terrain, limit=0.0, sink=1.0)"), SCENE);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(err, "rocks buried to the top must fail the check: {v}");
+    let before = v["output"]["findings"]["buried"].as_u64().unwrap_or(0);
+    assert!(before >= 5, "{}", v["output"]["findings"]);
+    let (recipe, scene) = write_world(&dir, &rocks_on_a_bank("seat(rocks, terrain, limit=0.0, sink=0.45)"), SCENE);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(!err, "with the rule nothing is more than half buried: {v}");
+    assert!(v["output"]["findings"]["buried"].is_null(), "{}", v["output"]["findings"]);
+    assert!(v["output"]["instances"].as_u64().unwrap_or(0) >= 5, "the rocks on the flat side stay");
+}
+
+/// Stones on a bed that lies 0.9 m under the water in the middle of the world and dry at the sides; `stand` is an hcs
+/// expression over `stones` (dropped by their centre), `bed` and `water`.
+fn stones_in_a_creek(stand: &str) -> String {
+    format!(
+        r#"bed = set_material(normals(wrangle(grid(size=[40, 40], rows=80, cols=80), code="@P.y = -0.9 * exp(-(@P.x * @P.x) / 30.0);")), name="terrain_test")
+water = set_material(normals(wrangle(grid(size=[40, 40], rows=2, cols=2), code="@P.y = 0.0;")), name="stream_water")
+pts = scatter_poisson(grid(size=[24, 30]), count=80, min_dist=1.2, seed=4, pscale_min=0.9, pscale_max=1.1)
+stone = set_material(fit_size(sphere(), size=[0.6, 0.4, 0.5], uniform=0), name="rock_test")
+stones = copy_to_points(stone, drop_to_surface(pts, bed, footprint=0.4), rot_y_random=360.0, seed=2)
+world = merge(bed, water, {stand})
+spec(world, "instances", min=5)
+out(world)
+"#
+    )
+}
+
+#[test]
+fn land_stones_in_the_water_are_caught_and_the_rule_keeps_them_on_the_bank() {
+    setup();
+    let mut s = Session::new();
+    let dir = scratch("wade");
+    let (recipe, scene) = write_world(&dir, &stones_in_a_creek("seat(stones, bed, water, wade=1.0)"), SCENE);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(err, "stones under the water must fail the check: {v}");
+    assert!(v["output"]["findings"]["shallow"].as_u64().unwrap_or(0) >= 10, "{}", v["output"]["findings"]);
+    let (recipe, scene) = write_world(&dir, &stones_in_a_creek("seat(stones, bed, water)"), SCENE);
+    let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+    assert!(!err, "with the rule no land stone stands mostly under water: {v}");
+    assert!(v["output"]["findings"]["shallow"].is_null(), "{}", v["output"]["findings"]);
+    assert!(v["output"]["instances"].as_u64().unwrap_or(0) >= 5, "the stones on the banks stay");
 }
 
 #[test]
