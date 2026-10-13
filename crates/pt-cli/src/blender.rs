@@ -191,10 +191,12 @@ pub struct WorldFacts {
     pub layers: std::collections::BTreeMap<String, Vec<String>>,
     pub names: std::collections::BTreeSet<String>,
     pub authored: std::collections::BTreeSet<String>,
+    /// Objects that float or hang inside a camera view, by the ground check (`None`: no standing camera or no terrain).
+    pub ungrounded: Option<u64>,
 }
 
 pub fn world_facts(geo: &Geometry) -> WorldFacts {
-    let mut f = WorldFacts { layers: layers_of(geo), names: geo.material_names().into_iter().collect(), authored: Default::default() };
+    let mut f = WorldFacts { layers: layers_of(geo), names: geo.material_names().into_iter().collect(), authored: Default::default(), ungrounded: None };
     let note = |g: &Geometry, authored: &mut std::collections::BTreeSet<String>| {
         authored.extend(g.detail.keys().filter_map(|k| k.strip_prefix(pt_core::gltf::ASSET_MATERIAL_PREFIX)).map(String::from));
     };
@@ -224,7 +226,7 @@ pub fn unknown_materials(geo: &Geometry, lib: &Value, scene: &Value) -> Vec<Stri
 }
 
 fn write_sidecar(path: &Path, key: &str, f: &WorldFacts) {
-    let v = json!({"key": key, "layers": f.layers, "names": f.names, "authored": f.authored});
+    let v = json!({"key": key, "layers": f.layers, "names": f.names, "authored": f.authored, "ungrounded": f.ungrounded});
     let _ = std::fs::write(path, v.to_string());
 }
 
@@ -238,6 +240,7 @@ fn read_sidecar(path: &Path, key: &str) -> Option<WorldFacts> {
         layers: v.get("layers")?.as_object()?.iter().map(|(k, r)| (k.clone(), strs(r).into_iter().collect::<Vec<_>>())).collect(),
         names: strs(v.get("names")?),
         authored: strs(v.get("authored")?),
+        ungrounded: v.get("ungrounded").and_then(Value::as_u64),
     })
 }
 
@@ -399,17 +402,19 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
             let mut sc = prepare_scene(scene, "description", o)?;
             inject_layers_from(&mut sc, &facts.layers);
             let unknown = unknown_from(&facts, &load_library(&repo_root()), &sc);
-            return run_blender(&cached_glb, &sc, unknown, &stem, out, o, &[]);
+            return run_blender(&cached_glb, &sc, unknown, &stem, out, o, &[]).map(|r| with_grounding(r, facts.ungrounded));
         }
     }
     // The graph and the cooked world are dropped before Blender starts: a large world is gigabytes here and Blender needs
     // several times the model's size to import it, and the two together do not fit in the memory of an ordinary desktop.
-    let (glb, scene, unknown) = {
+    let (glb, scene, unknown, ungrounded) = {
         let mut g = Graph::new();
         g.lookdev = o.lookdev;
         g.knobs = knobs_of(&scene)?;
         let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
         let mut geo = (*g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?).clone();
+        // every frame carries the ground check's verdict on the world it shows, so a floating object is never found by eye first
+        let ungrounded = crate::grounding::view_counts(&geo, &scene, 45.0).map(|c| c.0);
         if let (Some(r), Some(only)) = (cull, o.only.as_deref()) {
             let names: Vec<&str> = only.split(',').map(str::trim).collect();
             let cams: Vec<crate::grounding::Camera> = crate::grounding::cameras_of(&scene).into_iter().filter(|c| names.contains(&c.name.as_str())).collect();
@@ -418,12 +423,29 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
                 eprintln!("view cull {r} m: kept {kept} of {total} instances");
             }
         }
-        let facts = world_facts(&geo);
-        let made = export_for_render(&geo, &stem, scene, o)?;
+        let mut facts = world_facts(&geo);
+        facts.ungrounded = ungrounded;
+        let (glb, scene, unknown) = export_for_render(&geo, &stem, scene, o)?;
         write_sidecar(&side, &key, &facts);
-        made
+        (glb, scene, unknown, ungrounded)
     };
-    run_blender(&glb, &scene, unknown, &stem, out, o, &[])
+    run_blender(&glb, &scene, unknown, &stem, out, o, &[]).map(|r| with_grounding(r, ungrounded))
+}
+
+/// Put the ground check's verdict into a render report: the count of objects that float or hang inside a camera view, and a
+/// warning when there are any. A frame is looked at through its report, so the report says it before an eye has to find it.
+fn with_grounding(mut report: Value, ungrounded: Option<u64>) -> Value {
+    if let Some(n) = ungrounded {
+        report["floating_or_hanging_in_view"] = json!(n);
+        if n > 0 {
+            let w = json!(format!("{n} objects float or hang inside a camera view: run `pt ground-check` and seat them with the `seat` node before this frame is shown"));
+            match report.get_mut("warnings").and_then(Value::as_array_mut) {
+                Some(list) => list.push(w),
+                None => report["warnings"] = json!([w]),
+            }
+        }
+    }
+    report
 }
 
 /// Bake the layered materials of an exported model (terrain blends) into an albedo and a tangent-space normal PNG each, through
@@ -613,6 +635,17 @@ mod tests {
         assert!(resolve_style(&mut bad).unwrap_err().contains("unknown key 'lightning'"));
         let mut missing = json!({"style": "styles/does_not_exist.json"});
         assert!(resolve_style(&mut missing).unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn a_render_report_says_when_objects_float_or_hang_in_view() {
+        let clean = with_grounding(json!({"warnings": []}), Some(0));
+        assert_eq!((clean["floating_or_hanging_in_view"].clone(), clean["warnings"].as_array().unwrap().len()), (json!(0), 0));
+        let bad = with_grounding(json!({"frames": []}), Some(7));
+        assert_eq!(bad["floating_or_hanging_in_view"], 7);
+        assert!(bad["warnings"][0].as_str().unwrap().contains("7 objects float or hang"));
+        // no standing camera or no terrain: nothing to say
+        assert!(with_grounding(json!({}), None).get("floating_or_hanging_in_view").is_none());
     }
 
     #[test]
