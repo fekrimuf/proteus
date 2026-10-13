@@ -4,6 +4,7 @@
 //! computed on the cooked mesh with every triangle weighted by its footprint, so a steep wall counts for the ground it covers on the
 //! map. They are what a synthetic terrain will later be fitted to, and what the scorecard reports for the world it measures.
 
+use pt_core::math;
 use pt_core::Geometry;
 use pt_render::Image;
 use serde_json::{json, Value};
@@ -194,7 +195,7 @@ pub fn find_valleys(geo: &Geometry, rows: usize, cols: usize, size: [f32; 2], ra
     cands.sort_by(|a, b| b[3].partial_cmp(&a[3]).unwrap_or(std::cmp::Ordering::Equal));
     let mut out: Vec<[f32; 4]> = Vec::new();
     for c in cands {
-        if out.iter().all(|o| ((o[0] - c[0]).powi(2) + (o[1] - c[1]).powi(2)).sqrt() >= spacing) {
+        if out.iter().all(|o| (math::sq(o[0] - c[0]) + math::sq(o[1] - c[1])).sqrt() >= spacing) {
             out.push(c);
             if out.len() >= count {
                 break;
@@ -224,7 +225,7 @@ pub fn dem_manifest_cmd(args: &[String]) -> Result<(), String> {
             files.push(json!({"path": format!("dem/terrarium/{zoom}/{x}/{y}.png"), "url": format!("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{zoom}/{x}/{y}.png")}));
         }
     }
-    let metres_per_px = 156_543.033_928 * lat.to_radians().cos() / (1u64 << zoom) as f64;
+    let metres_per_px = 156_543.033_928 * math::sin_cos64(lat.to_radians()).1 / (1u64 << zoom) as f64;
     let entry = json!({
         "id": id, "source": "usgs-3dep-terrarium", "set": "dem", "category": "terrain", "difficulty": "terrain",
         "license": "PD-USGS", "license_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
@@ -276,7 +277,7 @@ pub fn main_reaches(geo: &Geometry, count: usize, spacing: f32) -> Vec<[f32; 5]>
     let mut out: Vec<[f32; 5]> = Vec::new();
     for k in cells {
         let q = p[k];
-        if out.iter().all(|o| ((o[0] - q[0]).powi(2) + (o[1] - q[2]).powi(2)).sqrt() >= spacing) {
+        if out.iter().all(|o| (math::sq(o[0] - q[0]) + math::sq(o[1] - q[2])).sqrt() >= spacing) {
             out.push([q[0], q[2], q[1], wd[k], acc[k] / 1.0e6]);
             if out.len() >= count {
                 break;
@@ -307,7 +308,7 @@ pub fn terrain_cmd(args: &[String]) -> Result<(), String> {
         let datum = dem.and_then(|d| d["datum_m"].as_f64()).unwrap_or(0.0);
         println!("valley-floor candidates (x east, z south of the centre, metres; elevation; score):");
         for c in find_valleys(&geo, rows, cols, size, radius, 8, radius * 1.5) {
-            let (dlat, dlon) = (-(c[1] as f64) / 111_320.0, c[0] as f64 / (111_320.0 * (lat0.to_radians()).cos()));
+            let (dlat, dlon) = (-(c[1] as f64) / 111_320.0, c[0] as f64 / (111_320.0 * math::sin_cos64(lat0.to_radians()).1));
             println!("  x {:>7.0} z {:>7.0}  elevation {:>6.0} m  score {:.2}  -> lat {:.4} lon {:.4}", c[0], c[1], c[2] as f64 + datum, c[3], lat0 + dlat, lon0 + dlon);
         }
     }

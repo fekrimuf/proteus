@@ -10,7 +10,7 @@
 
 use crate::column::Column;
 use crate::geo::{Geometry, MATERIAL_PREFIX};
-use crate::math::{self, Mat34};
+use crate::math::{self, sq, Mat34};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
@@ -612,8 +612,10 @@ impl Builder {
                 let old = map[&k]["index"].as_u64().unwrap_or(u64::MAX) as usize;
                 match self.copy_texture(rel, old) {
                     Some(n) => {
-                        map.get_mut(&k).unwrap()["index"] = json!(n);
-                        self.remap_textures(rel, map.get_mut(&k).unwrap());
+                        if let Some(t) = map.get_mut(&k) {
+                            t["index"] = json!(n);
+                            self.remap_textures(rel, t);
+                        }
                     }
                     None => {
                         map.remove(&k);
@@ -1177,7 +1179,7 @@ fn batch(b: &mut Builder, inst: &crate::geo::Instances, ids: &[usize], diag: f32
         attributes: json!({"TRANSLATION": ta, "ROTATION": ra, "SCALE": sa}),
         count: ids.len(),
         mean_scale: (scale_sum / ids.len().max(1) as f64) as f32,
-        radius: RANGE_PUSH * (0.5 * ((hi[0] - lo[0]).powi(2) + (hi[1] - lo[1]).powi(2) + (hi[2] - lo[2]).powi(2)).sqrt() + 0.5 * diag * max_scale),
+        radius: RANGE_PUSH * (0.5 * (sq(hi[0] - lo[0]) + sq(hi[1] - lo[1]) + sq(hi[2] - lo[2])).sqrt() + 0.5 * diag * max_scale),
     }
 }
 
@@ -1222,7 +1224,7 @@ pub fn build_tiled(g: &Geometry, policy: &crate::lod::LodPolicy) -> (Value, Vec<
                 continue;
             }
             let n = levels.len();
-            let diag = chain[0].geo.base_bounds().map_or(1.0, |(lo, hi)| ((hi[0] - lo[0]).powi(2) + (hi[1] - lo[1]).powi(2) + (hi[2] - lo[2]).powi(2)).sqrt());
+            let diag = chain[0].geo.base_bounds().map_or(1.0, |(lo, hi)| (sq(hi[0] - lo[0]) + sq(hi[1] - lo[1]) + sq(hi[2] - lo[2])).sqrt());
             // one level only and visible for kilometres (a stand-in forest, `lod_hint` cull): big tiles, or it is thousands of batches
             let tile = match crate::lod::hinted_cull(&inst.protos[p]).filter(|_| n == 1) {
                 Some(cull) => [64.0f32, 128.0, 256.0].into_iter().find(|&t| t >= cull / 8.0).unwrap_or(512.0),

@@ -159,7 +159,7 @@ pub fn simulate(sources: &[[f32; 3]], prm: &SmokeParams) -> SmokeState {
         for k in lo[2]..=hi[2] {
             for j in lo[1]..=hi[1] {
                 for i in lo[0]..=hi[0] {
-                    let d = ((i as f32 - g[0]).powi(2) + (j as f32 - g[1]).powi(2) + (k as f32 - g[2]).powi(2)).sqrt() / r_cells;
+                    let d = (pt_core::math::sq(i as f32 - g[0]) + pt_core::math::sq(j as f32 - g[1]) + pt_core::math::sq(k as f32 - g[2])).sqrt() / r_cells;
                     if d < 1.0 {
                         let w = 1.0 - d;
                         src_cells.push((at(dims, i, j, k), w * w * (3.0 - 2.0 * w)));

@@ -108,10 +108,10 @@ pub fn match_cmd(args: &[String]) -> Result<(), String> {
     let v = validity(&cand, &reference.geo);
     let out = json!({"reference": refp, "candidate": candp, "align": format!("{align:?}"), "metrics": m.to_json(), "validity": v.to_json(),
                      "free_parameters": params, "tier": params.map(|p| tier(&m, v.ok, p))});
-    println!("{}", serde_json::to_string_pretty(&out).unwrap());
+    println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
     if let Some(dir) = flag(args, "--report") {
         std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
-        std::fs::write(Path::new(dir).join("match.json"), serde_json::to_string_pretty(&out).unwrap()).map_err(|e| e.to_string())?;
+        std::fs::write(Path::new(dir).join("match.json"), serde_json::to_string_pretty(&out).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
         std::fs::write(Path::new(dir).join("match.png"), pt_render::encode_png(&pair_image(&reference.geo, &cand))?).map_err(|e| e.to_string())?;
         println!("wrote {dir}/match.json and {dir}/match.png (original left, ours right, same camera)");
     }
@@ -501,7 +501,7 @@ pub fn bench_cmd(args: &[String]) -> Result<(), String> {
     let write = |done: &[Value]| -> Result<(), String> {
         let doc = json!({"run": o.run, "solver": SOLVER_VERSION, "set": o.set, "options": {"evals": o.evals, "max_prims": o.max_prims, "time_budget_s": o.time_budget_s},
                          "holdout": hold, "assets": done, "summary": summarize(done)});
-        std::fs::write(&results_path, serde_json::to_string_pretty(&doc).unwrap()).map_err(|e| e.to_string())
+        std::fs::write(&results_path, serde_json::to_string_pretty(&doc).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
     };
     let started = Instant::now();
     for (i, a) in assets.iter().enumerate() {
@@ -693,7 +693,7 @@ pub fn audit_cmd(args: &[String]) -> Result<(), String> {
         }
         doc.insert(run, Value::Object(per));
     }
-    std::fs::write(out, serde_json::to_string_pretty(&Value::Object(doc)).unwrap()).map_err(|e| e.to_string())?;
+    std::fs::write(out, serde_json::to_string_pretty(&Value::Object(doc)).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     println!("wrote {out}");
     Ok(())
 }

@@ -66,6 +66,37 @@ pub fn expand(base_scene: &Value, manifest: &Manifest, variant: Option<&str>) ->
     Ok((name, scene))
 }
 
+pub const WORLD: crate::registry::Command = {
+    use crate::registry::{Kind, Param};
+    crate::registry::Command {
+        name: "world",
+        tool: "world",
+        summary: "Work on one variant of a layered world (worlds/*.world.json): info lists the layers and variants, scene writes the expanded scene file, check runs ground-check, pick runs pick, render runs render-scene (HEAVY: it takes the machine like render-scene; say so first).",
+        heavy: false,
+        params: &[
+            Param::pos("manifest", Kind::Str, "the world file (for example worlds/cascade.world.json)"),
+            Param::pos("action", Kind::Str, "info | scene | render | check | pick"),
+            Param::opt_pos("args", Kind::List, "render: OUT.png; pick: CAMERA X Y"),
+            Param::flag("variant", Kind::Str, "which variant to expand (default: the world's default)"),
+            Param::flag("quick", Kind::Bool, "render: quarter samples and half size"),
+            Param::flag("samples", Kind::Int, "render: Cycles samples"),
+            Param::flag("keep", Kind::Str, "render: folder to keep the exported world in"),
+            Param::flag("lod", Kind::Bool, "render: render with the levels of detail an engine would get"),
+            Param::flag("only", Kind::Str, "render: only these cameras (comma-separated)"),
+            Param::flag("cull", Kind::Num, "render: with only, drop what the cameras cannot see beyond this many metres"),
+            Param::flag("lookdev", Kind::Bool, "render, check, pick: the look-development tier"),
+            Param::flag("fresh", Kind::Bool, "render: ignore the cache of the cooked world"),
+            Param::flag("radius", Kind::Num, "check: metres that count as in view; pick: a pixel radius for a region"),
+            Param::flag("frames", Kind::Str, "check: folder of rendered frames to draw on"),
+            Param::flag("annotate", Kind::Str, "check: folder for the annotated frames; pick: the annotated output .png"),
+            Param::flag("frame", Kind::Str, "pick: the rendered frame .png the pixel refers to"),
+            Param::flag("size", Kind::Str, "pick: WIDTHxHEIGHT of the picture the pixel refers to"),
+            Param::flag("also", Kind::List, "pick: more pixels as X,Y (repeatable)"),
+        ],
+        run: world_cmd,
+    }
+};
+
 /// `pt world <manifest> info | scene | render OUT.png [flags] | check [flags] | pick CAMERA X Y [flags]` with `--variant NAME` anywhere.
 pub fn world_cmd(args: &[String]) -> Result<(), String> {
     const USAGE: &str = "usage: pt world <manifest.json> info|scene|render OUT.png [render flags]|check [flags]|pick CAMERA X Y [flags] [--variant NAME]";

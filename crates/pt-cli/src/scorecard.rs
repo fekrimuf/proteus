@@ -461,6 +461,34 @@ fn page(title: &str, subtitle: &str, ms: &[Measure], frames: &[PathBuf], audit: 
 }
 
 /// `pt scorecard <recipe> <scene.json> --out DIR [--no-render] [--no-fps] [--quick] [--samples N] [--notes TEXT]`
+pub const SCORECARD: crate::registry::Command = {
+    use crate::registry::{Kind, Param};
+    crate::registry::Command {
+        name: "scorecard",
+        tool: "scorecard",
+        summary: "Measure one build of a world end to end: cook, audit, render with Blender, export for an engine, run the glTF validator and the Godot referee (frame rate, walkable ground), and optionally bake the terrain and ask the vision judge. Writes the report, frames and scorecard.json under out. On demand at milestones, not after every change (DECISIONS B17).",
+        heavy: true,
+        params: &[
+            Param::pos("recipe", Kind::Str, "the world's recipe .hcs file"),
+            Param::pos("scene", Kind::Str, "the scene .json file"),
+            Param::req_flag("out", Kind::Str, "folder for the report, frames and exports"),
+            Param::flag("no_render", Kind::Bool, "skip the Blender render (export only)"),
+            Param::flag("no_fps", Kind::Bool, "skip the Godot frame-rate and walkability rows"),
+            Param::flag("no_lod", Kind::Bool, "export the engine file without levels of detail"),
+            Param::flag("quick", Kind::Bool, "quarter samples and half size"),
+            Param::flag("samples", Kind::Int, "Cycles samples"),
+            Param::flag("notes", Kind::Str, "text to store in the report"),
+            Param::flag("reuse", Kind::Bool, "keep the stages an earlier, cut-off run already finished in out"),
+            Param::flag("bake", Kind::Bool, "bake the layered terrain materials to textures for the engine file (takes several GB of memory)"),
+            Param::flag("judge", Kind::Bool, "ask the local vision judge about the frames (takes the whole GPU)"),
+            Param::flag("brief", Kind::Str, "the brief the judge scores brief fit against (default: the scene's own)"),
+            Param::flag("foil", Kind::List, "a different brief to test the judge against (repeatable)"),
+            Param::flag("baseline", Kind::Str, "an earlier scorecard.json to compare against"),
+        ],
+        run: scorecard_cmd,
+    }
+};
+
 pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     let pos: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
     let flag_val = |f: &str| args.iter().position(|a| a == f).and_then(|i| args.get(i + 1));

@@ -48,7 +48,7 @@ pub fn fit_channels<'a>(
         for k in 0..nch {
             m[k] = b1 * m[k] + (1.0 - b1) * grad[k];
             v[k] = b2 * v[k] + (1.0 - b2) * grad[k] * grad[k];
-            let (mh, vh) = (m[k] / (1.0 - b1.powi(step as i32)), v[k] / (1.0 - b2.powi(step as i32)));
+            let (mh, vh) = (m[k] / (1.0 - pt_core::math::powi(b1, step as i32)), v[k] / (1.0 - pt_core::math::powi(b2, step as i32)));
             x[k] -= lr * mh / (vh.sqrt() + eps);
             if let Some(b) = bounds {
                 x[k] = x[k].clamp(b[k].0, b[k].1);

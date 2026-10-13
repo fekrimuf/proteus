@@ -527,7 +527,7 @@ fn attribute_transfer(dst: &Geometry, src: &Geometry, p: &Params) -> Res {
             return Err(format!("input 1 has no point attribute '{n}'"));
         }
     }
-    let (lo, hi) = src.base_bounds().unwrap();
+    let (lo, hi) = src.base_bounds().ok_or("input 1 has no points")?;
     let ext = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
     let vol = (ext[0].max(1e-3)) * (ext[1].max(1e-3)) * (ext[2].max(1e-3));
     let cell = ((vol / sp.len() as f32).powf_det(1.0 / 3.0) * 1.5).max(1e-4);
@@ -570,7 +570,9 @@ fn attribute_transfer(dst: &Geometry, src: &Geometry, p: &Params) -> Res {
     let idx: Vec<u32> = dst.p().iter().map(|q| nearest(*q)).collect();
     let mut g = dst.clone();
     for n in names {
-        g.point.set(&n, src.point.get(&n).unwrap().gather(&idx));
+        if let Some(c) = src.point.get(&n) {
+            g.point.set(&n, c.gather(&idx));
+        }
     }
     Ok(g)
 }

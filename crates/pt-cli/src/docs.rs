@@ -6,7 +6,29 @@ use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use crate::registry::{Command as Cmd, Kind, Param};
+
 const STATE_FILE: &str = "docs/generated/state.md";
+/// The command table, generated from the registry (`crate::registry::markdown`).
+const COMMANDS_FILE: &str = "docs/generated/commands.md";
+
+pub const STATUS: Cmd = Cmd {
+    name: "status",
+    tool: "status",
+    summary: "Print the measured state: every count and score the docs may quote, from the code and the result files. With --write it stores the state in docs/generated/state.md and the command table in docs/generated/commands.md.",
+    heavy: false,
+    params: &[Param::flag("write", Kind::Bool, "store the state and the command table under docs/generated/")],
+    run: status_cmd,
+};
+
+pub const DOCS_CHECK: Cmd = Cmd {
+    name: "docs-check",
+    tool: "docs_check",
+    summary: "Check the documentation: size budgets, broken links, banned headings, mangled Windows paths, the STATUS date, the index, and that the generated state and command table are current. Exit 1 on any problem.",
+    heavy: false,
+    params: &[],
+    run: check_cmd,
+};
 const STATUS_BUDGET: usize = 8 * 1024;
 const DOC_BUDGET: usize = 50 * 1024;
 /// Files that only ever grow and are never read at startup.
@@ -80,6 +102,8 @@ pub fn state_text(root: &Path) -> String {
     s.push_str("| Fact | Value | Source |\n|---|---|---|\n");
 
     s.push_str(&format!("| Node types | {} | `pt_graph::all_schemas()` |\n", pt_graph::all_schemas().len()));
+    s.push_str(&format!("| Registered commands | {} (each also an agent tool) | `crates/pt-cli/src/registry.rs`; table in `docs/generated/commands.md` |\n", crate::registry::ALL.len()));
+    s.push_str(&format!("| Agent tools | {} | `tools/list` of `pt mcp` |\n", crate::mcp::tool_count()));
 
     let mut rs = vec![];
     walk(&root.join("crates"), "rs", &mut rs);
@@ -144,9 +168,14 @@ pub fn status_cmd(args: &[String]) -> Result<(), String> {
     let text = state_text(&root);
     if args.iter().any(|a| a == "--write") {
         let p = root.join(STATE_FILE);
-        std::fs::create_dir_all(p.parent().unwrap()).map_err(|e| e.to_string())?;
+        if let Some(dir) = p.parent() {
+            std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+        }
         std::fs::write(&p, &text).map_err(|e| e.to_string())?;
         println!("wrote {}", p.display());
+        let c = root.join(COMMANDS_FILE);
+        std::fs::write(&c, crate::registry::markdown()).map_err(|e| e.to_string())?;
+        println!("wrote {}", c.display());
     } else {
         print!("{text}");
     }
@@ -244,6 +273,9 @@ pub fn check_cmd(_args: &[String]) -> Result<(), String> {
     let want = state_text(&root);
     if read(&root.join(STATE_FILE)) != want {
         problems.push(format!("{STATE_FILE}: stale; run `pt status --write`"));
+    }
+    if read(&root.join(COMMANDS_FILE)) != crate::registry::markdown() {
+        problems.push(format!("{COMMANDS_FILE}: stale (a command was added or changed); run `pt status --write`"));
     }
 
     if problems.is_empty() {

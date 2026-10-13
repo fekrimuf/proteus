@@ -186,7 +186,7 @@ fn from_mesh(src: &Geometry, p: &Params) -> Res {
     if tris.is_empty() {
         return Err("sdf_from_mesh: input has no polygons".into());
     }
-    let (lo0, hi0) = g.base_bounds().unwrap();
+    let (lo0, hi0) = g.base_bounds().ok_or("sdf_from_mesh: input has no points")?;
     let (voxel, pad, band) = (p.f("voxel").max(1e-4), p.f("padding").max(0.0), p.i("band").clamp(1, 16) as f32);
     let lo = [0, 1, 2].map(|a| lo0[a] - pad - voxel);
     let hi = [0, 1, 2].map(|a| hi0[a] + pad + voxel);

@@ -87,7 +87,8 @@ impl<'a> R<'a> {
     fn u64(&mut self) -> Result<u64, String> {
         let b = self.0.get(self.1..self.1 + 8).ok_or("truncated")?;
         self.1 += 8;
-        Ok(u64::from_le_bytes(b.try_into().unwrap()))
+        let arr: [u8; 8] = b.try_into().map_err(|_| "truncated")?;
+        Ok(u64::from_le_bytes(arr))
     }
     fn bytes(&mut self) -> Result<&'a [u8], String> {
         let n = self.u64()? as usize;
@@ -126,7 +127,7 @@ pub fn to_bytes(g: &Geometry) -> Vec<u8> {
     w.bytes(bytemuck::cast_slice(&g.topo.indices));
     w.groups(&g.point_groups);
     w.groups(&g.prim_groups);
-    w.bytes(serde_json::to_string(&g.detail).unwrap().as_bytes());
+    w.bytes(serde_json::to_string(&g.detail).unwrap_or_else(|_| "{}".to_string()).as_bytes());
     match &g.instances {
         None => w.u64(0),
         Some(i) => {

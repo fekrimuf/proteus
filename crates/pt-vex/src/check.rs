@@ -561,7 +561,9 @@ impl<'a> Cx<'a> {
                     return None;
                 }
                 let slot = self.new_slot();
-                self.scopes.last_mut().unwrap().insert(name.clone(), (slot, *ty));
+                if let Some(scope) = self.scopes.last_mut() {
+                    scope.insert(name.clone(), (slot, *ty));
+                }
                 Some(IStmt::Set(slot, ir))
             }
             Stmt::Assign(target, comp, op, e, p) => {

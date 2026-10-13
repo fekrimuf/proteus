@@ -23,7 +23,91 @@ fn s<'a>(a: &'a Value, k: &str) -> Result<&'a str, String> {
     a.get(k).and_then(Value::as_str).ok_or_else(|| format!("missing string argument '{k}'"))
 }
 
+/// Every tool the agent sees: the hand-written session tools below, then the commands of the registry
+/// (`crate::registry`), which declare themselves once for the command line and for this list.
 fn tool_defs() -> Value {
+    let mut all = hand_written_tool_defs().as_array().cloned().unwrap_or_default();
+    all.extend(crate::registry::tool_defs());
+    Value::Array(all)
+}
+
+/// The names of the tools written by hand against the live session.
+pub fn hand_written_tool_names() -> Vec<String> {
+    hand_written_tool_defs().as_array().into_iter().flatten().filter_map(|t| t["name"].as_str().map(String::from)).collect()
+}
+
+/// What a tool accepts, from its schema: argument names with their JSON types, and the required ones.
+struct ToolSchema {
+    props: std::collections::BTreeMap<String, String>,
+    required: Vec<String>,
+}
+
+fn schemas() -> &'static HashMap<String, ToolSchema> {
+    static SCHEMAS: std::sync::OnceLock<HashMap<String, ToolSchema>> = std::sync::OnceLock::new();
+    SCHEMAS.get_or_init(|| {
+        let defs = tool_defs();
+        defs.as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|t| {
+                let name = t["name"].as_str()?.to_string();
+                let props = t["inputSchema"]["properties"].as_object()?.iter().map(|(k, v)| (k.clone(), v["type"].as_str().unwrap_or("").to_string())).collect();
+                let required = t["inputSchema"]["required"].as_array().into_iter().flatten().filter_map(|r| r.as_str().map(String::from)).collect();
+                Some((name, ToolSchema { props, required }))
+            })
+            .collect()
+    })
+}
+
+fn type_matches(json_type: &str, v: &Value) -> bool {
+    match json_type {
+        "string" => v.is_string(),
+        "number" => v.is_number(),
+        "integer" => v.is_i64() || v.is_u64(),
+        "boolean" => v.is_boolean(),
+        "array" => v.is_array(),
+        "object" => v.is_object(),
+        _ => true,
+    }
+}
+
+/// Refuse a call whose arguments the tool does not declare: a mistyped name, a missing required one, or a wrong type. The error
+/// names what is accepted, so the agent corrects it in one turn instead of wondering why a setting had no effect. A name that is
+/// not a tool is left to [`Session::call`], which reports it.
+pub fn check_arguments(tool: &str, args: &Value) -> Result<(), String> {
+    let Some(schema) = schemas().get(tool) else { return Ok(()) };
+    let none = serde_json::Map::new();
+    let obj = match args {
+        Value::Null => &none,
+        Value::Object(o) => o,
+        _ => return Err(format!("'{tool}' takes its arguments as a JSON object")),
+    };
+    let accepted = || if schema.props.is_empty() { "none".to_string() } else { schema.props.keys().cloned().collect::<Vec<_>>().join(", ") };
+    for (k, v) in obj {
+        let Some(t) = schema.props.get(k) else {
+            return Err(format!("unknown argument '{k}' for '{tool}'; accepted: {}", accepted()));
+        };
+        if !v.is_null() && !type_matches(t, v) {
+            return Err(format!("argument '{k}' of '{tool}' must be of type {t}, got {v}"));
+        }
+    }
+    if let Some(r) = schema.required.iter().find(|r| obj.get(r.as_str()).map_or(true, Value::is_null)) {
+        return Err(format!("missing required argument '{r}' for '{tool}'; accepted: {}", accepted()));
+    }
+    Ok(())
+}
+
+/// A panic payload as text.
+pub(crate) fn panic_message(p: &(dyn std::any::Any + Send)) -> String {
+    p.downcast_ref::<&str>().map(|s| s.to_string()).or_else(|| p.downcast_ref::<String>().cloned()).unwrap_or_else(|| "unknown error".into())
+}
+
+/// Lock the shared session; a panic in another thread that held it does not take every later call down with it.
+pub fn lock(m: &std::sync::Mutex<Session>) -> std::sync::MutexGuard<'_, Session> {
+    m.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+fn hand_written_tool_defs() -> Value {
     let t = |name: &str, desc: &str, props: Value, req: Value| {
         json!({"name": name, "description": desc,
                "inputSchema": {"type": "object", "properties": props, "required": req}})
@@ -224,9 +308,43 @@ impl Session {
         }
     }
 
+    /// Run one tool. Every caller (the agent over stdio, the local page) comes through here, so each gets the same three guarantees:
+    /// the arguments are checked against the tool's schema first (a mistyped one is refused with what is accepted); a registered
+    /// command runs in a child process; and a panic inside a tool becomes an error that names the tool and leaves the scene as it
+    /// was, so one bad input never ends a long session.
     pub fn call(&mut self, name: &str, a: &Value) -> Result<Out, String> {
+        check_arguments(name, a)?;
+        if let Some(r) = crate::registry::call_tool(name, a) {
+            return r.map(Out::Json);
+        }
+        self.guarded(name, |s| s.call_inner(name, a))
+    }
+
+    /// Run `f`; if it panics, restore the graph to what it was before and return an error naming `what`.
+    fn guarded<R>(&mut self, what: &str, f: impl FnOnce(&mut Session) -> Result<R, String>) -> Result<R, String> {
+        let before = self.graph.snapshot();
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| f(&mut *self))) {
+            Ok(r) => r,
+            Err(p) => {
+                let msg = panic_message(p.as_ref());
+                let restored = self.graph.restore(&before);
+                eprintln!("proteus: tool '{what}' panicked: {msg}");
+                Err(format!(
+                    "'{what}' failed with an internal error ({msg}); it was stopped and the scene was {}. Please report the exact arguments.",
+                    if restored.is_ok() { "put back as it was" } else { "not restorable (reload it with load_graph)" }
+                ))
+            }
+        }
+    }
+
+    fn call_inner(&mut self, name: &str, a: &Value) -> Result<Out, String> {
         let j = |v: Value| Ok(Out::Json(v));
         match name {
+            #[cfg(test)]
+            "__test_panic" => {
+                self.graph.create("box", Some("half_made"))?;
+                panic!("test panic") // infallible: this arm exists only in test builds
+            }
             "list_node_types" => j(json!(pt_graph::all_schemas().iter().map(|s| s.to_json()).collect::<Vec<_>>())),
             "describe_node" => {
                 if let Some(kind) = a.get("kind").and_then(Value::as_str) {
@@ -681,8 +799,19 @@ pub fn serve_with_ui(ui_addr: Option<String>) {
     let mut out = std::io::stdout();
     for line in stdin.lock().lines().map_while(Result::ok) {
         let line = line.trim_start_matches('\u{feff}');
-        let Ok(req) = serde_json::from_str::<Value>(line) else { continue };
-        let resp = handle(&mut session.lock().unwrap(), &req);
+        if line.trim().is_empty() {
+            continue;
+        }
+        let req = match serde_json::from_str::<Value>(line) {
+            Ok(r) => r,
+            Err(e) => {
+                // a malformed line gets an answer and the session keeps serving
+                let _ = writeln!(out, "{}", json!({"jsonrpc": "2.0", "id": null, "error": {"code": -32700, "message": format!("parse error: {e}")}}));
+                let _ = out.flush();
+                continue;
+            }
+        };
+        let resp = handle(&mut lock(&session), &req);
         if let Some(resp) = resp {
             let _ = writeln!(out, "{resp}");
             let _ = out.flush();
@@ -698,38 +827,7 @@ pub fn serve_ui_only(addr: &str) -> Result<(), String> {
     h.join().map_err(|_| "UI thread panicked".to_string())
 }
 
-/// Built-in example recipes (compiled into the binary so agents can read them anywhere).
-const RECIPES: &[(&str, &str)] = &[
-    ("01_fence", include_str!("../../../recipes/01_fence.hcs")),
-    ("02_spiral_staircase", include_str!("../../../recipes/02_spiral_staircase.hcs")),
-    ("03_rock_generator", include_str!("../../../recipes/03_rock_generator.hcs")),
-    ("04_tree", include_str!("../../../recipes/04_tree.hcs")),
-    ("05_building", include_str!("../../../recipes/05_building.hcs")),
-    ("06_pipe_network", include_str!("../../../recipes/06_pipe_network.hcs")),
-    ("07_terrain_valley", include_str!("../../../recipes/07_terrain_valley.hcs")),
-    ("08_crystal_cluster", include_str!("../../../recipes/08_crystal_cluster.hcs")),
-    ("09_colonnade", include_str!("../../../recipes/09_colonnade.hcs")),
-    ("10_scifi_panel", include_str!("../../../recipes/10_scifi_panel.hcs")),
-    ("11_eroded_mountain", include_str!("../../../recipes/11_eroded_mountain.hcs")),
-    ("12_mechanical_bracket", include_str!("../../../recipes/12_mechanical_bracket.hcs")),
-    ("13_organic_blob", include_str!("../../../recipes/13_organic_blob.hcs")),
-    ("14_particle_fountain", include_str!("../../../recipes/14_particle_fountain.hcs")),
-    ("15_flag_in_wind", include_str!("../../../recipes/15_flag_in_wind.hcs")),
-    ("16_smoke_plume", include_str!("../../../recipes/16_smoke_plume.hcs")),
-    ("17_shattering_wall", include_str!("../../../recipes/17_shattering_wall.hcs")),
-    ("18_bolt", include_str!("../../../recipes/18_bolt.hcs")),
-    ("19_canyon", include_str!("../../../recipes/19_canyon.hcs")),
-    ("20_forest_clearing", include_str!("../../../recipes/20_forest_clearing.hcs")),
-    ("21_city_block", include_str!("../../../recipes/21_city_block.hcs")),
-    ("22_lathe_vase", include_str!("../../../recipes/22_lathe_vase.hcs")),
-    ("23_spring_and_cable", include_str!("../../../recipes/23_spring_and_cable.hcs")),
-    ("24_hillside_village", include_str!("../../../recipes/24_hillside_village.hcs")),
-    ("25_carved_boulder", include_str!("../../../recipes/25_carved_boulder.hcs")),
-    ("26_clearing_planted_by_asking", include_str!("../../../recipes/26_clearing_planted_by_asking.hcs")),
-    ("27_woodpile_and_stones", include_str!("../../../recipes/27_woodpile_and_stones.hcs")),
-    ("28_stable_orchard", include_str!("../../../recipes/28_stable_orchard.hcs")),
-    ("29_conifer_grove", include_str!("../../../recipes/29_conifer_grove.hcs")),
-];
+include!(concat!(env!("OUT_DIR"), "/recipes_list.rs"));
 
 /// The `scene` argument of a tool: an object, or the path of a scene `.json` file (none = an empty scene).
 fn scene_arg(a: &Value) -> Result<Value, String> {
@@ -752,6 +850,95 @@ mod recipe_list_tests {
     fn compiled_recipe_list_matches_recipes_dir() {
         let on_disk: Vec<String> = crate::recipes::list().iter().map(|p| p.file_stem().unwrap().to_string_lossy().to_string()).collect();
         let compiled: Vec<String> = super::RECIPES.iter().map(|(n, _)| n.to_string()).collect();
-        assert_eq!(on_disk, compiled, "update RECIPES in mcp.rs when adding or accepting a recipe");
+        assert_eq!(on_disk, compiled, "the recipe list is generated by crates/pt-cli/build.rs; rebuild after adding or accepting a recipe");
     }
+}
+
+#[cfg(test)]
+mod guard_tests {
+    use super::*;
+
+    fn call(s: &mut Session, name: &str, args: Value) -> Value {
+        handle(s, &json!({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": name, "arguments": args}})).expect("a reply")["result"].clone()
+    }
+
+    fn text(r: &Value) -> String {
+        r["content"][0]["text"].as_str().unwrap_or("").to_string()
+    }
+
+    #[test]
+    fn a_panic_in_a_tool_becomes_an_error_and_the_scene_is_put_back() {
+        let mut s = Session::new();
+        let r = call(&mut s, "create_node", json!({"kind": "box", "name": "kept"}));
+        assert!(r["isError"].is_null(), "{r}");
+        // the test-only tool creates a node and then panics half way through
+        let r = call(&mut s, "__test_panic", json!({}));
+        assert_eq!(r["isError"], true, "{r}");
+        let t = text(&r);
+        assert!(t.contains("'__test_panic' failed with an internal error (test panic)") && t.contains("put back as it was"), "{t}");
+        assert!(s.graph.nodes.contains_key("kept"), "the earlier work is intact");
+        assert!(!s.graph.nodes.contains_key("half_made"), "the half-made node was rolled back: {:?}", s.graph.nodes.keys().collect::<Vec<_>>());
+        // and the session still answers
+        let r = call(&mut s, "create_node", json!({"kind": "box", "name": "after"}));
+        assert!(r["isError"].is_null(), "{r}");
+        assert!(s.graph.nodes.contains_key("after"));
+    }
+
+    #[test]
+    fn a_poisoned_session_lock_does_not_take_later_calls_down() {
+        let m = std::sync::Arc::new(std::sync::Mutex::new(Session::new()));
+        let m2 = m.clone();
+        let _ = std::thread::spawn(move || {
+            let _g = m2.lock().unwrap();
+            panic!("a thread died holding the session");
+        })
+        .join();
+        assert!(m.is_poisoned());
+        let mut g = lock(&m);
+        let r = call(&mut g, "create_node", json!({"kind": "box", "name": "b"}));
+        assert!(r["isError"].is_null(), "{r}");
+    }
+
+    #[test]
+    fn arguments_are_checked_against_the_schema_of_every_tool() {
+        assert!(check_arguments("create_node", &json!({"kind": "box"})).is_ok());
+        assert!(check_arguments("create_node", &Value::Null).unwrap_err().contains("missing required argument 'kind'"));
+        let e = check_arguments("create_node", &json!({"kind": "box", "nmae": "x"})).unwrap_err();
+        assert!(e.contains("unknown argument 'nmae'") && e.contains("accepted: kind, name"), "{e}");
+        assert!(check_arguments("create_node", &json!({"kind": 5})).unwrap_err().contains("must be of type string"));
+        assert!(check_arguments("get_graph", &json!({"x": 1})).unwrap_err().contains("accepted: none"));
+        assert!(check_arguments("frame_size_is_an_array", &json!({})).is_ok(), "a name that is not a tool is reported by the call, not here");
+        assert!(check_arguments("set_frame", &json!({"frame": 3.5})).is_ok(), "numbers may be fractional");
+        assert!(check_arguments("explain", &json!({"node": "a", "domain": "point", "index": 1.5})).unwrap_err().contains("must be of type integer"));
+        assert!(check_arguments("set_param", &json!({"node": "a", "name": "n", "value": null})).unwrap_err().contains("missing required argument 'value'"));
+        assert!(check_arguments("pick", &json!({"node": "a", "scene": {"cameras": []}, "camera": "c", "x": 1, "y": 2})).is_ok(), "a property without a type takes anything");
+    }
+
+    #[test]
+    fn every_registered_command_is_in_the_tool_list_and_none_shadows_a_hand_written_tool() {
+        let all = tool_defs();
+        let names: Vec<&str> = all.as_array().unwrap().iter().filter_map(|t| t["name"].as_str()).collect();
+        let unique: std::collections::HashSet<&&str> = names.iter().collect();
+        assert_eq!(unique.len(), names.len(), "a tool name is used twice: {names:?}");
+        for c in crate::registry::ALL {
+            assert!(names.contains(&c.tool), "{} missing from the tool list", c.tool);
+        }
+        for t in all.as_array().unwrap() {
+            assert!(t["description"].as_str().is_some_and(|d| d.len() >= 10), "{} needs a description", t["name"]);
+            assert_eq!(t["inputSchema"]["type"], "object");
+        }
+    }
+
+    #[test]
+    fn a_malformed_request_line_is_not_a_crash() {
+        let mut s = Session::new();
+        let r = handle(&mut s, &json!({"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {"name": "no_such_tool", "arguments": {}}})).unwrap();
+        assert_eq!(r["result"]["isError"], true);
+        assert!(text(&r["result"]).contains("unknown tool"), "{r}");
+    }
+}
+
+/// How many tools the agent sees (hand-written and registered).
+pub fn tool_count() -> usize {
+    tool_defs().as_array().map_or(0, Vec::len)
 }

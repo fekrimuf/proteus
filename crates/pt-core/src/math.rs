@@ -21,6 +21,47 @@ pub fn sin_cos(x: f32) -> (f32, f32) {
     (s as f32, c as f32)
 }
 
+/// Deterministic `sin`, `cos`, `tan` (through [`sin_cos`]).
+pub fn sin(x: f32) -> f32 {
+    sin_cos(x).0
+}
+
+pub fn cos(x: f32) -> f32 {
+    sin_cos(x).1
+}
+
+pub fn tan(x: f32) -> f32 {
+    let (s, c) = sin_cos(x);
+    s / c
+}
+
+/// `x * x`: a square, written so the same operations run on every platform (`powi` is on the banned list).
+#[inline]
+pub fn sq(x: f32) -> f32 {
+    x * x
+}
+
+/// `x` to the integer power `n` by repeated squaring, the routine the compiler runtime uses for `powi` (same results, bit for bit),
+/// written out so no platform library is involved.
+pub fn powi(x: f32, n: i32) -> f32 {
+    let (mut a, mut b, mut r) = (x, n.unsigned_abs(), 1.0f32);
+    loop {
+        if b & 1 == 1 {
+            r *= a;
+        }
+        b >>= 1;
+        if b == 0 {
+            break;
+        }
+        a *= a;
+    }
+    if n < 0 {
+        1.0 / r
+    } else {
+        r
+    }
+}
+
 pub fn to_radians(deg: f32) -> f32 {
     deg * (PI / 180.0)
 }

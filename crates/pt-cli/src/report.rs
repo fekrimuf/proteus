@@ -400,7 +400,7 @@ pub fn report_cmd(args: &[String]) -> Result<(), String> {
         "failures": fails, "gallery": gallery.iter().map(|e| e.id.clone()).collect::<Vec<_>>(),
         "cost": {"baseline_cpu_s": base_cpu, "llm_cpu_s": llm_cpu, "llm_turns": llm_turns},
     });
-    std::fs::write(out_dir.join("summary.json"), serde_json::to_string_pretty(&summary).unwrap()).map_err(|e| e.to_string())?;
+    std::fs::write(out_dir.join("summary.json"), serde_json::to_string_pretty(&summary).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     println!("report: {} ({} models; stack solved {stack_solved}, baseline {base_solved}, hold-out {stack_hold}/{n_hold}; light {verdict})", out_dir.join("report.html").display(), n);
     Ok(())
 }

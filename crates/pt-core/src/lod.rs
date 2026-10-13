@@ -12,6 +12,7 @@
 
 use crate::column::Column;
 use crate::geo::{gather_groups, Geometry, MATERIAL_PREFIX};
+use crate::math::sq;
 use meshopt::{simplify_with_attributes_and_locks, SimplifyOptions, VertexDataAdapter};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
@@ -184,9 +185,7 @@ pub fn decimate_scaled(g: &Geometry, ratio: f32, max_scale: f32) -> Geometry {
         let target = (((solid.len() as f32 * ratio).round() as usize).max(4)) * 3;
         let out: Vec<u32> = if target >= solid_idx.len() {
             solid_idx.clone()
-        } else {
-            let pbytes: &[u8] = bytemuck::cast_slice(&pos);
-            let vertices = VertexDataAdapter::new(pbytes, 12, 0).expect("positions are 12 bytes per vertex");
+        } else if let Ok(vertices) = VertexDataAdapter::new(bytemuck::cast_slice(&pos), 12, 0) {
             let n = g.point.get("N").and_then(Column::as_v3).filter(|c| c.len() == np);
             let uv = match g.point.get("uv") {
                 Some(Column::V2(c)) if c.len() == np => Some(c.as_slice()),
@@ -211,6 +210,9 @@ pub fn decimate_scaled(g: &Geometry, ratio: f32, max_scale: f32) -> Geometry {
             }
             let locks = vec![false; np];
             simplify_with_attributes_and_locks(&solid_idx, &vertices, &attrs, &weights, stride * 4, &locks, target, 0.2, SimplifyOptions::Prune | SimplifyOptions::Sparse | SimplifyOptions::Permissive, None)
+        } else {
+            // the positions cannot be presented to the simplifier (never the case for 12-byte points): keep the surface as it is
+            solid_idx.clone()
         };
         for t in out.chunks_exact(3) {
             // the simplifier keeps vertex ids but not triangle ids; the material of a triangle follows its first vertex's owner
@@ -376,7 +378,7 @@ pub fn shell(g: &Geometry, color: [f32; 3]) -> Option<Geometry> {
     let mut radius = [0.0f32; RINGS + 1];
     for (k, r) in radius.iter_mut().enumerate() {
         let y = ylo + step * k as f32;
-        let mut d: Vec<f32> = pts.iter().filter(|q| (q[1] - y).abs() <= step * 0.75).map(|q| ((q[0] - cx).powi(2) + (q[2] - cz).powi(2)).sqrt()).collect();
+        let mut d: Vec<f32> = pts.iter().filter(|q| (q[1] - y).abs() <= step * 0.75).map(|q| (sq(q[0] - cx) + sq(q[2] - cz)).sqrt()).collect();
         if !d.is_empty() {
             d.sort_by(f32::total_cmp);
             *r = d[((d.len() - 1) as f32 * 0.8) as usize];

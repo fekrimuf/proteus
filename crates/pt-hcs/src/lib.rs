@@ -186,9 +186,9 @@ fn lit(v: &Value) -> String {
         Value::Null => "None".into(),
         Value::Bool(b) => if *b { "True".into() } else { "False".into() },
         Value::Number(n) => format!("{}", n.as_f64().unwrap_or(0.0)),
-        Value::String(s) => serde_json::to_string(s).unwrap(),
+        Value::String(s) => serde_json::to_string(s).unwrap_or_else(|_| "\"\"".to_string()),
         Value::Array(a) => format!("[{}]", a.iter().map(lit).collect::<Vec<_>>().join(", ")),
-        Value::Object(o) => format!("{{{}}}", o.iter().map(|(k, v)| format!("{}: {}", serde_json::to_string(k).unwrap(), lit(v))).collect::<Vec<_>>().join(", ")),
+        Value::Object(o) => format!("{{{}}}", o.iter().map(|(k, v)| format!("{}: {}", serde_json::to_string(k).unwrap_or_else(|_| "\"\"".to_string()), lit(v))).collect::<Vec<_>>().join(", ")),
     }
 }
 
@@ -215,7 +215,7 @@ pub fn to_hcs(g: &Graph) -> String {
     let mut used: std::collections::HashSet<String> = std::collections::HashSet::new();
     for id in &order {
         let mut v: String = id.chars().map(|c| if c.is_alphanumeric() || c == '_' { c } else { '_' }).collect();
-        if v.is_empty() || v.chars().next().unwrap().is_ascii_digit() || PY_KEYWORDS.contains(&v.as_str()) || pt_graph::schema(&v).is_some() {
+        if v.is_empty() || v.chars().next().is_some_and(|c| c.is_ascii_digit()) || PY_KEYWORDS.contains(&v.as_str()) || pt_graph::schema(&v).is_some() {
             v = format!("n_{v}");
         }
         while !used.insert(v.clone()) {
@@ -240,7 +240,7 @@ pub fn to_hcs(g: &Graph) -> String {
             args.push(format!("{k}={}", lit(v)));
         }
         if var[id] != **id {
-            args.push(format!("id={}", serde_json::to_string(id).unwrap()));
+            args.push(format!("id={}", serde_json::to_string(id).unwrap_or_else(|_| "\"\"".to_string())));
         }
         out.push_str(&format!("{} = {}({})\n", var[id], n.kind, args.join(", ")));
     }

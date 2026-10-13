@@ -38,3 +38,14 @@ debug = false
 rapier3d = { path = "vendor/rapier3d" }
 parry3d = { path = "vendor/parry3d" }
 glamx = { path = "vendor/glamx" }
+
+# No crash-prone shortcuts in production code (DECISIONS B19): a bad input must come back as an error the agent can read, never as a
+# panic. Test code may use them (clippy.toml). A line that truly cannot fail gets `#[allow(clippy::...)]` with the reason, and the
+# gate (`pt gate`) runs these lints on every library and binary.
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+unreachable = "deny"
+todo = "deny"
+unimplemented = "deny"

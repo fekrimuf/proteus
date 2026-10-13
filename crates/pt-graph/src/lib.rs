@@ -154,7 +154,8 @@ pub fn hex(h: &[u8; 32]) -> String {
 
 fn tag_of(name: &str) -> i32 {
     let h = blake3::hash(name.as_bytes());
-    i32::from_le_bytes(h.as_bytes()[..4].try_into().unwrap())
+    let [a, b, c, d, ..] = *h.as_bytes();
+    i32::from_le_bytes([a, b, c, d])
 }
 
 fn type_matches(default: &Value, v: &Value) -> bool {
@@ -236,7 +237,7 @@ impl Graph {
             Some(n) if self.nodes.contains_key(n) => return Err(format!("node '{n}' already exists")),
             Some(n) if n.is_empty() || n.contains(char::is_whitespace) || n.contains('/') => return Err("node names must be non-empty, no spaces or '/'".into()),
             Some(n) => n.to_string(),
-            None => (1..).map(|i| format!("{kind}{i}")).find(|n| !self.nodes.contains_key(n)).unwrap(),
+            None => (1..).map(|i| format!("{kind}{i}")).find(|n| !self.nodes.contains_key(n)).unwrap_or_else(|| format!("{kind}_new")),
         };
         self.nodes.insert(id.clone(), Node { kind: kind.into(), params: Params::new(), inputs: vec![None; schema.inputs] });
         Ok(id)
@@ -256,7 +257,7 @@ impl Graph {
 
     pub fn set_param(&mut self, id: &str, name: &str, value: Value) -> Result<(), String> {
         let node = self.nodes.get_mut(id).ok_or_else(|| format!("no node '{id}'"))?;
-        let schema = schema(&node.kind).unwrap();
+        let schema = schema(&node.kind).ok_or_else(|| format!("node '{id}' has the unknown type '{}'", node.kind))?;
         let Some(p) = schema.params.iter().find(|p| p.name == name) else {
             let valid: Vec<_> = schema.params.iter().map(|p| p.name).collect();
             return Err(format!("'{}' has no parameter '{name}'. Valid: {valid:?}", node.kind));
@@ -280,7 +281,8 @@ impl Graph {
         if from == to || self.upstream(from).contains(to) {
             return Err(format!("connecting '{from}' -> '{to}' would create a cycle"));
         }
-        self.nodes.get_mut(to).unwrap().inputs[input] = Some(from.into());
+        let slot = self.nodes.get_mut(to).and_then(|n| n.inputs.get_mut(input)).ok_or_else(|| format!("no input slot {input} on '{to}'"))?;
+        *slot = Some(from.into());
         Ok(())
     }
 
@@ -434,7 +436,7 @@ impl Graph {
         let mut promoted = Vec::new();
         for (pname, node, param) in promote {
             let n = nodes.get(node).ok_or_else(|| format!("promoted parameter '{pname}': node '{node}' is not inside the asset"))?;
-            let sc = schema(&n.kind).unwrap();
+            let sc = schema(&n.kind).ok_or_else(|| format!("promoted parameter '{pname}': node '{node}' has the unknown type '{}'", n.kind))?;
             let p = sc.params.iter().find(|p| p.name == param).ok_or_else(|| format!("promoted parameter '{pname}': '{}' has no parameter '{param}'", n.kind))?;
             let default = n.params.get(param).cloned().unwrap_or_else(|| p.default.clone());
             promoted.push(Promoted { name: pname.clone(), node: node.clone(), param: param.clone(), default });
@@ -529,7 +531,7 @@ impl Graph {
         if pt_sop::point_ops(&chain[0].1.kind, &chain[0].2).is_some() && !self.no_fusion {
             let consumers = self.consumers();
             loop {
-                let last = chain.last().unwrap();
+                let Some(last) = chain.last() else { break };
                 let Some(up) = last.1.inputs.first().cloned().flatten() else { break };
                 if consumers.get(up.as_str()).copied().unwrap_or(0) != 1 {
                     break;
@@ -569,7 +571,7 @@ impl Graph {
             h.update(canonical(&json!(p)).to_string().as_bytes());
             if is_asset_kind(&n.kind) {
                 let a = self.asset(&p.s("asset"))?;
-                h.update(serde_json::to_string(a).unwrap().as_bytes());
+                h.update(serde_json::to_string(a).map_err(|e| format!("asset '{}' cannot be hashed: {e}", p.s("asset")))?.as_bytes());
             }
         }
         for e in &in_entries {
@@ -602,7 +604,7 @@ impl Graph {
             let base = in_entries[0].as_ref().ok_or_else(|| format!("{}: input 0 is not connected", chain[0].0))?;
             let mut ops = Vec::new();
             for (_, n, p) in &chain {
-                ops.extend(pt_sop::point_ops(&n.kind, p).unwrap());
+                ops.extend(pt_sop::point_ops(&n.kind, p).ok_or_else(|| format!("{}: a '{}' node cannot be fused", chain[0].0, n.kind))?);
             }
             self.stats.fused_passes += 1;
             self.stats.nodes_fused_away += chain.len() as u64 - 1;
@@ -678,7 +680,7 @@ impl Graph {
             }
         }
         let mut p = vec![to.to_string()];
-        while let Some(q) = prev.get(p.last().unwrap()) {
+        while let Some(q) = p.last().and_then(|l| prev.get(l)) {
             p.push(q.clone());
         }
         p.reverse();
@@ -798,7 +800,7 @@ impl Graph {
     }
 
     pub fn to_json(&self) -> String {
-        serde_json::to_string_pretty(self).unwrap()
+        serde_json::to_string_pretty(self).unwrap_or_default()
     }
 
     pub fn from_json(s: &str) -> Result<Self, String> {
@@ -807,7 +809,7 @@ impl Graph {
 
     /// Cheap snapshot of the graph definition (for undo / checkpoints).
     pub fn snapshot(&self) -> String {
-        serde_json::to_string(&(&self.nodes, &self.assets, self.frame)).unwrap()
+        serde_json::to_string(&(&self.nodes, &self.assets, self.frame)).unwrap_or_default()
     }
 
     pub fn restore(&mut self, snap: &str) -> Result<(), String> {

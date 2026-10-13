@@ -328,7 +328,7 @@ impl Fitter {
             return;
         }
         // Try axis-aligned cuts; keep the one whose two best primitives cover the cluster best.
-        let (lo, hi) = bounds_of_tris(&cl.tris).unwrap();
+        let Some((lo, hi)) = bounds_of_tris(&cl.tris) else { return };
         let mut best: Option<(f64, Vec<Tri>, Vec<Tri>)> = None;
         for axis in 0..3 {
             for k in 1..10 {

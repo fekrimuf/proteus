@@ -13,7 +13,7 @@
 //! It then lists, per scene camera, the flagged objects inside that camera's view cone within a radius, because those are the
 //! ones an eye will see. A `float` or `overhang` inside a view fails the check.
 
-use pt_core::math::xform_point;
+use pt_core::math::{self, xform_point};
 use pt_core::Geometry;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -112,8 +112,9 @@ impl Camera {
     /// right = (-sin yaw, 0, cos yaw), as in `render_scene.py`; the lens is horizontal-sensor based.
     pub fn project(&self, eye_y: f32, p: [f32; 3], w: usize, h: usize) -> Option<[f32; 2]> {
         let (yaw, pitch) = (self.yaw_deg.to_radians(), self.pitch_deg.to_radians());
-        let fwd = [yaw.cos() * pitch.cos(), pitch.sin(), yaw.sin() * pitch.cos()];
-        let right = [-yaw.sin(), 0.0, yaw.cos()];
+        let ((ys, yc), (ps, pc)) = (math::sin_cos(yaw), math::sin_cos(pitch));
+        let fwd = [yc * pc, ps, ys * pc];
+        let right = [-ys, 0.0, yc];
         let up = [right[1] * fwd[2] - right[2] * fwd[1], right[2] * fwd[0] - right[0] * fwd[2], right[0] * fwd[1] - right[1] * fwd[0]];
         let d = [p[0] - self.x, p[1] - eye_y, p[2] - self.z];
         let dot = |a: [f32; 3], b: [f32; 3]| a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -233,9 +234,9 @@ fn in_view(c: &Camera, pos: [f32; 3], radius: f32) -> bool {
     if d < 0.5 {
         return true;
     }
-    let yaw = c.yaw_deg.to_radians();
-    let cos = (dx * yaw.cos() + dz * yaw.sin()) / d;
-    cos >= (c.half_fov_deg + 8.0).to_radians().cos()
+    let (ys, yc) = math::sin_cos(c.yaw_deg.to_radians());
+    let cos = (dx * yc + dz * ys) / d;
+    cos >= math::cos((c.half_fov_deg + 8.0).to_radians())
 }
 
 /// Paint one marker: a square outline of `half` pixels around (cx, cy).
@@ -312,7 +313,7 @@ pub fn report(geo: &Geometry, scene: &Value, radius: f32, frames: Option<&std::p
                 let mut img = pt_render::decode_png(&bytes)?;
                 let fpx = c.lens / c.sensor * img.w as f32;
                 for f in &seen {
-                    let depth = ((f.pos[0] - c.x).powi(2) + (f.pos[2] - c.z).powi(2)).sqrt().max(0.5);
+                    let depth = (math::sq(f.pos[0] - c.x) + math::sq(f.pos[2] - c.z)).sqrt().max(0.5);
                     if let Some(p) = c.project(eye_y, [f.pos[0], f.pos[1] + f.height * 0.5, f.pos[2]], img.w, img.h) {
                         let half = (fpx * f.height / depth * 0.6).clamp(10.0, 70.0);
                         mark(&mut img, p[0], p[1], half, kind_colour(f.kind));
@@ -355,6 +356,37 @@ pub fn report(geo: &Geometry, scene: &Value, radius: f32, frames: Option<&std::p
         "fail": failing,
     }))
 }
+
+pub const GROUND_CHECK: crate::registry::Command = {
+    use crate::registry::{Kind, Param};
+    crate::registry::Command {
+        name: "ground-check",
+        tool: "ground_check",
+        summary: "Cook a world on the CPU (no render, no GPU) and list, per scene camera, the objects that float, hang over a slope or bank, are mostly under water (flat lids) or are buried. With frames and annotate it writes ground_<camera>.png with each one boxed (red float, orange hanging, yellow shallow, magenta buried). Fails when anything floats or hangs inside a camera view.",
+        heavy: false,
+        params: &[
+            Param::pos("recipe", Kind::Str, "the world's recipe .hcs file"),
+            Param::pos("scene", Kind::Str, "the scene .json file that holds the cameras"),
+            Param::flag("radius", Kind::Num, "metres around a camera that count as in view (default 45)"),
+            Param::flag("frames", Kind::Str, "folder holding the rendered frames to draw on"),
+            Param::flag("annotate", Kind::Str, "folder to write the annotated frames to"),
+            Param::flag("lookdev", Kind::Bool, "cook in the look-development tier (the tier the frame was rendered in)"),
+        ],
+        run: ground_check_cmd,
+    }
+};
+
+pub const REVIEW_TILES: crate::registry::Command = {
+    use crate::registry::{Kind, Param};
+    crate::registry::Command {
+        name: "review-tiles",
+        tool: "review_tiles",
+        summary: "Cut a frame into six tiles (3 x 2), each enlarged twice, so a frame is reviewed at full resolution tile by tile and not in one downscaled glance.",
+        heavy: false,
+        params: &[Param::pos("frame", Kind::Str, "the rendered frame (.png)"), Param::pos("out_dir", Kind::Str, "folder to write tile_r1c1.png ... tile_r2c3.png to")],
+        run: review_tiles_cmd,
+    }
+};
 
 /// `pt ground-check <recipe.hcs> <scene.json> [--radius M] [--frames DIR --annotate DIR]`
 pub fn ground_check_cmd(args: &[String]) -> Result<(), String> {
@@ -414,7 +446,7 @@ const FAR_RANGE_M: f32 = 30000.0;
 fn crop_terrain(geo: &mut Geometry, cams: &[Camera], radius: f32) -> (usize, usize) {
     let mats: Vec<bool> = geo.prim_materials().iter().map(|m| m.is_some_and(|m| m.starts_with("terrain") && !m.contains("far"))).collect();
     let p = geo.p();
-    let near = |q: [f32; 3]| cams.iter().any(|c| ((q[0] - c.x).powi(2) + (q[2] - c.z).powi(2)).sqrt() <= radius || in_view(c, q, FAR_RANGE_M));
+    let near = |q: [f32; 3]| cams.iter().any(|c| (math::sq(q[0] - c.x) + math::sq(q[2] - c.z)).sqrt() <= radius || in_view(c, q, FAR_RANGE_M));
     let keep: Vec<bool> = (0..geo.n_prims()).map(|i| !mats[i] || geo.prim_points(i).iter().any(|&q| near(p[q as usize]))).collect();
     let (considered, kept) = (mats.iter().filter(|m| **m).count(), (0..mats.len()).filter(|&i| mats[i] && keep[i]).count());
     if kept == considered {
@@ -452,7 +484,7 @@ pub fn cull_to_view(geo: &mut Geometry, cams: &[Camera], radius: f32) -> (usize,
                 return cams.iter().any(|c| in_view(c, pos, FAR_RANGE_M));
             }
             cams.iter().any(|c| {
-                let d = ((pos[0] - c.x).powi(2) + (pos[2] - c.z).powi(2)).sqrt();
+                let d = (math::sq(pos[0] - c.x) + math::sq(pos[2] - c.z)).sqrt();
                 d <= radius || in_view(c, pos, radius * 4.0)
             })
         })
@@ -471,7 +503,7 @@ pub fn cull_to_view(geo: &mut Geometry, cams: &[Camera], radius: f32) -> (usize,
         eprintln!("  {n} x {name}: {} triangles each{}", g.triangles().len(), if far_standin[*p] { " (far stand-in)" } else { "" });
     }
     if kept < total {
-        let inst = geo.instances.as_mut().unwrap();
+        let Some(inst) = geo.instances.as_mut() else { return (0, total) };
         let proto_id: Vec<u32> = keep.iter().map(|&k| inst.proto_id[k as usize]).collect();
         let xf: Vec<[f32; 12]> = keep.iter().map(|&k| inst.xf[k as usize]).collect();
         inst.attrs = inst.attrs.gather(&keep);

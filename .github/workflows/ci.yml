@@ -17,9 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build --workspace --release
+      - name: Lint (platform-independent maths, no crash-prone shortcuts; the same step as `pt gate`)
+        run: cargo run --release -p pt-cli --bin pt -- gate --only lint
       - name: Documentation harness (links, budgets, banned headings, generated state)
         run: cargo run --release -p pt-cli --bin pt -- docs-check
       - name: Per-node hash trace of the rigid-body recipe (diagnostic)

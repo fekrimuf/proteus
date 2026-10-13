@@ -7,7 +7,7 @@
 //! region: the classes of object under it, counted, so "that patch of moss" names its node and not one stone.
 
 use crate::grounding::{cameras_of, check, mark, Camera, Finding, Surface};
-use pt_core::math::{cross, normalize, sub, xform_point, Mat34};
+use pt_core::math::{self, cross, normalize, sub, xform_point, Mat34};
 use pt_core::spatial::{BoxTree, SurfHit, SurfaceTree};
 use pt_core::{Column, Geometry};
 use pt_graph::Graph;
@@ -130,8 +130,9 @@ impl Camera {
     /// The ray through pixel (`x`, `y`) of a `w` x `h` frame: (origin, unit direction). The inverse of `project`.
     pub fn ray(&self, eye_y: f32, w: usize, h: usize, x: f32, y: f32) -> (V3, V3) {
         let (yaw, pitch) = (self.yaw_deg.to_radians(), self.pitch_deg.to_radians());
-        let fwd = [yaw.cos() * pitch.cos(), pitch.sin(), yaw.sin() * pitch.cos()];
-        let right = [-yaw.sin(), 0.0, yaw.cos()];
+        let ((ys, yc), (ps, pc)) = (math::sin_cos(yaw), math::sin_cos(pitch));
+        let fwd = [yc * pc, ps, ys * pc];
+        let right = [-ys, 0.0, yc];
         let up = cross(right, fwd);
         let f = self.lens / self.sensor * w as f32;
         let (u, v) = ((x - w as f32 / 2.0) / f, (h as f32 / 2.0 - y) / f);
@@ -172,7 +173,10 @@ impl Ctx<'_> {
     fn describe(&mut self, hit: &Hit) -> Described {
         match *hit {
             Hit::Instance { k, proto, prim, dist, pos, n } => {
-                let inst = self.geo.instances.as_ref().expect("instance hit");
+                let Some(inst) = self.geo.instances.as_ref() else {
+                    let value = json!({"kind": "instance", "error": "the ray met an instance but the geometry has no instance table"});
+                    return Described { value, class: "?".into(), flagged: vec![] };
+                };
                 let xf = inst.xf[k as usize];
                 let origin = [xf[3], xf[7], xf[11]];
                 let (label, proto_json) = proto_label(self.geo, proto);

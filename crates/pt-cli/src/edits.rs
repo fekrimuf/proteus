@@ -39,6 +39,25 @@ pub fn record(file: &Path, scope: &str, id: Option<i64>, op: &str, nums: &[f64],
     Ok(edit)
 }
 
+pub const EDIT: crate::registry::Command = {
+    use crate::registry::{Kind, Param};
+    crate::registry::Command {
+        name: "edit",
+        tool: "edit",
+        summary: "Record the owner's decision about one placed object in an edits file, by its stable id (from `pick`): remove it, move it by (dx dy dz) or to a place (with `to`), scale it, or add a new one. The decision is replayed on every rebuild of the world.",
+        heavy: false,
+        params: &[
+            Param::pos("file", Kind::Str, "edits .json file to write (for example edits/cascade.json)"),
+            Param::pos("scope", Kind::Str, "name of the scatter the object belongs to (the scope its recipe passes to edits_of)"),
+            Param::opt_pos("id", Kind::Int, "the object's stable id (the `pid` that `pick` reports); leave out for `add`"),
+            Param::pos("op", Kind::Str, "remove | move | scale | add"),
+            Param::opt_pos("numbers", Kind::List, "move: dx dy dz; scale: one factor; add: x y z [pscale]"),
+            Param::flag("to", Kind::Bool, "with move: the numbers are a place in the world, not an offset"),
+        ],
+        run: edit_cmd,
+    }
+};
+
 /// `pt edit <edits.json> <scope> <id> remove | move DX DY DZ [--to] | scale F | add X Y Z [PSCALE]`
 pub fn edit_cmd(args: &[String]) -> Result<(), String> {
     const USAGE: &str = "usage: pt edit <edits.json> <scope> <id> remove | move DX DY DZ [--to] | scale FACTOR   or   pt edit <edits.json> <scope> add X Y Z [PSCALE]";

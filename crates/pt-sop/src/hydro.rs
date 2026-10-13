@@ -240,7 +240,7 @@ fn flow(g: &Geometry, p: &Params) -> Res {
             let depth = (hy.filled[c] - h[c]).max(0.0);
             fill_depth.push(depth);
             // wetness index: area per unit contour width over the slope (a small floor keeps flats finite)
-            twi.push((hy.acc[c] / dx.min(dz)).max(1.0).ln() - (tan + 0.02).ln());
+            twi.push(pt_core::math::ln((hy.acc[c] / dx.min(dz)).max(1.0)) - pt_core::math::ln(tan + 0.02));
             stream.push(smooth01((hy.acc[c] / stream_area - 0.5) / 1.0));
             lake.push((depth > lake_depth) as u8 as f32);
         }

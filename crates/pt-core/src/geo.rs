@@ -93,7 +93,9 @@ impl Geometry {
         }
         match self.point.0.get_mut("P") {
             Some(Column::V3(a)) => Arc::make_mut(a),
-            _ => unreachable!(),
+            // not reachable: `set` above made P a V3 column. Loud on purpose (a silent scratch buffer would lose writes); the tool guard turns it into an error.
+            #[allow(clippy::unreachable)]
+            _ => unreachable!("P was just set to a V3 column"),
         }
     }
     pub fn prim_points(&self, i: usize) -> &[u32] {

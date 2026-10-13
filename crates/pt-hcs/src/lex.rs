@@ -45,15 +45,15 @@ pub fn lex(src: &str) -> Result<Vec<Token>, Diag> {
             if i >= chars.len() || chars[i] == '#' {
                 continue; // blank or comment-only line
             }
-            if col > *indents.last().unwrap() {
+            if col > indents.last().copied().unwrap_or(0) {
                 indents.push(col);
                 out.push(Token { tok: Tok::Indent, line, col: 1 });
             } else {
-                while col < *indents.last().unwrap() {
+                while col < indents.last().copied().unwrap_or(0) {
                     indents.pop();
                     out.push(Token { tok: Tok::Dedent, line, col: 1 });
                 }
-                if col != *indents.last().unwrap() {
+                if col != indents.last().copied().unwrap_or(0) {
                     return Err(Diag::new(line, 1, "inconsistent indentation".into(), "indent blocks with the same number of spaces"));
                 }
             }

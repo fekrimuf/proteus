@@ -25,3 +25,6 @@ tiny_http = "0.12"
 sha2 = "0.10"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 rayon.workspace = true
+
+[lints]
+workspace = true

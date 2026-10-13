@@ -14,3 +14,8 @@ disallowed-methods = [
   { path = "f64::exp", reason = "non-deterministic across platforms" },
   { path = "f64::powf", reason = "non-deterministic across platforms" },
 ]
+
+# Test code may unwrap and panic (production code may not: [workspace.lints.clippy] in Cargo.toml).
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true

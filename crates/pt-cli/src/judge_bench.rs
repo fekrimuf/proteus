@@ -74,7 +74,7 @@ pub fn run_critique(j: &Judge, dir: &Path, method: &str) -> Result<Value, String
     }
     let judgments = dir.join(format!("judgments_{JUDGE_NAME}_{method}.json"));
     let doc = json!({"judge": format!("{JUDGE_NAME} {method}"), "scores": scores, "pairs": pairs_total, "contradictory_pairs": contradictory});
-    std::fs::write(&judgments, serde_json::to_string_pretty(&doc).unwrap()).map_err(|e| e.to_string())?;
+    std::fs::write(&judgments, serde_json::to_string_pretty(&doc).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     let out = PathBuf::from(format!("gym/critique_experiment_{JUDGE_NAME}_{method}.json"));
     crate::critique_bench::score_to(&judgments, dir, &out)?;
     if pairs_total > 0 {
@@ -82,7 +82,7 @@ pub fn run_critique(j: &Judge, dir: &Path, method: &str) -> Result<Value, String
     }
     let mut result: Value = serde_json::from_str(&std::fs::read_to_string(&out).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     result["order_contradictions"] = json!({"pairs": pairs_total, "contradictory": contradictory});
-    std::fs::write(&out, serde_json::to_string_pretty(&result).unwrap()).map_err(|e| e.to_string())?;
+    std::fs::write(&out, serde_json::to_string_pretty(&result).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     Ok(result)
 }
 
@@ -173,7 +173,7 @@ pub fn run_audit(j: &Judge) -> Result<Value, String> {
     });
     println!("flagged defects found: {tp} of {pos}   false alarms on the other {neg}: {fp}   identity control false alarms: {ident_fp} of {n}   different object detected: {other_tp} of {n}");
     println!("development half tp/fp/fn/tn {dtp}/{dfp}/{dfn}/{dtn}   hold-out half {htp}/{hfp}/{hfn}/{htn}");
-    std::fs::write(results_dir().join(format!("audit_{JUDGE_NAME}_structure.json")), serde_json::to_string_pretty(&result).unwrap()).map_err(|e| e.to_string())?;
+    std::fs::write(results_dir().join(format!("audit_{JUDGE_NAME}_structure.json")), serde_json::to_string_pretty(&result).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     Ok(result)
 }
 
@@ -235,13 +235,13 @@ pub fn judge_cmd(args: &[String]) -> Result<(), String> {
             let brief = flag(args, "--brief").ok_or("--brief TEXT")?;
             let img = |p: &str| pt_render::decode_png(&read(Path::new(p))?);
             let v = Judge::local().compare_side_by_side(brief, &img(a)?, &img(b)?)?;
-            println!("{}", serde_json::to_string_pretty(&json!({"margin_toward_first": v.margin, "contradictory": v.contradictory, "reasons": v.reasons})).unwrap());
+            println!("{}", serde_json::to_string_pretty(&json!({"margin_toward_first": v.margin, "contradictory": v.contradictory, "reasons": v.reasons})).unwrap_or_default());
             Ok(())
         }
         Some("parts") => {
             let p = pos.first().ok_or("usage: pt judge parts PAIR.png (a `pt match --report` pair picture: original left, rebuild right)")?;
             let (diff, counted) = Judge::local().structure(&pt_render::decode_png(&read(Path::new(p))?)?)?;
-            println!("{}", serde_json::to_string_pretty(&json!({"verdict": if diff.is_empty() { "parts match" } else { "parts differ" }, "differences": diff, "counted": counted})).unwrap());
+            println!("{}", serde_json::to_string_pretty(&json!({"verdict": if diff.is_empty() { "parts match" } else { "parts differ" }, "differences": diff, "counted": counted})).unwrap_or_default());
             Ok(())
         }
         Some("rate") => {
@@ -253,7 +253,7 @@ pub fn judge_cmd(args: &[String]) -> Result<(), String> {
         Some("which") => {
             let a = pos.first().ok_or("usage: pt judge which IMG.png --a TEXT --b TEXT")?;
             let v = Judge::local().which_brief(&read(Path::new(a))?, flag(args, "--a").ok_or("--a TEXT")?, flag(args, "--b").ok_or("--b TEXT")?)?;
-            println!("{}", serde_json::to_string_pretty(&json!({"margin_toward_a": v.margin, "contradictory": v.contradictory, "seen": v.reasons})).unwrap());
+            println!("{}", serde_json::to_string_pretty(&json!({"margin_toward_a": v.margin, "contradictory": v.contradictory, "seen": v.reasons})).unwrap_or_default());
             Ok(())
         }
         Some("critique") => {
@@ -269,7 +269,7 @@ pub fn judge_cmd(args: &[String]) -> Result<(), String> {
             }
             let frames: Vec<PathBuf> = pos.iter().map(PathBuf::from).collect();
             let r = judge_frames(&Judge::local(), &frames, brief, &foils)?;
-            println!("{}", serde_json::to_string_pretty(&r).unwrap());
+            println!("{}", serde_json::to_string_pretty(&r).unwrap_or_default());
             Ok(())
         }
         _ => Err("usage: pt judge status | compare A B --brief T | rate IMG --brief T | which IMG --a T --b T | parts PAIR.png | critique [dir] [--method sheet|sbs|pairs] | audit | frames IMG... --brief T [--foil T]...".into()),

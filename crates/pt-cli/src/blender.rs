@@ -74,7 +74,7 @@ pub fn check_scene(s: &Value) -> Vec<String> {
         range(r, "exposure", -10.0, 10.0, "render", &mut e);
         range(r, "smooth_angle", 0.0, 180.0, "render", &mut e);
         if let Some(res) = r.get("resolution") {
-            let ok = vec_n(res, 2) && res.as_array().unwrap().iter().all(|x| x.as_f64().is_some_and(|v| (64.0..=8192.0).contains(&v)));
+            let ok = vec_n(res, 2) && res.as_array().is_some_and(|a| a.iter().all(|x| x.as_f64().is_some_and(|v| (64.0..=8192.0).contains(&v))));
             if !ok {
                 e.push(format!("render.resolution must be [width, height] with each in 64..8192, got {res}"));
             }
@@ -522,6 +522,30 @@ fn run_blender(model: &Path, scene: &Value, unknown: Vec<String>, stem: &str, ou
     report["model"] = json!(model.display().to_string());
     Ok(report)
 }
+
+pub const RENDER_SCENE: crate::registry::Command = {
+    use crate::registry::{Kind, Param};
+    crate::registry::Command {
+        name: "render-scene",
+        tool: "render_world",
+        summary: "Cook a recipe (or read a .glb) and render it with Blender Cycles under a scene file's cameras, sky and sun, with material names bound to the CC0 PBR library. Prints the report: frames, triangles, material coverage, unknown materials, warnings.",
+        heavy: true,
+        params: &[
+            Param::pos("input", Kind::Str, "recipe .hcs or a .glb file"),
+            Param::pos("scene", Kind::Str, "scene .json file (cameras, lighting, render settings)"),
+            Param::pos("out", Kind::Str, "output .png path (the report names every frame written)"),
+            Param::flag("quick", Kind::Bool, "quarter samples and half size"),
+            Param::flag("samples", Kind::Int, "Cycles samples"),
+            Param::flag("keep", Kind::Str, "folder to keep the exported world and the Blender files in"),
+            Param::flag("lod", Kind::Bool, "render with the levels of detail an engine would get"),
+            Param::flag("only", Kind::Str, "render only these cameras (comma-separated names)"),
+            Param::flag("cull", Kind::Num, "with only: drop what the chosen cameras cannot see beyond this many metres"),
+            Param::flag("lookdev", Kind::Bool, "the look-development tier: fits this machine, not the full-quality world"),
+            Param::flag("fresh", Kind::Bool, "ignore the cache of the cooked world"),
+        ],
+        run: render_scene_cmd,
+    }
+};
 
 /// `pt render-scene <recipe|file.glb> <scene.json> <out.png> [--quick] [--samples N] [--keep DIR] [--lod]`
 pub fn render_scene_cmd(args: &[String]) -> Result<(), String> {

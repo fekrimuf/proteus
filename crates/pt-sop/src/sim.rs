@@ -292,7 +292,7 @@ fn shatter(src: &Geometry, p: &Params) -> Res {
     fp.insert("padding".into(), json!(p.f("padding").max(0.0) + 3.0 * voxel));
     fp.insert("band".into(), json!(3));
     let sdf_geo = crate::sdf::from_mesh_pub(src, &fp)?;
-    let vol = sdf_geo.volumes.get("sdf").unwrap().clone();
+    let vol = sdf_geo.volumes.get("sdf").ok_or("rbd_shatter: the signed distance field was not built")?.clone();
     let (lo, hi) = src.base_bounds().ok_or("rbd_shatter: empty input")?;
     // Fracture sites: random points inside the solid.
     let mut sites: Vec<[f32; 3]> = Vec::new();

@@ -1,0 +1,3 @@
+[alias]
+# `cargo gate` = everything that must pass before a commit (build, lint, docs, tests); `cargo gate --quick` leaves out the tests.
+gate = "run --release -p pt-cli --bin pt -- gate"

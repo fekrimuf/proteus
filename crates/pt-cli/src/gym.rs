@@ -101,7 +101,7 @@ pub fn tasks() -> Vec<Task> {
         ),
     ];
     for path in recipes::list() {
-        let name = path.file_stem().unwrap().to_string_lossy().to_string();
+        let name = path.file_stem().map_or_else(String::new, |s| s.to_string_lossy().to_string());
         let Ok(code) = std::fs::read_to_string(&path) else { continue };
         let mut g = Graph::new();
         let Ok(rep) = pt_hcs::run(&code, &mut g, true) else { continue };
@@ -445,7 +445,7 @@ pub fn baseline() -> Result<(), String> {
     let mean = |k: &str| rows.iter().map(|r| r[k].as_f64().unwrap_or(0.0)).sum::<f64>() / rows.len().max(1) as f64;
     println!("{:<26} {:>4} | {:>7.3} {:>7.3} {:>9.3}", "MEAN", "", mean("oracle"), mean("null_agent"), mean("perturbed_best_of_3"));
     std::fs::create_dir_all("gym").ok();
-    std::fs::write("gym/baseline.json", serde_json::to_string_pretty(&json!({"tasks": rows, "mean": {"oracle": mean("oracle"), "null_agent": mean("null_agent"), "perturbed": mean("perturbed_best_of_3")}})).unwrap()).map_err(|e| e.to_string())?;
+    std::fs::write("gym/baseline.json", serde_json::to_string_pretty(&json!({"tasks": rows, "mean": {"oracle": mean("oracle"), "null_agent": mean("null_agent"), "perturbed": mean("perturbed_best_of_3")}})).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     println!("recorded gym/baseline.json");
     if mean("oracle") < 0.999 {
         return Err("oracle must score 1.0 on every task (a task or spec is broken)".into());

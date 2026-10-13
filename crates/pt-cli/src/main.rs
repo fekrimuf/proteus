@@ -1,4 +1,4 @@
-use pt_cli::{corpus, demos, gym, matchcmd, mcp, recipes, report, top};
+use pt_cli::{corpus, demos, gym, matchcmd, mcp, recipes, registry, report, top};
 
 use pt_graph::{hex, Graph};
 use serde_json::json;
@@ -66,7 +66,7 @@ fn demo(out_dir: &str) -> Result<(), String> {
     }
     let (sheet, _) = pt_render::contact_sheet(&geo, &o);
     std::fs::write(format!("{out_dir}/demo_sheet.png"), pt_render::encode_png(&sheet)?).map_err(|e| e.to_string())?;
-    println!("{}", serde_json::to_string_pretty(&geo.stats()).unwrap());
+    println!("{}", serde_json::to_string_pretty(&geo.stats()).unwrap_or_default());
     println!("wrote {out_dir}/demo.{{gltf,obj,graph.json}} and demo_{{shaded,height,sheet}}.png");
     Ok(())
 }
@@ -127,7 +127,7 @@ fn bench(only_a: bool) -> Result<(), String> {
 /// Prints manifest hashes of golden scenes; compare across OSes/CPUs (Phase 1 gate (c)).
 fn golden() -> Result<(), String> {
     for threads in [1usize, 4] {
-        let pool = rayon_pool(threads);
+        let pool = rayon_pool(threads)?;
         let line = pool.install(|| -> Result<String, String> {
             let mut g = demo_graph(120, 20_000)?;
             let a = g.cook_entry("result")?.hash;
@@ -140,8 +140,8 @@ fn golden() -> Result<(), String> {
     Ok(())
 }
 
-fn rayon_pool(n: usize) -> rayon::ThreadPool {
-    rayon::ThreadPoolBuilder::new().num_threads(n).build().unwrap()
+fn rayon_pool(n: usize) -> Result<rayon::ThreadPool, String> {
+    rayon::ThreadPoolBuilder::new().num_threads(n).build().map_err(|e| format!("cannot start {n} worker threads: {e}"))
 }
 
 fn render_cmd(args: &[String]) -> Result<(), String> {
@@ -154,7 +154,29 @@ fn render_cmd(args: &[String]) -> Result<(), String> {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let r = match args.get(1).map(String::as_str) {
+    // Registered commands (crates/pt-cli/src/registry.rs) come first: the same list is the agent's tool list.
+    let r = match args.get(1).and_then(|n| registry::find(n)) {
+        Some(c) => registry::run_cli(c, args.get(2..).unwrap_or_default()),
+        None => dispatch(&args),
+    };
+    if let Err(e) = r {
+        eprintln!("error: {e}");
+        std::process::exit(1);
+    }
+}
+
+/// The commands that are not in the registry yet.
+fn dispatch(args: &[String]) -> Result<(), String> {
+    match args.get(1).map(String::as_str) {
+        Some("help") | Some("--help") | Some("-h") => {
+            print!("{}", registry::help_text());
+            println!("\nOther commands (not yet in the registry; new commands go in the registry): mcp ui pick demo bench golden gen-texture trace sparse-bench critique-bench render corpus match match-bench export parts audit report describe refine recipes-accept shot judge terrain dem-manifest gym gym-baseline optimize-demo vary-bench recover-demo top");
+            Ok(())
+        }
+        Some("commands") => {
+            println!("{}", serde_json::to_string_pretty(&registry::list_json()).unwrap_or_default());
+            Ok(())
+        }
         Some("mcp") => {
             // `pt mcp [--ui PORT]`: the UI shares the agent's live session.
             let ui = args.iter().position(|a| a == "--ui").map(|i| format!("127.0.0.1:{}", args.get(i + 1).map_or("7700", String::as_str)));
@@ -165,14 +187,8 @@ fn main() {
         Some("demo") => demo(args.get(2).map_or("out", String::as_str)),
         Some("bench") => bench(args.get(2).map(String::as_str) == Some("a")),
         Some("golden") => golden(),
-        Some("status") => pt_cli::docs::status_cmd(&args[2..]),
-        Some("ground-check") => pt_cli::grounding::ground_check_cmd(&args[2..]),
-        Some("review-tiles") => pt_cli::grounding::review_tiles_cmd(&args[2..]),
         Some("pick") => pt_cli::pick::pick_cmd(&args[2..]),
-        Some("edit") => pt_cli::edits::edit_cmd(&args[2..]),
         Some("gen-texture") => gen_texture_cmd(&args[2..]),
-        Some("world") => pt_cli::world::world_cmd(&args[2..]),
-        Some("docs-check") => pt_cli::docs::check_cmd(&args[2..]),
         Some("trace") => trace_cmd(&args[2..]),
         Some("sparse-bench") => sparse_bench_cmd(),
         Some("critique-bench") => critique_bench_cmd(&args[2..]),
@@ -186,11 +202,8 @@ fn main() {
         Some("report") => report::report_cmd(&args[2..]),
         Some("describe") => matchcmd::describe_cmd(&args[2..]),
         Some("refine") => matchcmd::refine_cmd(&args[2..]),
-        Some("recipes") => recipes_cmd(&args[2..]),
         Some("recipes-accept") => recipes_accept_cmd(&args[2..]),
         Some("shot") => shot_cmd(&args[2..]),
-        Some("render-scene") => pt_cli::blender::render_scene_cmd(&args[2..]),
-        Some("scorecard") => pt_cli::scorecard::scorecard_cmd(&args[2..]),
         Some("judge") => pt_cli::judge_bench::judge_cmd(&args[2..]),
         Some("terrain") => pt_cli::terrain::terrain_cmd(&args[2..]),
         Some("dem-manifest") => pt_cli::terrain::dem_manifest_cmd(&args[2..]),
@@ -204,13 +217,9 @@ fn main() {
         Some("recover-demo") => demos::recover_demo(),
         Some("top") => top::run_file(args.get(2).map_or("farm.json", String::as_str)),
         _ => {
-            eprintln!("usage: pt mcp                      run the MCP server on stdio\n       pt demo [dir]               build the demo graph, export + render it\n       pt bench                    Phase 1 gate measurements\n       pt golden                   print cook hashes (compare across machines)\n       pt render <graph> <node> <png>   contact sheet of a node");
+            eprintln!("usage: pt help                 every command with its usage\n       pt commands [--json]        the registered commands as JSON\n       pt mcp [--ui PORT]          run the agent tool server on stdio\n       pt demo [dir]               build the demo graph, export + render it\n       pt bench                    Phase 1 gate measurements\n       pt golden                   print cook hashes (compare across machines)\n       pt render <graph> <node> <png>   contact sheet of a node");
             Ok(())
         }
-    };
-    if let Err(e) = r {
-        eprintln!("error: {e}");
-        std::process::exit(1);
     }
 }
 
@@ -242,24 +251,6 @@ fn peak_mem_mb() -> f64 {
 #[cfg(not(windows))]
 fn peak_mem_mb() -> f64 {
     0.0
-}
-
-fn recipes_cmd(args: &[String]) -> Result<(), String> {
-    let update = args.iter().any(|a| a == "--update");
-    let results = recipes::run_all(update, Some(std::path::Path::new("out/recipes")))?;
-    let mut failed = 0;
-    println!("{:<26} {:>7} {:>9} {:>7} {:>9}  {}", "recipe", "specs", "points", "inst", "ms", "hash");
-    for r in &results {
-        println!("{:<26} {:>3}/{:<3} {:>9} {:>7} {:>9.1}  {}", r.name, r.specs_ok, r.specs_total, r.points, r.instances, r.ms, if r.hash.is_empty() { "-" } else { &r.hash[..16] });
-        for f in &r.failures {
-            println!("    FAIL {f}");
-        }
-        if !r.failures.is_empty() {
-            failed += 1;
-        }
-    }
-    println!("{} recipes, {} failed{}", results.len(), failed, if update { " (golden updated)" } else { "" });
-    if failed > 0 { Err(format!("{failed} recipe(s) failed")) } else { Ok(()) }
 }
 
 /// `pt shot <recipe-name-or-file> <out.png> [spp] [azimuth]`: path-traced still of a recipe.
@@ -296,7 +287,7 @@ fn recipes_accept_cmd(args: &[String]) -> Result<(), String> {
                 println!("no proposals in {}", recipes::proposed_dir().display());
             }
             for f in p {
-                println!("{}", f.file_stem().unwrap().to_string_lossy());
+                println!("{}", f.file_stem().map_or_else(String::new, |s| s.to_string_lossy().to_string()));
             }
         }
     }

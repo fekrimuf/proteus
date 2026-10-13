@@ -9,7 +9,7 @@
 //! (both are role names the style maps to library materials).
 
 use crate::{ps, sch};
-use pt_core::math::{cross, normalize, sub};
+use pt_core::math::{self, cross, normalize, sq, sub};
 use pt_core::rng::rand4;
 use pt_core::{Column, Differentiability as D, Geometry, Granularity as G, NodeSchema, ParamExt, Params};
 use serde_json::json;
@@ -143,13 +143,13 @@ fn tree_conifer(p: &Params) -> Res {
     // the trunk: where it is and how thick, at height y
     let axis = |y: f32| -> V3 {
         let t = y / height;
-        let off = lean.tan() * y + wobble * ((t * 5.0 + phase[0]).sin() * 0.5 * t);
-        let off2 = wobble * ((t * 4.3 + phase[1]).sin() * 0.5 * t);
+        let off = math::tan(lean) * y + wobble * (math::sin(t * 5.0 + phase[0]) * 0.5 * t);
+        let off2 = wobble * (math::sin(t * 4.3 + phase[1]) * 0.5 * t);
         [off * lean_dir_c + off2 * lean_dir_s, y, off * lean_dir_s - off2 * lean_dir_c]
     };
     let radius = |y: f32| -> f32 {
         let t = (y / height).clamp(0.0, 1.0);
-        (r0 * (1.0 - taper * t).powf(1.15) + r0 * 0.7 * (-y * 3.0 / (1.0 + r0 * 4.0)).exp()).max(0.012)
+        (r0 * math::pow(1.0 - taper * t, 1.15) + r0 * 0.7 * math::exp(-y * 3.0 / (1.0 + r0 * 4.0))).max(0.012)
     };
 
     let mut wood = Mesh::default();
@@ -168,7 +168,7 @@ fn tree_conifer(p: &Params) -> Res {
     let per = p.i("branches").clamp(3, 10) as f32 * detail.sqrt();
     let (droop, lift) = (p.f("droop").to_radians(), p.f("lift").to_radians());
     let (curl, asym, gaps) = (p.f("curl").clamp(0.0, 1.0), p.f("asymmetry").clamp(0.0, 1.0), p.f("gaps").clamp(0.0, 0.5));
-    let (card_w, card_l) = (p.f("spray_width") * (height / 18.0).powf(0.35), p.f("spray_length") * (height / 18.0).powf(0.35));
+    let (card_w, card_l) = (p.f("spray_width") * math::pow(height / 18.0, 0.35), p.f("spray_length") * math::pow(height / 18.0, 0.35));
     let per_m = p.f("sprays_per_m").max(0.2) * detail;
     let mut bid = 0u64;
     for w in 0..n_whorls {
@@ -177,7 +177,7 @@ fn tree_conifer(p: &Params) -> Res {
             break;
         }
         let t = ((y - y0) / (height * 0.985 - y0)).clamp(0.0, 1.0);
-        let l_max = crown_width * height * (1.0 - t).max(0.0).powf(crown_power) + 0.12 * height * 0.0;
+        let l_max = crown_width * height * math::pow((1.0 - t).max(0.0), crown_power) + 0.12 * height * 0.0;
         let nb = ((per + (rnd(3, w as u64) - 0.5) * 2.0).round() as usize).clamp(3, 14);
         let ph = rnd(4, w as u64) * std::f32::consts::TAU;
         for k in 0..nb {
@@ -186,7 +186,7 @@ fn tree_conifer(p: &Params) -> Res {
                 continue;
             }
             let phi = ph + std::f32::consts::TAU * k as f32 / nb as f32 + (rnd(6, bid) - 0.5) * 0.6;
-            let len = (l_max * (0.72 + 0.5 * rnd(7, bid)) * (1.0 - asym * rnd(8, bid).powi(2))).max(0.25);
+            let len = (l_max * (0.72 + 0.5 * rnd(7, bid)) * (1.0 - asym * sq(rnd(8, bid)))).max(0.25);
             let base = add(axis(y + (rnd(9, bid) - 0.5) * spacing * 0.6), [0.0, 0.0, 0.0]);
             let alpha0 = -droop * (1.0 - t) + lift * t + (rnd(10, bid) - 0.5) * 0.25;
             let (sf, cf) = pt_core::math::sin_cos(phi);

@@ -99,7 +99,9 @@ impl SparseVolume {
         }
         match e {
             Tile::Dense(d) => Arc::make_mut(d),
-            Tile::Const(_) => unreachable!(),
+            // not reachable: a const tile was expanded above. Loud on purpose (a silent scratch buffer would lose writes); the tool guard turns it into an error.
+            #[allow(clippy::unreachable)]
+            Tile::Const(_) => unreachable!("a const tile was just expanded to a dense one"),
         }
     }
 

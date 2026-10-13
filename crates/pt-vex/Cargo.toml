@@ -7,3 +7,6 @@ version.workspace = true
 pt-core.workspace = true
 serde_json.workspace = true
 rayon.workspace = true
+
+[lints]
+workspace = true

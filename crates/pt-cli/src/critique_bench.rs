@@ -49,7 +49,7 @@ fn candidates(t: &Task) -> Vec<Cand> {
             pool.push(Cand { kind: format!("perturbed(seed {seed}, amp {amp})"), reward: r, code });
         }
     }
-    pool.sort_by(|a, b| a.reward.partial_cmp(&b.reward).unwrap().then(a.code.cmp(&b.code)));
+    pool.sort_by(|a, b| a.reward.partial_cmp(&b.reward).unwrap_or(std::cmp::Ordering::Equal).then(a.code.cmp(&b.code)));
     pool.dedup_by(|a, b| (a.reward - b.reward).abs() < 0.02);
     let mut picks: Vec<Cand> = Vec::new();
     if !pool.is_empty() {
@@ -109,15 +109,15 @@ pub fn prepare(dir: &Path) -> Result<(), String> {
         blind.push(json!({"task": name, "sheet": png.display().to_string(), "layout": "A B / C D (top row A B, bottom row C D)", "brief": t.brief, "images": Value::Object(files)}));
         key.insert(name.into(), Value::Object(slots));
     }
-    std::fs::write(dir.join("blind.json"), serde_json::to_string_pretty(&blind).unwrap()).map_err(|e| e.to_string())?;
-    std::fs::write(dir.join("key.json"), serde_json::to_string_pretty(&key).unwrap()).map_err(|e| e.to_string())?;
+    std::fs::write(dir.join("blind.json"), serde_json::to_string_pretty(&blind).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    std::fs::write(dir.join("key.json"), serde_json::to_string_pretty(&key).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     println!("prepared {} tasks in {} (judge sees blind.json + sheet_*.png; key.json stays hidden)", blind.len(), dir.display());
     Ok(())
 }
 
 fn ranks(v: &[f64]) -> Vec<f64> {
     let mut idx: Vec<usize> = (0..v.len()).collect();
-    idx.sort_by(|&a, &b| v[a].partial_cmp(&v[b]).unwrap());
+    idx.sort_by(|&a, &b| v[a].partial_cmp(&v[b]).unwrap_or(std::cmp::Ordering::Equal));
     let mut r = vec![0.0; v.len()];
     let mut i = 0;
     while i < idx.len() {
@@ -190,9 +190,9 @@ pub fn score_to(judgments: &Path, dir: &Path, out_path: &Path) -> Result<(), Str
         let Some(js) = scores.get(task) else { continue };
         n_tasks += 1.0;
         let mut per: Vec<(Vec<f64>, Vec<f64>)> = kinds.iter().map(|_| (vec![], vec![])).collect();
-        for (slot, meta) in slots.as_object().unwrap() {
+        for (slot, meta) in slots.as_object().ok_or("bad key: a task's slots are not an object")? {
             let Some(js) = js.get(slot).and_then(Value::as_f64) else { continue };
-            let truth = meta["reward"].as_f64().unwrap();
+            let truth = meta["reward"].as_f64().ok_or("bad key: a slot has no numeric reward")?;
             for (k, kind) in kinds.iter().enumerate() {
                 let v = if *kind == "judge" { js } else { meta[*kind].as_f64().unwrap_or(0.0) };
                 per[k].0.push(truth);
@@ -227,7 +227,7 @@ pub fn score_to(judgments: &Path, dir: &Path, out_path: &Path) -> Result<(), Str
     if let Some(dir) = out_path.parent() {
         std::fs::create_dir_all(dir).ok();
     }
-    std::fs::write(out_path, serde_json::to_string_pretty(&out).unwrap()).map_err(|e| e.to_string())?;
+    std::fs::write(out_path, serde_json::to_string_pretty(&out).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     println!("recorded {}", out_path.display());
     Ok(())
 }

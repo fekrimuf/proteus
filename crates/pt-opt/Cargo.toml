@@ -11,3 +11,6 @@ pt-hcs.workspace = true
 pt-render.workspace = true
 serde_json.workspace = true
 rayon.workspace = true
+
+[lints]
+workspace = true

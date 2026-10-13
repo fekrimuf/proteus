@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "proteus": {
+      "command": "target/release/pt.exe",
+      "args": ["mcp", "--ui", "7700"]
+    }
+  }
+}

@@ -509,7 +509,7 @@ impl<'g> Interp<'g> {
         }
         let want = explicit_id.or_else(|| self.hint.clone()).unwrap_or_else(|| kind.to_string());
         let base: String = want.chars().map(|c| if c.is_alphanumeric() || c == '_' { c } else { '_' }).collect();
-        let id = if !self.g.nodes.contains_key(&base) && !base.is_empty() { base.clone() } else { (1..).map(|i| format!("{base}_{i}")).find(|n| !self.g.nodes.contains_key(n)).unwrap() };
+        let id = if !self.g.nodes.contains_key(&base) && !base.is_empty() { base.clone() } else { (1..).map(|i| format!("{base}_{i}")).find(|n| !self.g.nodes.contains_key(n)).unwrap_or_else(|| format!("{base}_new")) };
         self.hint = None;
         self.g.create(kind, Some(&id)).map_err(|m| d(pos, m, "check the node type"))?;
         self.report.node_lines.insert(id.clone(), pos.line);
@@ -711,7 +711,7 @@ impl<'g> Interp<'g> {
                 self.g.add_asset(asset);
                 V::None
             }
-            _ => unreachable!(),
+            other => return Err(d(pos, format!("'{other}' is not a built-in function"), "check the spelling; get_guide lists the built-ins")),
         })
     }
 }

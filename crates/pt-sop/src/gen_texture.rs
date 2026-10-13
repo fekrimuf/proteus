@@ -5,6 +5,7 @@
 //! colour that runs from dark at the stem to light at the tip. Deterministic for a seed; the transparent pixels carry the average
 //! needle colour so texture filtering does not draw dark fringes.
 
+use pt_core::math::{self, sq};
 use pt_core::rng::rand4;
 use std::path::Path;
 
@@ -39,7 +40,7 @@ impl Canvas {
                 let (px, py) = (x as f32 + 0.5, y as f32 + 0.5);
                 let t = (((px - p0[0]) * dx + (py - p0[1]) * dy) / len2).clamp(0.0, 1.0);
                 let (cx, cy) = (p0[0] + dx * t, p0[1] + dy * t);
-                let d = ((px - cx).powi(2) + (py - cy).powi(2)).sqrt();
+                let d = (sq(px - cx) + sq(py - cy)).sqrt();
                 let hw = w0 + (w1 - w0) * t;
                 let cover = (hw + 0.5 - d).clamp(0.0, 1.0);
                 if cover <= 0.0 {
@@ -75,7 +76,7 @@ impl Canvas {
             let col = if *a > 0.02 { *c } else { avg };
             // linear to sRGB-ish encoding for the file (the renderer reads it as sRGB colour)
             for k in 0..3 {
-                px.push((col[k].clamp(0.0, 1.0).powf(1.0 / 2.2) * 255.0 + 0.5) as u8);
+                px.push((math::pow(col[k].clamp(0.0, 1.0), 1.0 / 2.2) * 255.0 + 0.5) as u8);
             }
             px.push((a.clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
         }
@@ -99,14 +100,14 @@ pub fn needle_spray(size: usize, seed: i64) -> Rgba {
     let stem_b = [0.040, 0.070, 0.020];
     // the main stem: a gentle curve from the bottom edge to near the top
     let sway = (r(seed, 1, 0) - 0.5) * 0.08 * s;
-    let stem = |t: f32| -> [f32; 2] { [0.5 * s + sway * (t * 3.0).sin() * t, s * (0.985 - 0.95 * t)] };
+    let stem = |t: f32| -> [f32; 2] { [0.5 * s + sway * math::sin(t * 3.0) * t, s * (0.985 - 0.95 * t)] };
     let mut idx = 10u64;
     let mut needle = |cv: &mut Canvas, base: [f32; 2], ang: f32, len: f32, shade: f32| {
         let k = idx;
         idx += 1;
         let a = ang + (r(seed, 2, k) - 0.5) * 0.25;
         let l = len * (0.8 + 0.4 * r(seed, 3, k));
-        let tip = [base[0] + a.cos() * l, base[1] - a.sin() * l];
+        let tip = [base[0] + math::cos(a) * l, base[1] - math::sin(a) * l];
         let tone = (shade + 0.35 * (r(seed, 4, k) - 0.5)).clamp(0.0, 1.0);
         let c0 = if tone < 0.5 { [dark[0] + (mid[0] - dark[0]) * tone * 2.0, dark[1] + (mid[1] - dark[1]) * tone * 2.0, dark[2] + (mid[2] - dark[2]) * tone * 2.0] } else { let u = (tone - 0.5) * 2.0; [mid[0] + (light[0] - mid[0]) * u, mid[1] + (light[1] - mid[1]) * u, mid[2] + (light[2] - mid[2]) * u] };
         let c1 = [c0[0] * 1.25, c0[1] * 1.3, c0[2] * 1.15];
@@ -127,7 +128,7 @@ pub fn needle_spray(size: usize, seed: i64) -> Rgba {
             for q in 0..n {
                 let u = 0.12 + 0.9 * q as f32 / n as f32;
                 let b = [base[0] + (tip[0] - base[0]) * u.min(1.0), base[1] + (tip[1] - base[1]) * u.min(1.0)];
-                let shoot_ang = (-(tip[1] - base[1])).atan2(tip[0] - base[0]);
+                let shoot_ang = math::atan2(-(tip[1] - base[1]), tip[0] - base[0]);
                 for turn in [-1.0f32, 1.0] {
                     needle(&mut cv, b, shoot_ang + turn * (0.9 + 0.35 * r(seed, 7, q as u64)), 0.052 * s * (1.0 - 0.35 * u), 0.25 + 0.7 * u);
                 }

@@ -3,7 +3,7 @@
 //! agent changes anything, and every edit made in the page is visible to the agent.
 //! Loopback only; there is no remote access.
 
-use crate::mcp::{Out, Session};
+use crate::mcp::{lock, Out, Session};
 use pt_render::{Mode, Opts};
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -135,6 +135,14 @@ fn render_png(s: &mut Session, q: &std::collections::HashMap<String, String>) ->
     pt_render::encode_png(&img)
 }
 
+/// A response with its content type (left without one if the header cannot be built, never a panic).
+fn typed<R: std::io::Read>(r: tiny_http::Response<R>, mime: &str) -> tiny_http::Response<R> {
+    match tiny_http::Header::from_bytes(&b"Content-Type"[..], mime.as_bytes()) {
+        Ok(h) => r.with_header(h),
+        Err(()) => r,
+    }
+}
+
 pub fn serve_ui(session: Arc<Mutex<Session>>, addr: &str) -> Result<std::thread::JoinHandle<()>, String> {
     if !addr.starts_with("127.0.0.1") && !addr.starts_with("localhost") {
         return Err("the UI binds to loopback only (use 127.0.0.1:PORT)".into());
@@ -145,17 +153,19 @@ pub fn serve_ui(session: Arc<Mutex<Session>>, addr: &str) -> Result<std::thread:
             let url = req.url().to_string();
             let method = req.method().clone();
             let (path, q) = query(&url);
-            let json_resp = |v: Value| tiny_http::Response::from_string(v.to_string()).with_header("Content-Type: application/json".parse::<tiny_http::Header>().unwrap());
-            let resp: tiny_http::ResponseBox = match (method.as_str(), path.as_str()) {
-                ("GET", "/") | ("GET", "/index.html") => tiny_http::Response::from_string(INDEX).with_header("Content-Type: text/html; charset=utf-8".parse::<tiny_http::Header>().unwrap()).boxed(),
-                ("GET", "/api/state") => json_resp(state_json(&mut session.lock().unwrap())).boxed(),
+            let json_resp = |v: Value| typed(tiny_http::Response::from_string(v.to_string()), "application/json");
+            // a panic while answering one request must not end the page for the rest of the session
+            let answered = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> tiny_http::ResponseBox {
+                match (method.as_str(), path.as_str()) {
+                ("GET", "/") | ("GET", "/index.html") => typed(tiny_http::Response::from_string(INDEX), "text/html; charset=utf-8").boxed(),
+                ("GET", "/api/state") => json_resp(state_json(&mut lock(&session))).boxed(),
                 ("GET", "/api/schemas") => json_resp(json!(pt_graph::all_schemas().iter().map(|s| s.to_json()).collect::<Vec<_>>())).boxed(),
                 ("GET", "/api/geo") => {
                     let n = q.get("n").and_then(|v| v.parse().ok()).unwrap_or(100usize).min(2000);
-                    json_resp(geo_json(&mut session.lock().unwrap(), q.get("node").map(String::as_str).unwrap_or(""), n)).boxed()
+                    json_resp(geo_json(&mut lock(&session), q.get("node").map(String::as_str).unwrap_or(""), n)).boxed()
                 }
-                ("GET", "/api/render") => match render_png(&mut session.lock().unwrap(), &q) {
-                    Ok(png) => tiny_http::Response::from_data(png).with_header("Content-Type: image/png".parse::<tiny_http::Header>().unwrap()).boxed(),
+                ("GET", "/api/render") => match render_png(&mut lock(&session), &q) {
+                    Ok(png) => typed(tiny_http::Response::from_data(png), "image/png").boxed(),
                     Err(e) => json_resp(json!({"error": e})).with_status_code(400).boxed(),
                 },
                 ("POST", "/api/call") => {
@@ -164,13 +174,15 @@ pub fn serve_ui(session: Arc<Mutex<Session>>, addr: &str) -> Result<std::thread:
                     match serde_json::from_str::<Value>(&body) {
                         Ok(v) => {
                             let name = v["name"].as_str().unwrap_or("").to_string();
-                            json_resp(call_json(&mut session.lock().unwrap(), &name, &v["arguments"])).boxed()
+                            json_resp(call_json(&mut lock(&session), &name, &v["arguments"])).boxed()
                         }
                         Err(e) => json_resp(json!({"ok": false, "error": format!("bad JSON: {e}")})).with_status_code(400).boxed(),
                     }
                 }
                 _ => tiny_http::Response::from_string("not found").with_status_code(404).boxed(),
-            };
+                }
+            }));
+            let resp = answered.unwrap_or_else(|p| json_resp(json!({"ok": false, "error": format!("internal error: {}", crate::mcp::panic_message(p.as_ref()))})).with_status_code(500).boxed());
             let _ = req.respond(resp);
         }
     }))
@@ -193,20 +205,20 @@ mod tests {
     fn ui_and_agent_share_one_session() {
         let session = Arc::new(Mutex::new(Session::new()));
         {
-            let mut s = session.lock().unwrap();
+            let mut s = lock(&session);
             let r = call_json(&mut s, "run_hcs", &json!({"code": "g = grid(size=[4,4])\nout(g)\n"}));
             assert_eq!(r["ok"], true);
         }
-        let st1 = state_json(&mut session.lock().unwrap());
+        let st1 = state_json(&mut lock(&session));
         // The "agent" changes something; the UI sees a new revision.
-        call_json(&mut session.lock().unwrap(), "set_param", &json!({"node": "g", "name": "rows", "value": 3}));
-        let st2 = state_json(&mut session.lock().unwrap());
+        call_json(&mut lock(&session), "set_param", &json!({"node": "g", "name": "rows", "value": 3}));
+        let st2 = state_json(&mut lock(&session));
         assert_ne!(st1["rev"], st2["rev"]);
         assert_eq!(st2["nodes"]["g"]["params"]["rows"], json!(3));
-        let geo = geo_json(&mut session.lock().unwrap(), "g", 5);
+        let geo = geo_json(&mut lock(&session), "g", 5);
         assert_eq!(geo["rows"].as_array().unwrap().len(), 5);
         let mut q = std::collections::HashMap::new();
         q.insert("node".to_string(), "g".to_string());
-        assert!(render_png(&mut session.lock().unwrap(), &q).unwrap().starts_with(&[0x89, b'P', b'N', b'G']));
+        assert!(render_png(&mut lock(&session), &q).unwrap().starts_with(&[0x89, b'P', b'N', b'G']));
     }
 }

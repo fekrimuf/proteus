@@ -11,3 +11,6 @@ serde_json.workspace = true
 blake3.workspace = true
 pt-vex.workspace = true
 rayon.workspace = true
+
+[lints]
+workspace = true

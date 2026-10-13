@@ -17,6 +17,38 @@ pub struct RecipeResult {
     pub png: Option<PathBuf>,
 }
 
+pub const RUN_ALL: crate::registry::Command = crate::registry::Command {
+    name: "recipes",
+    tool: "recipes",
+    summary: "Build every recipe in recipes/, check its specs and its static flow check, and compare each content hash with recipes/golden.json. Exit 1 when any recipe fails. After an intended numeric change, --update re-records the hashes (then also run `pt gym-baseline`).",
+    heavy: false,
+    params: &[crate::registry::Param::flag("update", crate::registry::Kind::Bool, "re-record recipes/golden.json from this run")],
+    run: recipes_cmd,
+};
+
+/// `pt recipes [--update]`
+pub fn recipes_cmd(args: &[String]) -> Result<(), String> {
+    let update = args.iter().any(|a| a == "--update");
+    let results = run_all(update, Some(Path::new("out/recipes")))?;
+    let mut failed = 0;
+    println!("{:<26} {:>7} {:>9} {:>7} {:>9}  {}", "recipe", "specs", "points", "inst", "ms", "hash");
+    for r in &results {
+        println!("{:<26} {:>3}/{:<3} {:>9} {:>7} {:>9.1}  {}", r.name, r.specs_ok, r.specs_total, r.points, r.instances, r.ms, if r.hash.is_empty() { "-" } else { &r.hash[..16] });
+        for f in &r.failures {
+            println!("    FAIL {f}");
+        }
+        if !r.failures.is_empty() {
+            failed += 1;
+        }
+    }
+    println!("{} recipes, {} failed{}", results.len(), failed, if update { " (golden updated)" } else { "" });
+    if failed > 0 {
+        Err(format!("{failed} recipe(s) failed"))
+    } else {
+        Ok(())
+    }
+}
+
 pub fn recipes_dir() -> PathBuf {
     // Works from the workspace root and from `cargo test` (crate dir).
     for c in ["recipes", "../../recipes"] {
@@ -35,7 +67,7 @@ pub fn list() -> Vec<PathBuf> {
 }
 
 pub fn run_one(path: &Path, render_to: Option<&Path>) -> RecipeResult {
-    let name = path.file_stem().unwrap().to_string_lossy().to_string();
+    let name = path.file_stem().map_or_else(String::new, |s| s.to_string_lossy().to_string());
     let mut r = RecipeResult { name, hash: String::new(), specs_ok: 0, specs_total: 0, failures: vec![], ms: 0.0, points: 0, instances: 0, png: None };
     let code = match std::fs::read_to_string(path) {
         Ok(c) => c,
@@ -106,7 +138,7 @@ pub fn run_all(update: bool, render_to: Option<&Path>) -> Result<Vec<RecipeResul
     let mut results: Vec<RecipeResult> = list().iter().map(|p| run_one(p, render_to)).collect();
     if update {
         let m: serde_json::Map<String, Value> = results.iter().filter(|r| r.failures.is_empty()).map(|r| (r.name.clone(), json!(r.hash))).collect();
-        std::fs::write(&golden_path, serde_json::to_string_pretty(&Value::Object(m)).unwrap()).map_err(|e| e.to_string())?;
+        std::fs::write(&golden_path, serde_json::to_string_pretty(&Value::Object(m)).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     } else if golden.as_object().is_some_and(|m| !m.is_empty()) {
         for r in results.iter_mut() {
             match golden.get(&r.name).and_then(Value::as_str) {

@@ -246,9 +246,10 @@ fn resample(src: &Geometry, p: &Params) -> Res {
     }
     let mut cum = vec![0.0f32];
     for w in pts.windows(2) {
-        cum.push(cum.last().unwrap() + dist(w[0], w[1]));
+        let so_far = cum.last().copied().unwrap_or(0.0);
+        cum.push(so_far + dist(w[0], w[1]));
     }
-    let total = *cum.last().unwrap();
+    let total = cum.last().copied().unwrap_or(0.0);
     let steps = if closed { n } else { n - 1 };
     let mut out = Vec::with_capacity(n);
     let mut seg = 0;
@@ -357,7 +358,7 @@ fn revolve(src: &Geometry, p: &Params) -> Res {
             let i1 = if full { (i + 1) % div } else { i + 1 };
             let mut quad = vec![idx[j][i], idx[j + 1][i], idx[j + 1][i1], idx[j][i1]];
             quad.dedup();
-            if quad.len() > 1 && quad[0] == *quad.last().unwrap() {
+            if quad.len() > 1 && quad.first() == quad.last() {
                 quad.pop();
             }
             if quad.len() >= 3 {

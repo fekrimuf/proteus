@@ -118,7 +118,7 @@ impl Objective {
             }
             Objective::Size { target } => {
                 let (lo, hi) = geo.bounds().ok_or("result is empty")?;
-                (0..3).map(|a| (((hi[a] - lo[a]) - target[a]) / target[a].max(1e-6)).powi(2) as f64).sum::<f64>() / 3.0
+                (0..3).map(|a| math::sq(((hi[a] - lo[a]) - target[a]) / target[a].max(1e-6)) as f64).sum::<f64>() / 3.0
             }
             Objective::Silhouette { masks, bounds, res } => {
                 let real = geo.realize();
