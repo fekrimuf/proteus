@@ -218,6 +218,41 @@ MCP:   pick(node, scene, camera, x, y, radius?, frame_size?)
   renders are half size. A camera must be a standing one (`eye` in the scene file). Hits use the geometry of the cooked world, so an
   alpha-cut leaf card counts as a hit where its texture is clear.
 
+## Looking at a world from every side (`survey`, `walk`)
+
+Do not render to find flaws. An offline frame costs half a minute to ten minutes and shows one side; the game engine loads the same
+world once and draws it at a hundred frames a second (DECISIONS B22). Survey first, render when the survey is clean.
+
+```
+pt survey scenes/cascade.hcs scenes/cascade.scene.json [--at X,Z --radius M] [--stations N] [--closeups N] [--passes lit,flags,kinds]
+MCP:   survey(recipe, scene, out?, at?, radius?, stations?, closeups?, passes?, size?, lookdev?, plan_only?)
+```
+
+* **What it takes, in one engine launch:** a walk (standing points spread over the area the scene's cameras look at, four views
+  each), the area from above (four sides and a plan), the scene's own cameras, and a close-up pair of every object the ground check
+  flags (floating, hanging, mostly under water): one low view that shows the air under it and one higher from another side, each from
+  the clearest of twelve directions, at most three objects of one class.
+* **What you open:** the contact sheets in the output folder (default `out/survey/<recipe>/`), twelve labelled views each:
+  `sheet_walk_N.png`, `sheet_overview_N.png` (above and cameras), `sheet_flaws_N.png` (close-ups, target boxed in the defect's
+  colour). The report (also `survey.json`) lists every sheet's cells and what each close-up shows. Open a single picture
+  (`lit_<view>.png`, 1280 x 720) when a cell shows something.
+* **Passes:** `lit` is the world as the engine draws it. `flags` paints every flagged object in its colour over the same view (red
+  floats, orange hangs, yellow is mostly under water, magenta is buried), so you see which defects a visitor can see and from where.
+  `kinds` (on request) gives every kind of object one colour of its own: what belongs to what, where one kind repeats.
+* **Asking about a pixel:** `survey.scene.json` holds every view as a camera, so
+  `pt pick <recipe> out/survey/<recipe>/survey.scene.json <view> X Y --size 1280x720` names the object, its stable id and the node
+  that placed it. Fix the class (the rule), record single decisions with `pt edit`.
+* **What it is for:** placement, shape, scale, gaps, repeats. The engine's light is plain, its ground shows the layers' flat colours
+  and its meshes are the engine's reduced levels (kept three times further out than in a game, without the far shells): judge light, air and surfaces in a render (`pt render-scene`).
+* **Cost on the creek world:** 67 seconds for 90 pictures of a changed world (cook 35 s, engine 16 s); the engine file is kept while
+  the world is the same. `--plan-only` plans the views without the engine.
+
+`pt walk <recipe> <scene>` opens the same world in a window for the owner to walk or fly through: the only safe way to open a world
+by hand (low priority, the memory cap, a time limit on the load; never open a full world in Blender by hand). Controls are on screen
+(H). A left click notes "this looks wrong", X notes "remove this"; when the window closes each note is named like a pick (object,
+`pid`, placing node, ground-check verdict) in `out/walk/<recipe>/notes.json` with the picture taken at the click. Read the notes, fix
+the class, and record a single decision with `pt edit`. `--check` proves the walk works with nobody at the keyboard.
+
 ## Technique notes
 
 * **Scale**: model in real meters (door 2.0, person 1.8, stair rise 0.18). Add a `height` spec.

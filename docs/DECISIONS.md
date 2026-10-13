@@ -1,6 +1,6 @@
 # Decisions (design choices that stay fixed until new evidence changes them)
 
-Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20, B21) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
+Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20, B21, B22) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
 
 ## B11. Decisions already made (do not re-litigate without new evidence)
 
@@ -213,3 +213,17 @@ Not built and not scheduled: ROUTE.md row 14. The decision is recorded now so th
 4. **Refused, with the reason recorded:** AI-generated images; low-budget game screenshots and asset-flip art (a source that is not on the quality list); low resolution (long side under 1920 pixels); watermarked previews; pictures with no human creator or source page. The system never builds a world from a refused reference.
 5. **How AI-made images are caught** (Openverse gives no flag): the content-credentials marker where a file carries one, tags and titles such as "ai generated", "midjourney", "stable diffusion" and "dall-e", a block list of sources that publish mostly AI output, a missing human creator, and the agent's own look at the picture before it is accepted (CLAUDE.md rule 7).
 6. **Where quality comes from:** for natural scenes the Commons "Featured pictures" and "Quality images" categories and Openverse's large-photograph filter; there is no free interface for AAA game art, so those references come from the owner, or from official press pages the agent finds by search and adds by direct image address through the same gate.
+
+## B22. The game engine finds the flaws; the offline render makes the frames the owner judges (approach change, 2026-10-13)
+
+**Evidence.** Looking was the slow step. One offline frame of the creek world costs 31 seconds at draft quality and about ten minutes at the owner's quality, it shows one side of the world, and every attempt to make it faster made it worse; the owner found floating firs and rigid dressing that a one-angle review had passed. Measured on the same world in the game engine (Godot, 2026-10-13): the world is up in 10 seconds, the engine peaks at 3.5 GB of memory under the 8 GB cap and draws 125 frames a second, and one launch loaded the world and wrote 123 pictures in 17 seconds. A whole survey of a changed world (cook, engine file, 90 pictures, contact sheets) took 67 seconds, 35 of them the cook. Blender opened by hand on the full world froze the owner's PC for about an hour, because nothing limits it there.
+
+**Course change.**
+1. **Two jobs, two tools.** Flaws of placement, shape, scale, gaps and repeats are found in the engine, from many sides (`pt survey`). Light, air and surfaces are judged in offline frames, and only those go to the owner for the side-by-side look (B17 stays: the owner's eye is the gate).
+2. **Survey first.** A world is surveyed before any offline frame of it is rendered and again after every change to placement. A world whose survey shows a floating or hanging object is fixed before a frame of it is rendered.
+3. **Flaws choose the cameras.** Every object the ground check flags gets a close-up pair from the two sides with the clearest sight, at most three of one class, because the fix goes to the class (the rule), not the object.
+4. **The owner opens a world with `pt walk` and nothing else.** It runs under the protections of B19 item 5 and B20 (low priority, the memory cap, stopped with `pt`) and a time limit on the load. Blender is never opened by hand on a full world.
+5. **Every engine launch has a time limit** (`PT_GODOT_SECONDS`, default 600): a stalled import is stopped with the engine it started and reported as such.
+6. **One camera everywhere.** A survey view, `pt pick`, the boxes drawn on pictures and the engine put the same point on the same pixel (a test through the agent tools holds them together), so any pixel of any survey picture can be asked what it is.
+
+**What it replaces.** The "live render session" half of ROUTE.md row 1 (send Blender only what moved) is dropped: its purpose was fast looks, and the engine gives them. Row 1 keeps "the full-detail world fits this machine" for the owner's frames. The engine timeout of row 9 is done.
