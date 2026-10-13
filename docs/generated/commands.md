@@ -6,6 +6,7 @@ Every command below is on the command line and, under the tool name, in the agen
 
 | Command | Tool | Heavy | What it does |
 |---|---|---|---|
+| `certificate` | `certificate` |  | Write the clean-title certificate of a world: every asset file and elevation tile its recipe uses, with source, licence and hash from corpus/LEDGER.csv, and a line stating that everything else is made by the recipe's rules. Works from the recipe text and the ledger alone (no asset files, GPU or Blender). Fails with exit code 1, naming them, when an asset is missing from the ledger. |
 | `docs-check` | `docs_check` |  | Check the documentation: size budgets, broken links, banned headings, mangled Windows paths, the STATUS date, the index, and that the generated state and command table are current. Exit 1 on any problem. |
 | `edit` | `edit` |  | Record the owner's decision about one placed object in an edits file, by its stable id (from `pick`): remove it, move it by (dx dy dz) or to a place (with `to`), scale it, or add a new one. The decision is replayed on every rebuild of the world. |
 | `gate` | `gate` | yes | The checks every commit must pass, in order: build, lint (the platform-independent maths rule and the ban on crash-prone shortcuts, enforced by clippy on all production code), the documentation harness, and the tests. Stops at the first failing step and names it. Takes minutes: it builds and tests the workspace. |
@@ -20,6 +21,14 @@ Every command below is on the command line and, under the tool name, in the agen
 | `world` | `world` |  | Work on one variant of a layered world (worlds/*.world.json): info lists the layers and variants, scene writes the expanded scene file, check runs ground-check, pick runs pick, render runs render-scene (HEAVY: it takes the machine like render-scene). |
 
 ## Usage
+
+### certificate
+
+`pt certificate <recipe> --out OUT [--ledger LEDGER]`
+
+* `recipe` (required): the world's recipe .hcs file
+* `--out` (required): the Markdown file to write
+* `--ledger`: the licence ledger (default corpus/LEDGER.csv of this repository)
 
 ### docs-check
 

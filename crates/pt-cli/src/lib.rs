@@ -1,5 +1,6 @@
 //! Proteus CLI library: the MCP server and the recipe runner (also used by integration tests).
 pub mod blender;
+pub mod certificate;
 pub mod corpus;
 pub mod critique;
 pub mod critique_bench;

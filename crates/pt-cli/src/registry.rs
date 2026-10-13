@@ -92,6 +92,7 @@ pub struct Command {
 
 /// Every registered command. One line per command; keep it in alphabetical order of the command-line name.
 pub const ALL: &[&Command] = &[
+    &crate::certificate::CERTIFICATE,
     &crate::docs::DOCS_CHECK,
     &crate::edits::EDIT,
     &crate::gate::GATE,

@@ -463,3 +463,33 @@ fn a_walk_through_opens_notes_what_is_pointed_at_and_names_it() {
     assert!(Path::new(notes[0]["shot"].as_str().unwrap()).exists(), "the picture taken at the click");
     assert!(out.join("notes.json").exists());
 }
+
+/// The clean-title certificate through the agent tools: a world whose assets are in the ledger gets its report; one with an asset
+/// the ledger lacks is an error that names the asset, and no report is written.
+#[test]
+fn certificate_tool_writes_the_report_and_refuses_an_unledgered_asset() {
+    setup();
+    let dir = scratch("certificate");
+    let recipe = dir.join("world.hcs");
+    std::fs::write(&recipe, "rock = import_asset(path=\"polyhaven/models/rock_09/rock_09_1k.gltf\")\nout(rock)\n").unwrap();
+    let header = "id,source,url,license,license_url,sha256,fetched_at,attribution\n";
+    let row = "polyhaven/models/rock_09/rock_09_1k.gltf,polyhaven,https://example.org/rock,CC0-1.0,https://creativecommons.org/publicdomain/zero/1.0/,deadbeef,2026-10-10T00:00:00Z,\n";
+    let (good, bad) = (dir.join("good.csv"), dir.join("bad.csv"));
+    std::fs::write(&good, format!("{header}{row}")).unwrap();
+    std::fs::write(&bad, header).unwrap();
+    let mut s = Session::new();
+    let listed = handle(&mut s, &json!({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})).unwrap();
+    assert!(listed["result"]["tools"].as_array().unwrap().iter().any(|t| t["name"] == "certificate"), "certificate is not an agent tool");
+
+    let out = dir.join("cert.md");
+    let (err, v) = tool(&mut s, "certificate", json!({"recipe": recipe, "out": out, "ledger": good}));
+    assert!(!err, "{v}");
+    let text = std::fs::read_to_string(&out).unwrap();
+    assert!(text.contains("rock_09_1k.gltf") && text.contains("deadbeef") && text.contains("CC0-1.0"), "{text}");
+
+    let out2 = dir.join("cert2.md");
+    let (err, v) = tool(&mut s, "certificate", json!({"recipe": recipe, "out": out2, "ledger": bad}));
+    assert!(err, "a missing asset must fail");
+    assert!(v.to_string().contains("polyhaven/models/rock_09/rock_09_1k.gltf") && v.to_string().contains("\"exit_code\":1"), "{v}");
+    assert!(!out2.exists(), "a failed certificate left a file");
+}
