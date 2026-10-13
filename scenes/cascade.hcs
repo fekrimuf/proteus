@@ -338,23 +338,42 @@ h_cobble_pts = edited(h_cobble_pts, "hero_cobbles")
 h_rock_pts = edited(h_rock_pts, "hero_rocks")
 h_log_pts = edited(h_log_pts, "hero_logs")
 
-tall = three(tall_pts, fir_a, young_a, pine_a, 51)
-young = three(young_pts, fir_b, young_b, pine_b, 52)
-pines = three(pine_pts, fir_c, young_c, pine_c, 53)
-bushes = three(bush_pts, bush_a, bush_b, bush_c, 54)
-seedlings = three(seedling_pts, seedling_a, seedling_b, seedling_c, 55)
-ferns = three(fern_pts, fern_a, fern_b, fern_c, 56)
-meadow = copy_variants(meadow_pts, tile_a, tile_b, tile_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, orient_to_normal=1, seed=57)
-flowers = three(flower_pts, flower_a, flower_b, dandelion, 58)
-rocks = three(rock_pts, rock_a, rock_b, rock_c, 59)
-shore_rocks = three(shore_rock_pts, rock_d, rock_e, rock_f, 60)
-deadwood = three(deadwood_pts, log_a, stump_a, stump_b, 61)
-h_tiles = copy_variants(h_tile_pts, tile_a, tile_b, tile_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, orient_to_normal=1, seed=62)
-h_ferns = three(h_fern_pts, fern_a, fern_b, fern_c, 63)
-h_weeds = three(h_weed_pts, weed_a, nettle_a, shrub, 64)
-h_cobbles = three(h_cobble_pts, cobble_a, cobble_b, cobble_c, 65)
-h_rocks = three(h_rock_pts, rock_d, rock_e, rock_a, 66)
-h_logs = three(h_log_pts, log_b, branches, roots, 67)
+# Seating: the points above place an object by a radius someone typed; `seat` then places it by its REAL shape, per variant, and it
+# is the same measure `pt ground-check` fails a world on. A tree goes down until the whole rim of its root plate is in the soil (on
+# a slope the downhill rim of a fir's 1.4 m plate hung 25 cm in the air). A log comes down until its body lies on the ground (the
+# scanned trunk stands half a metre up on a branch stub) and, in the creek, lies in the water line where the water is deep enough
+# for it and on the bed where it is not. A grass tile or a rock whose base would hang over a bank's edge is not placed there.
+# The ground to stand on is the near level and the level around it: a tree at the near level's edge has part of its base over the next.
+footing = merge(land_near, land_mid)
+def rooted(instances):
+    return seat(instances, footing, limit=0.5, bury=0.2)
+
+def seated(instances):
+    return seat(instances, footing, limit=0.5)
+
+def turfed(instances):
+    return seat(instances, footing, limit=0.25)
+
+def afloat(instances):
+    return seat(instances, footing, water, limit=0.5, draft=0.55)
+
+tall = rooted(three(tall_pts, fir_a, young_a, pine_a, 51))
+young = rooted(three(young_pts, fir_b, young_b, pine_b, 52))
+pines = rooted(three(pine_pts, fir_c, young_c, pine_c, 53))
+bushes = seated(three(bush_pts, bush_a, bush_b, bush_c, 54))
+seedlings = seated(three(seedling_pts, seedling_a, seedling_b, seedling_c, 55))
+ferns = seated(three(fern_pts, fern_a, fern_b, fern_c, 56))
+meadow = turfed(copy_variants(meadow_pts, tile_a, tile_b, tile_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, orient_to_normal=1, seed=57))
+flowers = seated(three(flower_pts, flower_a, flower_b, dandelion, 58))
+rocks = seated(three(rock_pts, rock_a, rock_b, rock_c, 59))
+shore_rocks = seated(three(shore_rock_pts, rock_d, rock_e, rock_f, 60))
+deadwood = afloat(three(deadwood_pts, log_a, stump_a, stump_b, 61))
+h_tiles = turfed(copy_variants(h_tile_pts, tile_a, tile_b, tile_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, orient_to_normal=1, seed=62))
+h_ferns = seated(three(h_fern_pts, fern_a, fern_b, fern_c, 63))
+h_weeds = seated(three(h_weed_pts, weed_a, nettle_a, shrub, 64))
+h_cobbles = seated(three(h_cobble_pts, cobble_a, cobble_b, cobble_c, 65))
+h_rocks = seated(three(h_rock_pts, rock_d, rock_e, rock_a, 66))
+h_logs = afloat(three(h_log_pts, log_b, branches, roots, 67))
 
 # ---- the forest beyond the near level: low conifer shapes on the mid level out to 3.4 km. At that distance a tree is a dark spike
 # with a lit and a shaded side; twenty triangles each instead of two million. The hint keeps them visible for kilometres in an
