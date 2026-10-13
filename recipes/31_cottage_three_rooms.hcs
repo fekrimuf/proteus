@@ -1,0 +1,22 @@
+# A three-room cottage with a stone chimney and its front door standing open.
+# Technique: two partitions across the depth (`cuts_z=[0.4, 0.7]`) make a hall at the front, a kitchen and a bedroom behind it; the inner
+# doors chain the rooms (hall to kitchen to bedroom), and the chimney stack stands on the back gable wall. `open` swings the entrance
+# leaf into the room by that many degrees. The rooms and the openings are also built as geometry of their own (floor rectangles, and one
+# line per door or window pointing the way a person walks through it) so a later stage can furnish the rooms and aim a camera at a door.
+house = building(width=6.2, depth=5.6, height=2.5, wall=0.3, partition=0.12, floor_y=0.4, footing=1.6, cuts_z=[0.4, 0.7],
+    door=[0, 0.3, 1.0, 1.95],
+    inner_doors=[[0, 1, 0.3, 0.9, 2.0], [1, 2, 0.7, 0.9, 2.0]],
+    windows=[[0, 0.75, 0.8, 0.7, 1.0], [1, 0.2, 0.8, 0.8, 1.0], [3, 0.85, 0.8, 0.8, 1.0], [2, 0.7, 0.8, 0.8, 1.0]],
+    chimney=[2, 0.25, 0.9, 0.5, 0.8], pitch=48.0, overhang=0.7, open=70.0)
+rooms = building(width=6.2, depth=5.6, height=2.5, wall=0.3, partition=0.12, floor_y=0.4, cuts_z=[0.4, 0.7],
+    door=[0, 0.3, 1.0, 1.95],
+    inner_doors=[[0, 1, 0.3, 0.9, 2.0], [1, 2, 0.7, 0.9, 2.0]],
+    windows=[[0, 0.75, 0.8, 0.7, 1.0], [1, 0.2, 0.8, 0.8, 1.0], [3, 0.85, 0.8, 0.8, 1.0], [2, 0.7, 0.8, 0.8, 1.0]],
+    mode="rooms")
+
+spec(house, "width", min=6.5, max=8.5)
+spec(house, "height", min=5.5, max=9.0)
+spec(house, "finite")
+spec(house, "attribute", name="part")
+spec(rooms, "finite")
+out(house)

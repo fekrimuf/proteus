@@ -463,3 +463,48 @@ fn a_walk_through_opens_notes_what_is_pointed_at_and_names_it() {
     assert!(Path::new(notes[0]["shot"].as_str().unwrap()).exists(), "the picture taken at the click");
     assert!(out.join("notes.json").exists());
 }
+
+/// A two-room cottage built through the tools, and its rooms and openings read back: the way a later stage (furnishing, a camera at a
+/// door) learns where the doors and windows are. A plan with a room nobody can walk to is refused with the reason.
+#[test]
+fn a_cottage_built_from_a_plan_gives_back_its_rooms_and_openings() {
+    setup();
+    let plan = |inner: &str| {
+        format!(
+            r#"house = building(width=6.2, depth=4.6, height=2.5, cuts_z=[0.55], door=[0, 0.32, 1.0, 1.95], inner_doors={inner}, windows=[[0, 0.74, 0.8, 0.7, 1.0], [3, 0.22, 0.8, 0.8, 1.0], [2, 0.5, 0.8, 0.8, 1.0]])
+doors = building(width=6.2, depth=4.6, height=2.5, cuts_z=[0.55], door=[0, 0.32, 1.0, 1.95], inner_doors={inner}, windows=[[0, 0.74, 0.8, 0.7, 1.0], [3, 0.22, 0.8, 0.8, 1.0], [2, 0.5, 0.8, 0.8, 1.0]], mode="openings")
+out(house)
+out(doors)
+"#
+        )
+    };
+    let mut s = Session::new();
+    let (err, v) = tool(&mut s, "run_hcs", json!({"code": plan("[[0, 1, 0.5, 0.9, 2.0]]")}));
+    assert!(!err && v["ok"] == true, "{v}");
+    let (shell, lines) = (v["outputs"][0]["node"].as_str().unwrap().to_string(), v["outputs"][1]["node"].as_str().unwrap().to_string());
+    let (err, st) = tool(&mut s, "cook", json!({"node": shell}));
+    assert!(!err, "{st}");
+    let info = &st["detail"]["building"];
+    let rooms = info["rooms"].as_array().unwrap();
+    assert_eq!(rooms.len(), 2, "{info}");
+    let (front, back) = (&rooms[0], &rooms[1]);
+    assert!(front["center"][2].as_f64().unwrap() > back["center"][2].as_f64().unwrap(), "room 0 is the front room (+Z)");
+    assert!(front["size"][0].as_f64().unwrap() > 5.0, "{front}");
+    let opens = info["openings"].as_array().unwrap();
+    assert_eq!(opens.iter().filter(|o| o["kind"] == "window").count(), 3);
+    let entrance = &opens[0];
+    assert_eq!((entrance["kind"].as_str(), entrance["room_from"].as_i64(), entrance["room_to"].as_i64()), (Some("entrance"), Some(0), Some(-1)));
+    assert!(entrance["dir"][2].as_f64().unwrap() > 0.99, "the front door faces +Z: {entrance}");
+    let inner = opens.iter().find(|o| o["kind"] == "inner_door").unwrap();
+    assert!(inner["width"].as_f64().unwrap() >= 0.8 && inner["height"].as_f64().unwrap() >= 1.9, "{inner}");
+    assert_eq!(st["primitive_attributes"]["room"]["max"][0].as_f64(), Some(1.0), "{}", st["primitive_attributes"]);
+    assert!(st["primitive_groups"]["mat:hut_roof"].as_u64().unwrap() > 0 && st["primitive_groups"]["mat:hut_door"].as_u64().unwrap() > 0, "{}", st["primitive_groups"]);
+    let (err, ln) = tool(&mut s, "cook", json!({"node": lines}));
+    assert!(!err, "{ln}");
+    assert_eq!(ln["primitives"], 5, "an entrance, an inner door and three windows: {ln}");
+    // a plan with a room that has no door is refused, with the reason, and gives no building
+    let (err, e) = tool(&mut s, "run_hcs", json!({"code": plan("[]")}));
+    assert!(!err && e["ok"] == false, "{e}");
+    let why = e["outputs"][0]["error"].as_str().unwrap();
+    assert!(why.contains("room 1 cannot be reached") && why.contains("inner door"), "{why}");
+}

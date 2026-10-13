@@ -1,0 +1,22 @@
+# A two-room cottage built from a floor plan, the size of the creek hut (6.2 m by 4.6 m, walls 2.5 m).
+# Technique: `building` makes the shell inside out. The plan is a rectangle split by one partition (`cuts_z`) into a front room and a
+# back room; the entrance, the door between the rooms and every window are rows of numbers, and each opening is cut through a wall of
+# real thickness (jambs, head and sill are real faces, nothing is boolean-cut). Each window lies inside one room, and the plan is refused
+# if a room cannot be walked to. The shell carries `room`, `part` and `opening` on its faces; `mode="openings"` and `mode="rooms"` give
+# the doors, windows and floor rectangles as lines and polygons that follow any transform of the house (see WORLD_GUIDE "A house from a plan").
+# `hut(w, d, h)` has the call shape of the one-box hut in scenes/cascade.hcs and uses its material names, so it can be swapped in there.
+def hut(w, d, h):
+    return building(width=w, depth=d, height=h, wall=0.3, floor_y=0.4, footing=1.6, cuts_z=[0.55],
+        door=[0, 0.32, 1.0, 1.95],
+        inner_doors=[[0, 1, 0.5, 0.9, 2.0]],
+        windows=[[0, 0.74, 0.8, 0.7, 1.0], [1, 0.22, 0.8, 0.8, 1.0], [3, 0.22, 0.8, 0.8, 1.0], [3, 0.82, 0.8, 0.8, 1.0], [2, 0.5, 0.8, 0.8, 1.0]],
+        pitch=48.0, overhang=0.7, roof_thickness=0.22, open=0.0)
+
+cottage = hut(6.2, 4.6, 2.5)
+
+spec(cottage, "width", min=6.5, max=8.5)
+spec(cottage, "depth", min=5.0, max=6.5)
+spec(cottage, "height", min=5.5, max=9.0)
+spec(cottage, "finite")
+spec(cottage, "attribute", name="room")
+out(cottage)
