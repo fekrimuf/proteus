@@ -1,6 +1,6 @@
 # Decisions (design choices that stay fixed until new evidence changes them)
 
-Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20, B21, B22) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
+Section numbers (B11, B15, B15a, B16, B16a, B17, B18, B19, B20, B21, B22, B23) are kept from the plan so references in code comments and the log still resolve. The plan: [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md). Dated results: [LOG.md](LOG.md).
 
 ## B11. Decisions already made (do not re-litigate without new evidence)
 
@@ -227,3 +227,16 @@ Not built and not scheduled: ROUTE.md row 14. The decision is recorded now so th
 6. **One camera everywhere.** A survey view, `pt pick`, the boxes drawn on pictures and the engine put the same point on the same pixel (a test through the agent tools holds them together), so any pixel of any survey picture can be asked what it is.
 
 **What it replaces.** The "live render session" half of ROUTE.md row 1 (send Blender only what moved) is dropped: its purpose was fast looks, and the engine gives them. Row 1 keeps "the full-detail world fits this machine" for the owner's frames. The engine timeout of row 9 is done.
+
+## B23. Private until strong progress; competitors are studied from public material only (decision, 2026-10-13)
+
+**Evidence.** The owner asked whether to add REA ("Reverse Engineer Anything", a tool server that lets an agent take other programs apart) to the project. It makes no part of a world, and it works against the clean-room record of PLAN D1: most commercial licences forbid decompiling, the legal exception covers making software work together and not building a competing product, and code written after reading a rival's decompiled program can be claimed as derived from it. A survey of rival products from their public pages, talks and papers the same day gave the features worth taking, and a study of public deals and prices gave the money estimate; both are in [MARKET.md](MARKET.md) with their sources.
+
+**Decisions.**
+1. **Proteus stays private until the owner says otherwise** (owner, 2026-10-13: not before strong progress). No public demo, post, release or open-sourcing is proposed as a near step. Feedback from outside is sought privately only, and only when the owner chooses.
+2. **No decompiler is pointed at a rival's product, and REA is not added.** Rivals are studied from public material: feature pages, release notes, talks, papers and open-source code. B11 stays: Houdini is never run, opened or studied; public business figures about its maker are market evidence, not a study of the program.
+3. **B21 is confirmed for invented styles too:** an AI-made picture is never a reference, even where no photograph of the style exists. Invented styles come from blending and mutating styles (ROUTE.md row 6). The reason is the clean-title certificate (row 15): one picture of unknown origin in the chain weakens it.
+4. **Open, and the owner's, after strong progress:** the business goal (sell the company, raise investment or run for revenue) and which parts are free. The lead's recommendation, not a decision: a free kernel, with the director, the style tools and the certificate paid, and worlds on demand as the first revenue.
+5. **The route took what the survey showed** (ROUTE.md, 2026-10-13): the mill before the materials and built from the inside out (row 5), the engine look as its own row (2a), interiors (5a), three memory cuts (row 1), the shadow lift (row 2), vines (row 3), worn ground at buildings (row 4), the three-pass layout (row 7), meandering rivers (row 10) and six value features (rows 15 to 20).
+
+**The owner's judgement of the frames (2026-10-13).** The owner finds the nature and light of the hut frames high quality, near a top open-world game in a still. The claim the project makes from that is the narrow one: our best still frames of nature reach that level at a small fraction of the cost. Four things stand between it and "a world of that quality", each with its row: the picture at game speed (2a), every angle (`pt survey`, row 7), scale (rows 10 and 12), and a finished world with buildings and rooms (rows 5 and 5a).
