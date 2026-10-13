@@ -142,18 +142,27 @@ rock_pts_1 = keep(spots(8000, 5.0, 25, 0.7, 1.7), "tr1", "@w_ground_gravel > 0.2
 rock_pts_2 = keep(spots(8000, 5.0, 31, 0.7, 1.7), "tr2", "@w_ground_gravel > 0.25 || (@w_ground_rock > 0.1 && @slope_deg < 44.0 && @w_ground_snow < 0.3)")
 deadwood_pts = keep(spots(2800, 14.0, 26, 0.8, 1.2), "td", "@w_ground_forest > 0.5 && @slope_deg < 20.0" + DRY)
 
-broadleaf = copy_variants(broadleaf_pts, jacaranda, jacaranda, jacaranda, weights=[1.0, 0.0, 0.0], rot_y_random=360.0, seed=31)
-conifer = copy_variants(conifer_pts, pine_a, pine_b, pine_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=32)
-bushes_1 = copy_variants(bush_pts_1, bush_a, bush_b, bush_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=40)
-bushes_2 = copy_variants(bush_pts_2, bush_d, bush_e, bush_f, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=41)
-ferns = copy_variants(understory_pts, fern_a, fern_b, fern_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=33)
-shrubs = copy_variants(understory_pts, shrub, shrub, shrub, weights=[1.0, 0.0, 0.0], rot_y_random=360.0, seed=34)
-meadow_1 = copy_variants(meadow_pts_1, flower_a, weed_a, nettle_a, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=35)
-meadow_2 = copy_variants(meadow_pts_2, flower_b, weed_b, nettle_b, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=36)
-meadow_3 = copy_variants(meadow_pts_2, flower_c, weed_c, weed_c, weights=[1.0, 1.0, 0.0], rot_y_random=360.0, seed=37)
-rocks_1 = copy_variants(rock_pts_1, rock_a, rock_b, rock_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=38)
-rocks_2 = copy_variants(rock_pts_2, rock_d, rock_e, rock_f, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=39)
-deadwood = copy_variants(deadwood_pts, log, stump, boulder, weights=[1.0, 1.0, 0.0], rot_y_random=360.0, seed=42)
+# Seating by the real shape (docs/WORLD_GUIDE.md): a tree goes down until its whole base, the slab of scanned soil included, is in the
+# ground; lying things follow the ground under their footprint and rest on their body. `pt ground-check` fails on the same measure.
+footing = merge(land_near, land_far)
+def rooted(instances):
+    return seat(instances, footing, limit=0.5, bury=0.2)
+
+def seated(instances):
+    return seat(instances, footing, limit=0.5)
+
+broadleaf = rooted(copy_variants(broadleaf_pts, jacaranda, jacaranda, jacaranda, weights=[1.0, 0.0, 0.0], rot_y_random=360.0, seed=31))
+conifer = rooted(copy_variants(conifer_pts, pine_a, pine_b, pine_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=32))
+bushes_1 = seated(copy_variants(bush_pts_1, bush_a, bush_b, bush_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=40))
+bushes_2 = seated(copy_variants(bush_pts_2, bush_d, bush_e, bush_f, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=41))
+ferns = seated(copy_variants(understory_pts, fern_a, fern_b, fern_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=33))
+shrubs = seated(copy_variants(understory_pts, shrub, shrub, shrub, weights=[1.0, 0.0, 0.0], rot_y_random=360.0, seed=34))
+meadow_1 = seated(copy_variants(meadow_pts_1, flower_a, weed_a, nettle_a, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=35))
+meadow_2 = seated(copy_variants(meadow_pts_2, flower_b, weed_b, nettle_b, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=36))
+meadow_3 = seated(copy_variants(meadow_pts_2, flower_c, weed_c, weed_c, weights=[1.0, 1.0, 0.0], rot_y_random=360.0, seed=37))
+rocks_1 = seated(copy_variants(rock_pts_1, rock_a, rock_b, rock_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=38))
+rocks_2 = seated(copy_variants(rock_pts_2, rock_d, rock_e, rock_f, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, seed=39))
+deadwood = seated(copy_variants(deadwood_pts, log, stump, boulder, weights=[1.0, 1.0, 0.0], rot_y_random=360.0, seed=42))
 
 trees = merge(broadleaf, conifer, bushes_1, bushes_2)
 ground_cover = merge(ferns, shrubs, meadow_1, meadow_2)
