@@ -278,7 +278,7 @@ pub(crate) fn mark(img: &mut pt_render::Image, cx: f32, cy: f32, half: f32, rgb:
     }
 }
 
-fn kind_colour(kind: &str) -> [u8; 3] {
+pub(crate) fn kind_colour(kind: &str) -> [u8; 3] {
     match kind {
         "float" => [255, 0, 0],
         "overhang" => [255, 140, 0],

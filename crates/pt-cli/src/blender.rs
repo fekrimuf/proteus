@@ -462,7 +462,7 @@ pub fn bake_layers(model: &Path, mut scene: Value, geo: &Geometry, work: &Path, 
 }
 
 /// BLAKE3 of a file's content as hex, read in chunks (a world file can be gigabytes).
-fn file_hash(path: &Path) -> Result<String, String> {
+pub(crate) fn file_hash(path: &Path) -> Result<String, String> {
     use std::io::Read;
     let mut f = std::fs::File::open(path).map_err(|e| format!("{}: {e}", path.display()))?;
     let mut h = blake3::Hasher::new();

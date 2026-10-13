@@ -72,7 +72,7 @@ fn the_command_line_and_the_tool_list_come_from_the_same_declaration() {
         let name = c["tool"].as_str().unwrap();
         assert!(tools.contains(&name), "registered command '{}' is missing from the agent's tool list as '{name}'", c["command"]);
     }
-    for must in ["ground_check", "review_tiles", "scorecard", "world", "edit", "render_world", "docs_check", "status", "recipes"] {
+    for must in ["ground_check", "review_tiles", "scorecard", "world", "edit", "render_world", "docs_check", "status", "recipes", "survey", "walk"] {
         assert!(tools.contains(&must), "the agent cannot see '{must}'");
     }
     let mut seen = std::collections::HashSet::new();
@@ -322,4 +322,144 @@ fn hostile_input_gets_answers_and_the_session_keeps_working() {
     }
     let (err, _) = tool(&mut s, "create_node", json!({"kind": "box", "name": "still_alive"}));
     assert!(!err, "the session still works after hostile input");
+}
+
+// ---- the survey and the walk-through: the game engine as the eye that finds flaws ----
+
+#[test]
+fn a_survey_plan_puts_every_kind_of_floating_object_in_front_of_the_eye() {
+    // The class: an object the ground check flags that nobody looks at because no camera happens to face it. The plan must give
+    // it a view of its own, and that view's middle pixel must be the object itself (asked of `pt pick`, not assumed).
+    setup();
+    let dir = scratch("survey_plan");
+    let lifted = "wrangle(drop_to_surface(pts, terrain, footprint=0.5), code=\"@P.y = @P.y + 2.5;\")";
+    let (recipe, scene) = write_world(&dir, &rocks_on_a_hill(lifted, 3), SCENE);
+    let out = dir.join("survey");
+    let mut s = Session::new();
+    let (err, v) = tool(&mut s, "survey", json!({"recipe": recipe, "scene": scene, "out": out.to_string_lossy(), "plan_only": true}));
+    assert!(!err, "{v}");
+    let report = &v["output"];
+    assert!(report["flagged_in_area"]["float"].as_u64().unwrap_or(0) >= 10, "{}", report["flagged_in_area"]);
+    // one prototype with one kind of defect is one class: three examples, two views each
+    assert_eq!(report["views"]["flaw"], 6, "{}", report["views"]);
+    assert_eq!(report["views"]["walk"], 24);
+    let shows = report["closeups"][0]["shows"].as_str().unwrap();
+    assert!(shows.starts_with("float ") && shows.contains("rock_test") && shows.contains("sight clear"), "{shows}");
+    // the same view, asked of pick: the middle of the picture is a floating rock
+    let views = out.join("survey.scene.json");
+    assert!(views.exists() && out.join("plan.json").exists());
+    let picked = Command::new(env!("CARGO_BIN_EXE_pt")).args(["pick", &recipe, &views.to_string_lossy(), "flaw_01a", "640", "360", "--size", "1280x720"]).output().unwrap();
+    let text = String::from_utf8_lossy(&picked.stdout);
+    assert!(picked.status.success() && text.contains("rock_test") && text.contains("ground-check flags: float"), "{text}");
+
+    // the same rocks set down by the placement rule: nothing to look at closely
+    let dir = scratch("survey_plan_seated");
+    let (recipe, scene) = write_world(&dir, &rocks_on_a_hill("drop_to_surface(pts, terrain, footprint=0.5)", 3), SCENE);
+    let (err, v) = tool(&mut s, "survey", json!({"recipe": recipe, "scene": scene, "out": dir.join("survey").to_string_lossy(), "plan_only": true}));
+    assert!(!err, "{v}");
+    assert_eq!(v["output"]["views"]["flaw"], 0, "{}", v["output"]["closeups"]);
+    assert!(v["output"]["flagged_in_area"]["float"].is_null());
+}
+
+#[test]
+fn a_survey_refuses_an_unknown_pass_and_a_world_without_ground() {
+    setup();
+    let dir = scratch("survey_refuse");
+    let (recipe, scene) = write_world(&dir, &rocks_on_a_hill("pts", 1), SCENE);
+    let mut s = Session::new();
+    let (err, v) = tool(&mut s, "survey", json!({"recipe": recipe, "scene": scene, "out": dir.join("s").to_string_lossy(), "passes": "lit,heat", "plan_only": true}));
+    assert!(err && v["stderr"].as_str().unwrap().contains("unknown pass 'heat'") && v["stderr"].as_str().unwrap().contains("lit, flags, kinds"), "{v}");
+    let (recipe, scene) = write_world(&dir, "out(box(size=[1, 1, 1]))\n", SCENE);
+    let (err, v) = tool(&mut s, "survey", json!({"recipe": recipe, "scene": scene, "out": dir.join("s").to_string_lossy(), "plan_only": true}));
+    assert!(err && v["stderr"].as_str().unwrap().contains("no terrain material"), "{v}");
+}
+
+/// A green ground (its colour is a point colour), a rock hanging 1.5 m in the air over the middle, and a rock on the ground
+/// (the rock is 1.2 m tall with its underside at its origin).
+const TWO_ROCKS: &str = r#"terrain = set_material(normals(wrangle(grid(size=[60, 60], rows=20, cols=20), code="@Cd = vec3(0.05, 0.6, 0.05);")), name="terrain_test")
+spot = curve(points=[[0.0, 1.5, 0.0], [6.0, 0.0, 0.0]])
+rock = set_material(fit_size(sphere(), size=[1.6, 1.2, 1.6], uniform=0), name="rock_test")
+rocks = copy_to_points(rock, spot)
+world = merge(terrain, rocks)
+out(world)
+"#;
+const TWO_ROCKS_SCENE: &str = r#"{"cameras": [{"name": "front", "eye": {"at": [0, -12], "height": 1.7, "yaw": 90}, "lens": 28}]}"#;
+
+fn pixel(img: &pt_render::Image, p: [f32; 2]) -> [u8; 3] {
+    let o = (p[1] as usize * img.w + p[0] as usize) * 3;
+    [img.rgb[o], img.rgb[o + 1], img.rgb[o + 2]]
+}
+
+#[test]
+fn the_engine_shows_the_flagged_rock_in_red_exactly_where_the_camera_maths_puts_it() {
+    // Three classes in one engine launch (skipped where the engine is not installed):
+    // * the engine's camera and the program's camera (pick, the ground check, the boxes drawn on pictures) must be the same
+    //   camera, or every pixel names the wrong object;
+    // * a flagged object must show in its colour in the `flags` pass and only there;
+    // * a point colour must reach the screen (the engine's importer left it off: every far tree's shell and every unbaked
+    //   ground drew white).
+    setup();
+    if !pt_cli::engine::exe().exists() {
+        eprintln!("skipped: the game engine is not installed (PT_GODOT)");
+        return;
+    }
+    let dir = scratch("survey_engine");
+    let (recipe, scene) = write_world(&dir, TWO_ROCKS, TWO_ROCKS_SCENE);
+    let out = dir.join("survey");
+    let mut s = Session::new();
+    let (err, v) = tool(&mut s, "survey", json!({"recipe": recipe, "scene": scene, "out": out.to_string_lossy(), "stations": 1, "closeups": 2, "size": "640x360"}));
+    assert!(!err, "{v}");
+    let report = &v["output"];
+    assert_eq!(report["flagged_in_area"]["float"], 1, "{}", report["flagged_in_area"]);
+    assert_eq!(report["engine"]["pictures"], report["views"]["pictures"], "every planned picture was taken: {}", report["engine"]);
+    assert_eq!(report["engine"]["objects_painted_as_flagged"].as_u64().map(|n| n >= 1), Some(true), "{}", report["engine"]);
+    for sheet in report["sheets"].as_array().unwrap() {
+        assert!(Path::new(sheet["sheet"].as_str().unwrap()).exists(), "{sheet}");
+    }
+    assert!(report["sheets"].as_array().unwrap().iter().any(|s| s["sheet"].as_str().unwrap().contains("sheet_flaws_1")), "the close-ups have a sheet");
+    let load = |name: &str| pt_render::decode_png(&std::fs::read(out.join(name)).unwrap()).unwrap();
+    let (lit, flags) = (load("lit_cam_front.png"), load("flags_cam_front.png"));
+    assert_eq!((lit.w, lit.h), (640, 360));
+    // the scene's camera, as the program computes it
+    let cam = pt_cli::survey::View { name: "front".into(), group: "camera", why: String::new(), eye: [0.0, 1.7, -12.0], yaw: 90.0, pitch: 0.0, lens: 28.0, target: None };
+    let floating = cam.project([0.0, 2.1, 0.0], 640, 360).unwrap();
+    let seated = cam.project([6.0, 0.6, 0.0], 640, 360).unwrap();
+    let ground = cam.project([-3.0, 0.0, -4.0], 640, 360).unwrap();
+    let red = |c: [u8; 3]| c[0] > 200 && c[1] < 90 && c[2] < 90;
+    assert!(red(pixel(&flags, floating)), "the floating rock is not red at {floating:?} in the flags pass: {:?}", pixel(&flags, floating));
+    assert!(!red(pixel(&lit, floating)), "the lit pass shows the world as it is: {:?}", pixel(&lit, floating));
+    assert!(!red(pixel(&flags, seated)), "the rock on the ground is not flagged: {:?}", pixel(&flags, seated));
+    let g = pixel(&lit, ground);
+    assert!(g[1] as i32 > g[0] as i32 + 25 && g[1] as i32 > g[2] as i32 + 25, "the ground's point colour (green) did not reach the screen: {g:?}");
+    // the close-up has the rock (a grey stand-in material) in the middle, not the green ground or the sky
+    let c = pixel(&load("lit_flaw_01a.png"), [320.0, 180.0]);
+    assert!((c[0] as i32 - c[1] as i32).abs() < 25 && (c[2] as i32 - c[1] as i32).abs() < 40, "the middle of the close-up is not the rock: {c:?}");
+    assert!(out.join("boxed_flaw_01a.png").exists());
+}
+
+#[test]
+fn a_walk_through_opens_notes_what_is_pointed_at_and_names_it() {
+    // The owner's way into a world (skipped where the engine is not installed). `check` plays the owner: it points at the middle
+    // of the first camera's view, where the floating rock hangs, and closes the window. The note must name that rock: the ray
+    // the engine wrote down and the world the program cooked agree.
+    setup();
+    if !pt_cli::engine::exe().exists() {
+        eprintln!("skipped: the game engine is not installed (PT_GODOT)");
+        return;
+    }
+    let dir = scratch("walk_engine");
+    let (recipe, scene) = write_world(&dir, TWO_ROCKS, TWO_ROCKS_SCENE);
+    let out = dir.join("walk");
+    let mut s = Session::new();
+    let (err, v) = tool(&mut s, "walk", json!({"recipe": recipe, "scene": scene, "out": out.to_string_lossy(), "size": "640x360", "check": true}));
+    assert!(!err, "{v}");
+    let notes = v["output"]["notes"].as_array().unwrap();
+    assert_eq!(notes.len(), 1, "{}", v["output"]);
+    assert_eq!(notes[0]["asked"], "this looks wrong");
+    assert_eq!(notes[0]["result"]["kind"], "instance", "{}", notes[0]);
+    assert_eq!(notes[0]["result"]["instance"], 0, "the rock in the air, not the one on the ground");
+    assert_eq!(notes[0]["result"]["ground_check"][0]["kind"], "float");
+    assert!(notes[0]["summary"].as_str().unwrap().contains("rock_test"), "{}", notes[0]["summary"]);
+    assert!(Path::new(notes[0]["shot"].as_str().unwrap()).exists(), "the picture taken at the click");
+    assert!(out.join("notes.json").exists());
 }

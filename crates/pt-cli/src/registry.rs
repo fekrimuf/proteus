@@ -101,6 +101,8 @@ pub const ALL: &[&Command] = &[
     &crate::grounding::REVIEW_TILES,
     &crate::scorecard::SCORECARD,
     &crate::docs::STATUS,
+    &crate::survey::SURVEY,
+    &crate::survey::WALK,
     &crate::world::WORLD,
 ];
 

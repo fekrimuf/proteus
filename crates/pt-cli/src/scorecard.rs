@@ -18,7 +18,6 @@ use std::process::Command;
 use std::time::Instant;
 
 pub const DEFAULT_VALIDATOR: &str = r"D:\Fekri\tools\gltf_validator\gltf_validator.exe";
-pub const DEFAULT_GODOT: &str = r"D:\Fekri\tools\godot\Godot_v4.7.2-stable_win64_console.exe";
 
 fn tool(env: &str, default: &str) -> PathBuf {
     std::env::var(env).map(PathBuf::from).unwrap_or_else(|_| PathBuf::from(default))
@@ -224,6 +223,27 @@ pub fn style_records(g: &mut Geometry, scene: &Value, lib: &Value, corpus: &Path
     }
 }
 
+/// The world as an engine gets it: the cooked world without what only the offline render reads (the layer weights that baked
+/// textures replace: a third of the terrain's bytes), and with the style's word on every plain material, in the base and in the
+/// prototypes ([`style_records`]).
+pub fn engine_geometry(geo: &Geometry, scene: &Value, lib: &Value) -> Geometry {
+    let mut engine_geo: Geometry = geo.clone();
+    engine_geo.point.remove("Wt0");
+    engine_geo.point.remove("Wt1");
+    style_records(&mut engine_geo, scene, lib, &crate::corpus::root());
+    if let Some(inst) = engine_geo.instances.as_mut() {
+        for p in inst.protos.iter_mut() {
+            let plain = p.material_names().iter().any(|n| !p.detail.contains_key(&format!("{}{n}", pt_core::gltf::ASSET_MATERIAL_PREFIX)));
+            if plain {
+                let mut q = (**p).clone();
+                style_records(&mut q, scene, lib, &crate::corpus::root());
+                *p = std::sync::Arc::new(q);
+            }
+        }
+    }
+    engine_geo
+}
+
 /// The report of a stage that finished earlier, if every file it lists is still there: `list` points at an array of objects or
 /// an object of objects, and `key` names the file path inside each. `None` when the stage has to run again.
 fn finished_stage(report: &Path, list: &str, key: &str) -> Option<Value> {
@@ -283,29 +303,6 @@ fn run_validator(glb: &Path) -> Value {
         }
     }
     json!({"available": true, "errors": n("Errors"), "warnings": n("Warnings"), "codes": codes})
-}
-
-fn run_godot(glb: &Path, extra: &[&str], windowed: bool) -> Value {
-    let glb = absolute(glb).to_string_lossy().replace('\\', "/");
-    let exe = tool("PT_GODOT", DEFAULT_GODOT);
-    if !exe.exists() {
-        return json!({"available": false});
-    }
-    let project = blender::repo_root().join("engine/godot");
-    let mut cmd = Command::new(&exe);
-    if !windowed {
-        cmd.arg("--headless");
-    }
-    cmd.arg("--path").arg(&project).args(["--script", "referee.gd", "--"]).arg(&glb).args(extra);
-    let Ok(out) = crate::lowload::output(&mut cmd) else { return json!({"available": false}) };
-    let text = String::from_utf8_lossy(&out.stdout);
-    match text.lines().find_map(|l| l.strip_prefix("REFEREE_JSON ")).and_then(|j| serde_json::from_str::<Value>(j).ok()) {
-        Some(mut v) => {
-            v["available"] = json!(true);
-            v
-        }
-        None => json!({"available": true, "ok": false, "errors": [format!("Godot printed no result (exit {:?})", out.status.code())]}),
-    }
 }
 
 fn f(v: &Value, p: &str) -> Option<f64> {
@@ -546,21 +543,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
         render = blender::render_geometry(&geo, "world", scene.clone(), &frames_base, &opts)?;
     }
     // layered materials (terrain blends) have no portable form: bake them to albedo and normal textures for the engine file
-    let mut engine_geo: Geometry = (*geo).clone();
-    // the layer weights are what the baked textures replace: an engine has no use for them, and they are a third of the terrain's bytes
-    engine_geo.point.remove("Wt0");
-    engine_geo.point.remove("Wt1");
-    style_records(&mut engine_geo, &scene, &lib, &crate::corpus::root());
-    if let Some(inst) = engine_geo.instances.as_mut() {
-        for p in inst.protos.iter_mut() {
-            let plain = p.material_names().iter().any(|n| !p.detail.contains_key(&format!("{}{n}", pt_core::gltf::ASSET_MATERIAL_PREFIX)));
-            if plain {
-                let mut q = (**p).clone();
-                style_records(&mut q, &scene, &lib, &crate::corpus::root());
-                *p = std::sync::Arc::new(q);
-            }
-        }
-    }
+    let mut engine_geo = engine_geometry(&geo, &scene, &lib);
     let mut baked_report = json!({});
     if args.iter().any(|a| a == "--bake") && !blender::layers_of(&geo).is_empty() {
         let t = Instant::now();
@@ -608,7 +591,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
     if let Some(m) = &nav_mats {
         nav_args.push(m);
     }
-    let godot = run_godot(&glb, &nav_args, false);
+    let godot = crate::engine::run(&glb, &nav_args, false);
     // the engine view stands where the scene's first eye-height camera stands, so its picture and frame rate are comparable to the render
     let eye_cam = scene.get("cameras").and_then(Value::as_array).into_iter().flatten().chain(scene.get("camera")).find(|c| c.get("eye").is_some()).cloned();
     let engine_shot = out_dir.join("engine_eye.png");
@@ -624,7 +607,7 @@ pub fn scorecard_cmd(args: &[String]) -> Result<(), String> {
         }
     }
     let fps_refs: Vec<&str> = fps_args.iter().map(String::as_str).collect();
-    let fps = if args.iter().any(|a| a == "--no-fps") { json!({}) } else { run_godot(&glb, &fps_refs, true) };
+    let fps = if args.iter().any(|a| a == "--no-fps") { json!({}) } else { crate::engine::run(&glb, &fps_refs, true) };
 
     // 5. the vision judge reads the rendered frames (last, so it never shares the GPU with the frame-rate measurement)
     let frame_files: Vec<PathBuf> = render.get("frames").and_then(Value::as_array).into_iter().flatten().filter_map(|f| f.get("file").and_then(Value::as_str).map(PathBuf::from)).collect();

@@ -15,6 +15,8 @@ Every command below is on the command line and, under the tool name, in the agen
 | `review-tiles` | `review_tiles` |  | Cut a frame into six tiles (3 x 2), each enlarged twice, so a frame is reviewed at full resolution tile by tile and not in one downscaled glance. |
 | `scorecard` | `scorecard` | yes | Measure one build of a world end to end: cook, audit, render with Blender, export for an engine, run the glTF validator and the Godot referee (frame rate, walkable ground), and optionally bake the terrain and ask the vision judge. Writes the report, frames and scorecard.json under out. On demand at milestones, not after every change (DECISIONS B17). |
 | `status` | `status` |  | Print the measured state: every count and score the docs may quote, from the code and the result files. With --write it stores the state in docs/generated/state.md and the command table in docs/generated/commands.md. |
+| `survey` | `survey` | yes | Look at a world from many sides in seconds, in the game engine instead of the offline renderer: a walk (standing points with four views each), the area from above, the scene's cameras, and a close-up pair of every object the ground check flags (floating, hanging, mostly under water), all in one engine launch, written as contact sheets of twelve labelled views. The `flags` pass paints every flagged object in its colour (red floats, orange hangs, yellow under water, magenta buried); `kinds` paints every kind of object in a colour of its own. For placement, shape, scale and gaps; judge light and surfaces in a render. `survey.scene.json` in the output folder holds every view as a camera for `pick`. |
+| `walk` | `walk` | yes | Open a world in a window to walk or fly through, in the game engine, under the same protections as every heavy job (low priority, the memory cap, stopped when `pt` exits, a time limit on the load): the safe way to open a world by hand. Right mouse button to look, W A S D to move, G to walk on the ground, 1 to 9 for the scene's cameras, F to show flagged objects. A left click notes whatever looks wrong (X notes "remove this"); when the window closes each note is named (object, stable id, placing node, ground-check verdict) in notes.json. Returns when the window is closed. |
 | `world` | `world` |  | Work on one variant of a layered world (worlds/*.world.json): info lists the layers and variants, scene writes the expanded scene file, check runs ground-check, pick runs pick, render runs render-scene (HEAVY: it takes the machine like render-scene). |
 
 ## Usage
@@ -107,6 +109,33 @@ Every command below is on the command line and, under the tool name, in the agen
 `pt status [--write]`
 
 * `--write`: store the state and the command table under docs/generated/
+
+### survey
+
+`pt survey <recipe> <scene> [--out OUT] [--at AT] [--radius RADIUS] [--stations STATIONS] [--closeups CLOSEUPS] [--passes PASSES] [--size SIZE] [--lookdev] [--plan-only]`
+
+* `recipe` (required): the world's recipe .hcs file
+* `scene` (required): the scene .json file (cameras, style)
+* `--out`: folder for the pictures, the sheets and the report (default out/survey/<recipe name>)
+* `--at`: middle of the area to look at, as X,Z in metres (default: where the scene's standing cameras are)
+* `--radius`: radius of that area in metres (default: the cameras' spread plus 40, at least 60)
+* `--stations`: standing points of the walk, four views each (default 6)
+* `--closeups`: flagged objects to look at from two sides each (default 12)
+* `--passes`: pictures per view, comma-separated: lit, flags, kinds (default lit,flags)
+* `--size`: picture size as WIDTHxHEIGHT (default 1280x720)
+* `--lookdev`: cook in the look-development tier
+* `--plan-only`: plan the views and write the plan and survey.scene.json without starting the engine
+
+### walk
+
+`pt walk <recipe> <scene> [--out OUT] [--size SIZE] [--lookdev] [--check]`
+
+* `recipe` (required): the world's recipe .hcs file
+* `scene` (required): the scene .json file (cameras, style)
+* `--out`: folder for the engine file, the notes and their pictures (default out/walk/<recipe name>)
+* `--size`: window size as WIDTHxHEIGHT (default 1600x900)
+* `--lookdev`: cook in the look-development tier
+* `--check`: nobody at the keyboard: open the window, note what is in the middle of the first camera's view, and close (proves the walk-through works on this machine)
 
 ### world
 

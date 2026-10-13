@@ -7,7 +7,7 @@
 //! region: the classes of object under it, counted, so "that patch of moss" names its node and not one stone.
 
 use crate::grounding::{cameras_of, check, mark, Camera, Finding, Surface};
-use pt_core::math::{self, cross, normalize, sub, xform_point, Mat34};
+use pt_core::math::{self, cross, normalize, xform_point, Mat34};
 use pt_core::spatial::{BoxTree, SurfHit, SurfaceTree};
 use pt_core::{Column, Geometry};
 use pt_graph::Graph;
@@ -106,9 +106,14 @@ impl<'a> World<'a> {
 
     /// The first thing the ray from `o` along `d` meets.
     pub fn cast(&self, o: V3, d: V3) -> Option<Hit> {
+        self.cast_within(o, d, f32::INFINITY)
+    }
+
+    /// The first thing the ray meets within `reach` metres (a sight line to a known point: nothing beyond it is looked at).
+    pub fn cast_within(&self, o: V3, d: V3, reach: f32) -> Option<Hit> {
         let d = normalize(d);
-        let base = self.base.as_ref().and_then(|b| b.ray(o, d));
-        let tmax = base.map_or(f32::INFINITY, |h| h.dist);
+        let base = self.base.as_ref().and_then(|b| b.ray(o, d)).filter(|h| h.dist <= reach);
+        let tmax = base.map_or(reach, |h| h.dist);
         let found = self.boxes.ray(o, d, tmax, &mut |bi, _| self.hit_instance(self.inst_of_box[bi as usize], o, d).map(|h| h.0));
         if let Some((bi, t)) = found {
             if t < tmax {
@@ -141,8 +146,13 @@ impl Camera {
     }
 }
 
+/// `x` rounded to 1/`k` (k = 100: centimetres), as the number a report shows: 3.12, not 3.119999885559082.
+fn rd(x: f32, k: f64) -> f64 {
+    (x as f64 * k).round() / k
+}
+
 fn r3(v: V3) -> Value {
-    json!([(v[0] * 1000.0).round() / 1000.0, (v[1] * 1000.0).round() / 1000.0, (v[2] * 1000.0).round() / 1000.0])
+    json!([rd(v[0], 1000.0), rd(v[1], 1000.0), rd(v[2], 1000.0)])
 }
 
 /// A prototype in words: its material names, its triangle count, and whether it is a far stand-in.
@@ -187,7 +197,7 @@ impl Ctx<'_> {
                 for (name, col) in inst.attrs.iter().filter(|(n, _)| !n.starts_with("__")) {
                     match col {
                         Column::F32(v) if (k as usize) < v.len() => {
-                            attrs.insert(name.clone(), json!((v[k as usize] * 1000.0).round() / 1000.0));
+                            attrs.insert(name.clone(), json!(rd(v[k as usize], 1000.0)));
                         }
                         Column::V3(v) if (k as usize) < v.len() => {
                             attrs.insert(name.clone(), r3(v[k as usize]));
@@ -208,12 +218,12 @@ impl Ctx<'_> {
                     "prototype": proto_json,
                     "prototype_made_by": proto_made_by,
                     "created_by": creator,
-                    "hit": {"distance_m": (dist * 100.0).round() / 100.0, "position": r3(pos), "normal": r3(n), "primitive_in_prototype": prim},
+                    "hit": {"distance_m": rd(dist, 100.0), "position": r3(pos), "normal": r3(n), "primitive_in_prototype": prim},
                     "origin": r3(origin),
-                    "origin_above_ground_m": ground.map(|g| ((origin[1] - g) * 1000.0).round() / 1000.0),
-                    "scale": [(linear(&xf, [1.0, 0.0, 0.0]).iter().map(|c| c * c).sum::<f32>().sqrt() * 1000.0).round() / 1000.0],
+                    "origin_above_ground_m": ground.map(|g| rd(origin[1] - g, 1000.0)),
+                    "scale": [rd(linear(&xf, [1.0, 0.0, 0.0]).iter().map(|c| c * c).sum::<f32>().sqrt(), 1000.0)],
                     "attributes": attrs,
-                    "ground_check": fs.iter().map(|f| json!({"kind": f.kind, "amount_m": (f.amount * 100.0).round() / 100.0, "object_height_m": (f.height * 100.0).round() / 100.0})).collect::<Vec<_>>(),
+                    "ground_check": fs.iter().map(|f| json!({"kind": f.kind, "amount_m": rd(f.amount, 100.0), "object_height_m": rd(f.height, 100.0)})).collect::<Vec<_>>(),
                 });
                 Described { value, class: format!("{creator_name} / {label}"), flagged }
             }
@@ -226,8 +236,8 @@ impl Ctx<'_> {
                     "material": mat,
                     "primitive": prim,
                     "created_by": creator,
-                    "hit": {"distance_m": (dist * 100.0).round() / 100.0, "position": r3(pos), "normal": r3(n), "slope_deg": (n[1].clamp(-1.0, 1.0).acos().to_degrees() * 10.0).round() / 10.0},
-                    "terrain_height_there_m": ground.map(|g| (g * 1000.0).round() / 1000.0),
+                    "hit": {"distance_m": rd(dist, 100.0), "position": r3(pos), "normal": r3(n), "slope_deg": rd(n[1].clamp(-1.0, 1.0).acos().to_degrees(), 10.0)},
+                    "terrain_height_there_m": ground.map(|g| rd(g, 1000.0)),
                 });
                 let by = value["created_by"]["created_by"].as_str().unwrap_or("?").to_string();
                 Described { value, class: format!("{by} / {mat}"), flagged: vec![] }
@@ -311,7 +321,7 @@ pub fn pick(graph: &mut Graph, node: &str, scene: &Value, o: &PickOpts) -> Resul
         out["region"] = json!({
             "radius_px": o.radius_px,
             "rays": rays,
-            "classes": rows.into_iter().map(|(k, (n, _, ex, fl))| json!({"class": k, "rays": n, "share": ((n as f32 / rays.max(1) as f32) * 100.0).round() / 100.0, "nearest_to_centre": ex, "flagged": fl})).collect::<Vec<_>>(),
+            "classes": rows.into_iter().map(|(k, (n, _, ex, fl))| json!({"class": k, "rays": n, "share": rd(n as f32 / rays.max(1) as f32, 100.0), "nearest_to_centre": ex, "flagged": fl})).collect::<Vec<_>>(),
         });
     }
     out["summary"] = json!(summary(&out));
@@ -319,7 +329,7 @@ pub fn pick(graph: &mut Graph, node: &str, scene: &Value, o: &PickOpts) -> Resul
 }
 
 /// One plain sentence for the result.
-fn summary(v: &Value) -> String {
+pub(crate) fn summary(v: &Value) -> String {
     let r = &v["result"];
     let at = format!("pixel ({}, {}) of {}", v["pixel"][0], v["pixel"][1], v["camera"].as_str().unwrap_or("?"));
     match r["kind"].as_str() {
@@ -346,6 +356,30 @@ fn summary(v: &Value) -> String {
         ),
         _ => format!("{at}: nothing hit (sky)"),
     }
+}
+
+/// What each ray (origin, direction) meets in the cooked output of `node`, described like a pick: the object, the node that
+/// placed it, where it stands, what the ground check says. For rays that do not come from a scene camera: the notes of a
+/// walk-through, where the owner pointed at something in the engine.
+pub fn describe_rays(graph: &mut Graph, node: &str, rays: &[(V3, V3)]) -> Result<Vec<Value>, String> {
+    let geo = graph.cook(node)?;
+    let terrain = Surface::from_geometry(&geo, |m| m.starts_with("terrain"));
+    let water = Surface::from_geometry(&geo, |m| m.contains("water"));
+    let mut findings: BTreeMap<usize, Vec<Finding>> = BTreeMap::new();
+    if !terrain.is_empty() {
+        for f in check(&geo, &terrain, &water).0 {
+            findings.entry(f.index).or_default().push(f);
+        }
+    }
+    let world = World::new(&geo);
+    let mut ctx = Ctx { geo: &geo, graph, node, terrain: &terrain, findings };
+    Ok(rays
+        .iter()
+        .map(|(o, d)| match world.cast(*o, *d) {
+            Some(hit) => ctx.describe(&hit).value,
+            None => json!({"kind": "sky (nothing hit)"}),
+        })
+        .collect())
 }
 
 fn frame_size(scene: &Value, frame: Option<&str>, size: Option<&str>) -> Result<(usize, usize), String> {

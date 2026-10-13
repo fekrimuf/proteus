@@ -2,11 +2,16 @@ extends SceneTree
 # Engine referee. Usage (see `pt referee`):
 #   godot --headless --path engine/godot --script referee.gd -- <model.glb> [nav=1]            import + counts + navmesh coverage
 #   godot --path engine/godot --script referee.gd -- <model.glb> fps=1 [eye=x,y,z yaw=deg]     windowed: draw calls and frame rate
+#   godot --path engine/godot --script referee.gd -- <model.glb> plan=<plan.json>              windowed: every view of the plan as a picture (`pt survey`)
+#   godot --path engine/godot --script referee.gd -- <model.glb> plan=<plan.json> walk=1       a window to walk the world in (`pt walk`)
 # Prints one line `REFEREE_JSON {...}`; exits 0 if the engine imported the file without errors, 1 otherwise.
 
 const TERRAIN_NODE := "geometry"  # the base mesh of a Proteus export (instances are separate nodes)
 
 var result := {"ok": false, "errors": [], "godot": Engine.get_version_info().string}
+var plan := {}  # what `pt survey` and `pt walk` ask for: the views, the sun, the flagged objects, the colour of every kind
+var flag_material: ShaderMaterial = null
+var flag_nodes := 0
 
 
 func _initialize() -> void:
@@ -20,6 +25,12 @@ func _initialize() -> void:
 		opts[kv[0]] = kv[1] if kv.size() > 1 else "1"
 	var path: String = args[0]
 	result["model"] = path
+	if opts.has("plan"):
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(String(opts["plan"])))
+		if not (parsed is Dictionary):
+			_finish("the plan file %s is not a JSON object" % String(opts["plan"]))
+			return
+		plan = parsed
 	result["bytes"] = FileAccess.get_file_as_bytes(path).size() if FileAccess.file_exists(path) else 0
 	var t0 := Time.get_ticks_msec()
 	var doc := GLTFDocument.new()
@@ -38,11 +49,17 @@ func _initialize() -> void:
 	await process_frame  # the nodes are inside the tree from here on (global transforms are valid)
 	_apply_instancing(state, root)
 	_apply_lod(root)
+	_apply_point_colours(root)
 	_count(root)
 	if opts.has("nav"):
 		await _navmesh(root, opts)
 	if opts.has("fps"):
 		await _fps(root, opts)
+	result["ready_ms"] = Time.get_ticks_msec() - t0
+	if opts.has("walk"):
+		await _walk(root)
+	elif plan.has("views"):
+		await _survey(root)
 	result["ok"] = (result["errors"] as Array).is_empty()
 	_finish("")
 
@@ -78,6 +95,7 @@ func _apply_instancing(state: GLTFState, root: Node) -> void:
 		for c in w.get_children():
 			walk.append(c)
 	var built := {}  # "t,r,s" accessor ids -> Array of Transform3D, shared by the levels of one tile
+	var flags := _flags_by_proto()
 	var made := 0
 	var placed := 0
 	for i in nodes.size():
@@ -103,11 +121,24 @@ func _apply_instancing(state: GLTFState, root: Node) -> void:
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.mesh = (old as MeshInstance3D).mesh
+		# the flagged objects of this prototype (float, hang, drowned, buried), by where they stand: they get a colour of their own
+		var mine: Variant = null
+		if jn.has("extras") and (jn["extras"] as Dictionary).has("proteus_proto"):
+			mine = flags.get(int(jn["extras"]["proteus_proto"]))
+		mm.use_custom_data = mine != null
 		mm.instance_count = xforms.size()
+		var flagged := 0
 		for k in xforms.size():
 			mm.set_instance_transform(k, xforms[k])
+			if mine != null:
+				var col: Variant = (mine as Dictionary).get(_flag_key((xforms[k] as Transform3D).origin))
+				mm.set_instance_custom_data(k, col if col != null else Color(0, 0, 0, 0))
+				flagged += 1 if col != null else 0
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
+		if flagged > 0:
+			mmi.material_overlay = _flag_material()
+			flag_nodes += 1
 		var nm := String(old.name)
 		if old.has_meta("extras"):
 			mmi.set_meta("extras", old.get_meta("extras"))
@@ -118,7 +149,7 @@ func _apply_instancing(state: GLTFState, root: Node) -> void:
 		parent.add_child(mmi)
 		made += 1
 		placed += xforms.size()
-	result["instancing"] = {"nodes": made, "instances_with_levels": placed}
+	result["instancing"] = {"nodes": made, "instances_with_levels": placed, "nodes_with_flagged": flag_nodes}
 
 
 # The engine bridge for LODs: the exporter writes one node per level with its distance range in the node extras
@@ -160,6 +191,36 @@ func _apply_lod(root: Node) -> void:
 					parented += 1
 	result["lod_ranges_applied"] = applied
 	result["hlod_parents_set"] = parented
+
+
+# The engine bridge for point colours. The exporter writes the point colour `Cd` as COLOR_0: a far tree's shell takes its colour
+# from it, and so does a ground whose layers were not baked (`pt survey`). Godot's importer leaves the material's switch for it
+# off, so every shell and every such ground drew white. It is switched on for materials that have no colour map of their own (a
+# textured material keeps its look).
+func _apply_point_colours(root: Node) -> void:
+	var seen := {}
+	var switched := 0
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for c in n.get_children():
+			stack.append(c)
+		var mesh: Mesh = null
+		if n is MeshInstance3D:
+			mesh = (n as MeshInstance3D).mesh
+		elif n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh != null:
+			mesh = (n as MultiMeshInstance3D).multimesh.mesh
+		if mesh == null or not (mesh is ArrayMesh) or seen.has(mesh.get_rid()):
+			continue
+		seen[mesh.get_rid()] = true
+		for s in mesh.get_surface_count():
+			if ((mesh as ArrayMesh).surface_get_format(s) & Mesh.ARRAY_FORMAT_COLOR) == 0:
+				continue
+			var m := mesh.surface_get_material(s)
+			if m is BaseMaterial3D and (m as BaseMaterial3D).albedo_texture == null and not (m as BaseMaterial3D).vertex_color_use_as_albedo:
+				(m as BaseMaterial3D).vertex_color_use_as_albedo = true
+				switched += 1
+	result["materials_with_point_colour"] = switched
 
 
 func _count(root: Node) -> void:
@@ -542,30 +603,9 @@ func _fps(root: Node, opts: Dictionary) -> void:
 	elif opts.has("eye"):
 		var p2: PackedStringArray = String(opts["eye"]).split(",")
 		eye = Vector3(float(p2[0]), float(p2[1]), float(p2[2]))
-	var cam := Camera3D.new()
-	var lens := float(opts.get("lens", "28"))  # 36 mm sensor width, like the Blender render
-	cam.fov = rad_to_deg(2.0 * atan((18.0 / lens) * (float(size.y) / float(size.x))))  # Godot's fov is vertical
-	cam.far = 6000.0
-	root.add_child(cam)
-	cam.global_position = eye
-	# Godot's camera looks down -Z; our yaw 0 looks along +X and grows toward +Z
-	cam.rotation_degrees = Vector3(float(opts.get("pitch", "0")), -90.0 - float(opts.get("yaw", "0")), 0)
-	cam.current = true
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-27, -60, 0)  # toward the sun at azimuth 150, elevation 27 (the alpine style)
-	sun.shadow_enabled = true
-	# what a game ships with in a forest: shadows to 150 m in two cascades (every cascade draws the casters again)
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_max_distance = float(opts.get("shadow_m", "150"))
-	root.add_child(sun)
-	var env := Environment.new()
-	env.background_mode = Environment.BG_SKY
-	env.sky = Sky.new()
-	env.sky.sky_material = ProceduralSkyMaterial.new()
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	var we := WorldEnvironment.new()
-	we.environment = env
-	root.add_child(we)
+	# toward the sun at azimuth 150, elevation 27 (the alpine style)
+	var cam := _stage(root, 150.0, 27.0, float(opts.get("shadow_m", "150")))
+	_aim(cam, eye, float(opts.get("yaw", "0")), float(opts.get("pitch", "0")), float(opts.get("lens", "28")), size)
 	var frames := int(opts.get("frames", "90"))
 	for i in 20:  # warm-up
 		await process_frame
@@ -586,6 +626,223 @@ func _fps(root: Node, opts: Dictionary) -> void:
 		await RenderingServer.frame_post_draw
 		var img := get_root().get_texture().get_image()
 		result["shot"] = String(opts["shot"]) if img.save_png(String(opts["shot"])) == OK else "save failed"
+
+
+# A camera, the sun and a sky. The sun stands at `azimuth` degrees (0 looks along +X and grows toward +Z, like a camera's yaw)
+# and `elevation` degrees above the horizon. `ambient` lifts the light in the shade: a survey looks for flaws there too.
+func _stage(root: Node, azimuth: float, elevation: float, shadow_m: float, ambient: float = 1.0) -> Camera3D:
+	var cam := Camera3D.new()
+	cam.far = 6000.0
+	root.add_child(cam)
+	cam.current = true
+	var sun := DirectionalLight3D.new()
+	sun.rotation_degrees = Vector3(-elevation, 90.0 - azimuth, 0)
+	sun.shadow_enabled = true
+	# what a game ships with in a forest: shadows to 150 m in two cascades (every cascade draws the casters again)
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_max_distance = shadow_m
+	root.add_child(sun)
+	var env := Environment.new()
+	env.background_mode = Environment.BG_SKY
+	env.sky = Sky.new()
+	env.sky.sky_material = ProceduralSkyMaterial.new()
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_energy = ambient
+	var we := WorldEnvironment.new()
+	we.environment = env
+	root.add_child(we)
+	return cam
+
+
+# Stand the camera at `eye`, looking along `yaw` and `pitch` (degrees) through a lens of `lens` mm on a 36 mm sensor, like the
+# Blender render and `pt pick`.
+func _aim(cam: Camera3D, eye: Vector3, yaw: float, pitch: float, lens: float, size: Vector2i) -> void:
+	cam.fov = rad_to_deg(2.0 * atan((18.0 / lens) * (float(size.y) / float(size.x))))  # Godot's fov is vertical
+	cam.global_position = eye
+	# Godot's camera looks down -Z; our yaw 0 looks along +X and grows toward +Z
+	cam.rotation_degrees = Vector3(pitch, -90.0 - yaw, 0)
+
+
+func _plan_size() -> Vector2i:
+	var s: Array = plan.get("size", [1280, 720])
+	return Vector2i(int(s[0]), int(s[1]))
+
+
+# Where an object stands, to the centimetre: the key the flagged objects of the plan are found by.
+func _flag_key(p: Vector3) -> Vector3i:
+	return Vector3i(roundi(p.x * 100.0), roundi(p.y * 100.0), roundi(p.z * 100.0))
+
+
+# The plan's flagged objects, `[prototype, x, y, z, r, g, b]` each, as prototype -> {place -> colour}.
+func _flags_by_proto() -> Dictionary:
+	var out := {}
+	for f in plan.get("flags", []):
+		var a: Array = f
+		var p := int(a[0])
+		if not out.has(p):
+			out[p] = {}
+		(out[p] as Dictionary)[_flag_key(Vector3(a[1], a[2], a[3]))] = Color(a[4], a[5], a[6], 1.0)
+	return out
+
+
+# Drawn over a flagged object: its colour, flat and unlit, so it shows from every side and in shadow. `on` switches it.
+func _flag_material() -> ShaderMaterial:
+	if flag_material == null:
+		var sh := Shader.new()
+		sh.code = "shader_type spatial;\nrender_mode unshaded, cull_disabled;\nuniform float on = 0.0;\nvarying vec4 flag;\nvoid vertex() {\n\tflag = INSTANCE_CUSTOM;\n}\nvoid fragment() {\n\tALBEDO = flag.rgb;\n\tALPHA = flag.a * on;\n}\n"
+		flag_material = ShaderMaterial.new()
+		flag_material.shader = sh
+	return flag_material
+
+
+func _show_flags(on: bool) -> void:
+	if flag_material != null:
+		flag_material.set_shader_parameter("on", 1.0 if on else 0.0)
+
+
+const KIND_SHADER := "shader_type spatial;\nrender_mode cull_disabled;\nuniform vec3 kind : source_color;\nuniform sampler2D cut : source_color;\nuniform bool has_cut = false;\nvoid fragment() {\n\tif (has_cut && texture(cut, UV).a < 0.5) {\n\t\tdiscard;\n\t}\n\tALBEDO = kind;\n\tROUGHNESS = 1.0;\n}\n"
+
+
+# Paint every kind of object in one colour of its own, lit, so shapes still read: instanced prototypes by their number (the
+# plan's `kinds`), base surfaces by their material's name (`base_kinds`). A leaf card keeps its cut-out. Returns what was
+# swapped, for `_restore_kinds`.
+func _paint_kinds(root: Node) -> Array:
+	var shader := Shader.new()
+	shader.code = KIND_SHADER
+	var kinds: Dictionary = plan.get("kinds", {})
+	var base_kinds: Dictionary = plan.get("base_kinds", {})
+	var swapped: Array = []
+	var seen := {}
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for c in n.get_children():
+			stack.append(c)
+		var mesh: Mesh = null
+		var colour: Variant = null
+		if n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh != null:
+			mesh = (n as MultiMeshInstance3D).multimesh.mesh
+			var ex: Variant = n.get_meta("extras") if n.has_meta("extras") else null
+			if ex is Dictionary and ex.has("proteus_proto"):
+				colour = kinds.get(str(int(ex["proteus_proto"])))
+		elif n is MeshInstance3D:
+			mesh = (n as MeshInstance3D).mesh
+		if mesh == null or seen.has(mesh.get_rid()):
+			continue
+		seen[mesh.get_rid()] = true
+		for s in mesh.get_surface_count():
+			var orig := mesh.surface_get_material(s)
+			var c2: Variant = colour
+			if c2 == null and orig != null:
+				c2 = base_kinds.get(String(orig.resource_name))
+			if c2 == null:
+				continue
+			var a: Array = c2
+			var m := ShaderMaterial.new()
+			m.shader = shader
+			m.set_shader_parameter("kind", Color(a[0], a[1], a[2]))
+			if orig is BaseMaterial3D and (orig as BaseMaterial3D).transparency != BaseMaterial3D.TRANSPARENCY_DISABLED and (orig as BaseMaterial3D).albedo_texture != null:
+				m.set_shader_parameter("cut", (orig as BaseMaterial3D).albedo_texture)
+				m.set_shader_parameter("has_cut", true)
+			swapped.append([mesh, s, orig])
+			mesh.surface_set_material(s, m)
+	return swapped
+
+
+func _restore_kinds(swapped: Array) -> void:
+	for e in swapped:
+		(e[0] as Mesh).surface_set_material(int(e[1]), e[2])
+
+
+# One picture to disk. The engine's PNG writer takes a fifth of a second a picture, most of a survey's time, so with the plan's
+# `raw` the plain bytes go out (`<file>.rgb`, three bytes a pixel) and `pt` writes the PNG, on every core.
+func _save(img: Image, file: String) -> bool:
+	if not bool(plan.get("raw", false)):
+		return img.save_png(file) == OK
+	img.convert(Image.FORMAT_RGB8)
+	var f := FileAccess.open(file + ".rgb", FileAccess.WRITE)
+	if f == null:
+		return false
+	f.store_buffer(img.get_data())
+	f.close()
+	return true
+
+
+# `pt survey`: every view of the plan as a picture, in one launch. A view is {"name", "eye": [x, y, z], "yaw", "pitch", "lens",
+# "file", "pass"}. Passes: "lit" (the world as the engine draws it), "flags" (the same, every flagged object in its colour) and
+# "kinds" (every kind of object in one colour of its own).
+func _survey(root: Node) -> void:
+	var size := _plan_size()
+	get_root().size = size
+	DisplayServer.window_set_title("Proteus survey")
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)  # the owner is working: do not take the keyboard
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	var sun: Dictionary = plan.get("sun", {})
+	var cam := _stage(root, float(sun.get("azimuth", 150.0)), float(sun.get("elevation", 27.0)), float(plan.get("shadow_m", 150.0)), float(plan.get("ambient", 1.6)))
+	var views: Array = plan.get("views", [])
+	var settle := int(plan.get("settle_frames", 2))
+	var done := 0
+	var failed: Array = []
+	var t0 := Time.get_ticks_msec()
+	var first := true
+	for pass_name in ["lit", "flags", "kinds"]:
+		var mine: Array = views.filter(func(v): return String(v.get("pass", "lit")) == pass_name)
+		if mine.is_empty():
+			continue
+		_show_flags(pass_name == "flags")
+		var swapped: Array = _paint_kinds(root) if pass_name == "kinds" else []
+		for v in mine:
+			var e: Array = v["eye"]
+			_aim(cam, Vector3(e[0], e[1], e[2]), float(v.get("yaw", 0.0)), float(v.get("pitch", 0.0)), float(v.get("lens", 28.0)), size)
+			# the first view also waits for the shaders and textures the engine prepares on first use
+			for i in (20 if first else settle):
+				await process_frame
+			first = false
+			await RenderingServer.frame_post_draw
+			var img := get_root().get_texture().get_image()
+			if img != null and _save(img, String(v["file"])):
+				done += 1
+				size = Vector2i(img.get_width(), img.get_height())
+			else:
+				failed.append(String(v.get("name", "?")))
+		_restore_kinds(swapped)
+	_show_flags(false)
+	var ms := Time.get_ticks_msec() - t0
+	result["survey"] = {
+		"views": done, "failed": failed, "ms": ms, "ms_per_view": snappedf(float(ms) / maxf(done, 1), 0.1), "size": [size.x, size.y],
+		"video_mem_mb": snappedf(RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_VIDEO_MEM_USED) / 1048576.0, 0.1),
+		"adapter": RenderingServer.get_video_adapter_name(),
+	}
+	if not failed.is_empty():
+		(result["errors"] as Array).append("survey: %d view(s) were not written" % failed.size())
+
+
+# `pt walk`: a window to move through the world in and point at what looks wrong. Everything the owner notes goes to the plan's
+# `notes` file, one JSON line each; `pt walk` names the objects afterwards. The plan's `ready` file tells `pt` the world is up.
+func _walk(root: Node) -> void:
+	var size := _plan_size()
+	get_root().size = size
+	auto_accept_quit = false  # closing the window ends the walk here, so the result line is still printed
+	DisplayServer.window_set_title("Proteus walk-through   (H: help, Esc: close)")
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)  # the monitor's rate is plenty: leave the rest of the card alone
+	Engine.max_fps = 60
+	var sun: Dictionary = plan.get("sun", {})
+	var cam := _stage(root, float(sun.get("azimuth", 150.0)), float(sun.get("elevation", 27.0)), float(plan.get("shadow_m", 150.0)), float(plan.get("ambient", 1.6)))
+	var walker: Node = (load("res://walk.gd") as GDScript).new()
+	var bases: Array = []
+	for c in root.get_children():
+		if c is MeshInstance3D and String(c.name).begins_with(TERRAIN_NODE + "__terrain") and (c as MeshInstance3D).mesh != null:
+			bases.append(c)
+	walker.call("setup", cam, plan, bases, Callable(self, "_show_flags"))
+	get_root().add_child(walker)
+	if plan.has("ready"):
+		var f := FileAccess.open(String(plan["ready"]), FileAccess.WRITE)
+		if f != null:
+			f.store_line("ready")
+			f.close()
+	var t0 := Time.get_ticks_msec()
+	await walker.closed
+	result["walk"] = {"notes": int(walker.get("notes")), "seconds": snappedf((Time.get_ticks_msec() - t0) / 1000.0, 0.1)}
 
 
 func _finish(error: String) -> void:
