@@ -5,11 +5,26 @@
 //! runaway import fails by itself instead of swapping the whole machine. Limits: `PT_HEAVY_MEM_GB` (default 8, 0 = no cap) and
 //! `PT_HEAVY_THREADS` (default: all cores but two). Other systems just run the command.
 //!
+//! Only one heavy child runs on the machine at a time, whichever `pt` process or git worktree started it: before Blender, Godot,
+//! the validator or the judge server starts, `pt` takes a machine-wide lock ([`acquire`]) and a second `pt` waits its turn,
+//! saying once who it waits for. The lock is an operating-system file lock (`File::try_lock`) on `heavy.lock` in a fixed per-user
+//! folder ([`lock_dir`]); the system drops it when the process ends however it ends, so a killed or crashed holder never leaves a
+//! stale lock. One `pt` holds it once however many children it runs: they share one hold, taken for the first and let go with the
+//! last, so the scorecard's several children in a row, or the judge server alive across calls, never wait for themselves.
+//! `PT_HEAVY_WAIT_SECONDS` (default 3600; 0 = do not wait) bounds the wait; past it the command fails and names the holder.
+//! Cargo (`pt gate`) and the `pt` that a tool call starts are low priority but take no lock ([`spawn_light`]): that `pt` takes
+//! the lock for its own heavy children, and a lock held by both would make it wait for its parent.
+//!
 //! A child can also be given a time limit ([`output_within`]): one that has not finished is stopped together with everything it
 //! started ([`kill_tree`]), so a stalled import ends by itself. The game engine always runs this way (`crate::engine`).
 
+use std::fs::File;
 use std::io;
+use std::ops::{Deref, DerefMut};
+use std::path::PathBuf;
 use std::process::{Child, Command, Output, Stdio};
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 /// Threads a heavy child may use: all cores but two (at least one), or `PT_HEAVY_THREADS`.
 pub fn threads() -> usize {
@@ -22,14 +37,167 @@ fn mem_cap_bytes() -> usize {
     (gb.max(0.0) * 1_073_741_824.0) as usize
 }
 
-/// Start `cmd` at low priority inside the memory-capped job.
-pub fn spawn(cmd: &mut Command) -> io::Result<Child> {
-    start(cmd, true)
+// ---- the machine-wide lock ----
+
+/// How long a second heavy start waits for the first: `PT_HEAVY_WAIT_SECONDS`, default an hour; 0 means do not wait.
+fn wait_limit() -> Duration {
+    Duration::from_secs(std::env::var("PT_HEAVY_WAIT_SECONDS").ok().and_then(|s| s.trim().parse::<u64>().ok()).unwrap_or(3600))
 }
 
-/// Start `cmd` at low priority and kill it when `pt` exits, without a memory cap (the judge server maps a large model).
-pub fn spawn_uncapped(cmd: &mut Command) -> io::Result<Child> {
+/// The folder of the lock files: the same for every worktree of this user (`PT_HEAVY_LOCK_DIR` moves it, for tests).
+pub fn lock_dir() -> PathBuf {
+    if let Some(d) = std::env::var_os("PT_HEAVY_LOCK_DIR").filter(|d| !d.is_empty()) {
+        return PathBuf::from(d);
+    }
+    let var = |k: &str| std::env::var_os(k).filter(|v| !v.is_empty()).map(PathBuf::from);
+    let base = if cfg!(windows) { var("LOCALAPPDATA") } else { var("XDG_STATE_HOME").or_else(|| var("HOME").map(|h| h.join(".local").join("state"))) };
+    base.map_or_else(|| std::env::temp_dir().join("pt-heavy"), |d| d.join("pt"))
+}
+
+/// What a waiting `pt` reads to name the holder (the lock file itself cannot be read while it is locked on Windows).
+fn holder_file() -> PathBuf {
+    lock_dir().join("heavy.holder")
+}
+
+/// Who holds the lock as last recorded: `pid 1234, blender.exe, in <folder>` (None when nobody wrote one).
+pub fn recorded_holder() -> Option<String> {
+    std::fs::read_to_string(holder_file()).ok().map(|t| t.trim().to_string()).filter(|t| !t.is_empty())
+}
+
+struct Hold {
+    users: usize,
+    /// The locked file; closing it (or the process ending) releases the lock.
+    file: Option<File>,
+}
+
+static HOLD: Mutex<Hold> = Mutex::new(Hold { users: 0, file: None });
+
+/// One heavy child's share of the machine-wide lock. The lock lets go when the last share of this `pt` is dropped.
+pub struct Slot(());
+
+impl Drop for Slot {
+    fn drop(&mut self) {
+        let mut h = HOLD.lock().unwrap_or_else(|e| e.into_inner());
+        h.users = h.users.saturating_sub(1);
+        if h.users == 0 && h.file.take().is_some() {
+            let _ = std::fs::remove_file(holder_file());
+        }
+    }
+}
+
+/// Take the machine-wide heavy-job lock for `what` (a short description of the child), waiting for another `pt` that holds it.
+/// A `pt` that already holds it just takes another share. Fails past `PT_HEAVY_WAIT_SECONDS`, naming the holder.
+pub fn acquire(what: &str) -> io::Result<Slot> {
+    let mut h = HOLD.lock().unwrap_or_else(|e| e.into_inner());
+    if h.users > 0 {
+        h.users += 1;
+        return Ok(Slot(()));
+    }
+    let dir = lock_dir();
+    std::fs::create_dir_all(&dir)?;
+    let file = std::fs::OpenOptions::new().create(true).truncate(false).read(true).write(true).open(dir.join("heavy.lock"))?;
+    let (limit, started) = (wait_limit(), Instant::now());
+    let mut told = false;
+    loop {
+        match file.try_lock() {
+            Ok(()) => break,
+            Err(std::fs::TryLockError::WouldBlock) => {
+                let holder = recorded_holder().unwrap_or_else(|| "another pt, not recorded".into());
+                if started.elapsed() >= limit {
+                    let e = format!("another heavy job holds the machine ({holder}) and PT_HEAVY_WAIT_SECONDS={} passed; one heavy job runs at a time (lock: {})", limit.as_secs(), dir.join("heavy.lock").display());
+                    eprintln!("pt: {e}");
+                    return Err(io::Error::new(io::ErrorKind::TimedOut, e));
+                }
+                if !told {
+                    eprintln!("pt: waiting for the machine: another heavy job is running ({holder}); {what} starts when it ends (PT_HEAVY_WAIT_SECONDS={} at most)", limit.as_secs());
+                    told = true;
+                }
+                std::thread::sleep(Duration::from_millis(250));
+            }
+            Err(std::fs::TryLockError::Error(e)) => return Err(e),
+        }
+    }
+    let cwd = std::env::current_dir().map(|d| d.display().to_string()).unwrap_or_default();
+    let _ = std::fs::write(holder_file(), format!("pid {}, {what}, in {cwd}", std::process::id()));
+    h.file = Some(file);
+    h.users = 1;
+    Ok(Slot(()))
+}
+
+/// Whether some `pt` holds the lock right now (this one included), by trying to take it and letting go at once.
+pub fn is_held() -> bool {
+    if HOLD.lock().unwrap_or_else(|e| e.into_inner()).users > 0 {
+        return true;
+    }
+    let Ok(file) = std::fs::OpenOptions::new().create(true).truncate(false).read(true).write(true).open(lock_dir().join("heavy.lock")) else { return false };
+    matches!(file.try_lock(), Err(std::fs::TryLockError::WouldBlock))
+}
+
+/// A heavy child together with its share of the machine-wide lock: the share lasts as long as this value, so keep it until the
+/// child has ended (it derefs to the [`Child`]).
+pub struct Heavy {
+    child: Child,
+    _slot: Slot,
+}
+
+impl Deref for Heavy {
+    type Target = Child;
+    fn deref(&self) -> &Child {
+        &self.child
+    }
+}
+
+impl DerefMut for Heavy {
+    fn deref_mut(&mut self) -> &mut Child {
+        &mut self.child
+    }
+}
+
+impl Heavy {
+    /// Like `Child::wait_with_output`; the lock is let go afterwards.
+    pub fn wait_with_output(self) -> io::Result<Output> {
+        let Heavy { child, _slot } = self;
+        child.wait_with_output()
+    }
+}
+
+fn describe(cmd: &Command) -> String {
+    let p = cmd.get_program().to_string_lossy().into_owned();
+    p.rsplit(['/', '\\']).next().unwrap_or("a child").to_string()
+}
+
+/// Wait for the machine-wide lock, then start `cmd` at low priority inside the memory-capped job.
+pub fn spawn(cmd: &mut Command) -> io::Result<Heavy> {
+    let slot = acquire(&describe(cmd))?;
+    Ok(Heavy { child: start(cmd, true)?, _slot: slot })
+}
+
+/// Like [`spawn`], without a memory cap (the judge server maps a large model).
+pub fn spawn_uncapped(cmd: &mut Command) -> io::Result<Heavy> {
+    let slot = acquire(&describe(cmd))?;
+    Ok(Heavy { child: start(cmd, false)?, _slot: slot })
+}
+
+/// Start `cmd` at low priority and kill it when `pt` exits, with no cap and no lock: for a program that is not itself the heavy
+/// job (cargo, or another `pt` that takes the lock for the heavy children it starts).
+pub fn spawn_light(cmd: &mut Command) -> io::Result<Child> {
     start(cmd, false)
+}
+
+pub const HEAVY_STATUS: crate::registry::Command = crate::registry::Command {
+    name: "heavy-status",
+    tool: "heavy_status",
+    summary: "Say whether a heavy job (Blender, the game engine, the validator, the judge server) holds the machine, and who: only one runs at a time across every `pt` and worktree; a second waits up to PT_HEAVY_WAIT_SECONDS (default 3600, 0 = fail at once). Look here before starting a render to know whether it would wait.",
+    heavy: false,
+    params: &[],
+    run: status_cmd,
+};
+
+fn status_cmd(_args: &[String]) -> Result<(), String> {
+    let held = is_held();
+    let v = serde_json::json!({"held": held, "holder": if held { recorded_holder() } else { None }, "lock_file": lock_dir().join("heavy.lock").to_string_lossy(), "wait_seconds": wait_limit().as_secs()});
+    println!("{}", serde_json::to_string_pretty(&v).map_err(|e| e.to_string())?);
+    Ok(())
 }
 
 /// Like `Command::output`, through [`spawn`].
@@ -59,8 +227,8 @@ pub fn sink_file(tag: &str) -> std::path::PathBuf {
 pub fn output_within(cmd: &mut Command, limit: std::time::Duration) -> io::Result<Timed> {
     let (out, err) = (sink_file("out"), sink_file("err"));
     cmd.stdin(Stdio::null()).stdout(std::fs::File::create(&out)?).stderr(std::fs::File::create(&err)?);
-    let started = std::time::Instant::now();
     let mut child = spawn(cmd)?;
+    let started = std::time::Instant::now(); // after the wait for the machine: the limit is for the child, not for the queue
     let status = loop {
         match child.try_wait() {
             Ok(Some(s)) => break Some(s),

@@ -17,7 +17,7 @@ use pt_render::Image;
 use serde_json::{json, Value};
 use std::cell::{Cell, RefCell};
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
+use std::process::{Command, Stdio};
 
 pub const DEFAULT_SERVER: &str = r"D:\Fekri\tools\llama\bin\llama-server.exe";
 pub const DEFAULT_MODEL: &str = r"D:\Fekri\tools\models\qwen3-vl-8b\model-Q4_K_M.gguf";
@@ -277,7 +277,7 @@ fn env_or(name: &str, default: &str) -> String {
 pub struct Judge {
     port: u16,
     may_spawn: bool,
-    child: RefCell<Option<Child>>,
+    child: RefCell<Option<crate::lowload::Heavy>>,
     cache: PathBuf,
     pub calls: Cell<u64>,
     pub cache_hits: Cell<u64>,

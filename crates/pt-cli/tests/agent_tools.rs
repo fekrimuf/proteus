@@ -463,3 +463,21 @@ fn a_walk_through_opens_notes_what_is_pointed_at_and_names_it() {
     assert!(Path::new(notes[0]["shot"].as_str().unwrap()).exists(), "the picture taken at the click");
     assert!(out.join("notes.json").exists());
 }
+
+/// The agent can see whether the machine is taken before it starts a render, and by whom.
+#[test]
+fn the_agent_sees_who_holds_the_machine() {
+    setup();
+    let dir = scratch("heavy_status");
+    std::env::set_var("PT_HEAVY_LOCK_DIR", dir.join("lock"));
+    let mut s = Session::new();
+    let (err, v) = tool(&mut s, "heavy_status", json!({}));
+    assert!(!err && v["output"]["held"] == false, "{v}");
+    let slot = pt_cli::lowload::acquire("a stand-in render").unwrap();
+    let (err, v) = tool(&mut s, "heavy_status", json!({}));
+    assert!(!err && v["output"]["held"] == true, "{v}");
+    assert!(v["output"]["holder"].as_str().unwrap().contains("a stand-in render"), "{v}");
+    drop(slot);
+    let (_, v) = tool(&mut s, "heavy_status", json!({}));
+    assert_eq!(v["output"]["held"], false, "{v}");
+}
