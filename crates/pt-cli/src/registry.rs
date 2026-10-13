@@ -96,6 +96,7 @@ pub const ALL: &[&Command] = &[
     &crate::edits::EDIT,
     &crate::gate::GATE,
     &crate::grounding::GROUND_CHECK,
+    &crate::lowload::HEAVY_STATUS,
     &crate::recipes::RUN_ALL,
     &crate::blender::RENDER_SCENE,
     &crate::grounding::REVIEW_TILES,
@@ -308,7 +309,7 @@ fn run_child(c: &Command, args: &Value) -> Result<Value, String> {
     // line would have finished.
     let out = if c.heavy {
         p.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
-        crate::lowload::spawn_uncapped(&mut p).and_then(|child| child.wait_with_output())
+        crate::lowload::spawn_light(&mut p).and_then(|child| child.wait_with_output())
     } else {
         p.output()
     }

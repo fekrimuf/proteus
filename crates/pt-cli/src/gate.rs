@@ -51,7 +51,7 @@ fn cargo() -> std::ffi::OsString {
 fn run_cargo(args: &[&str]) -> Result<(), String> {
     let mut c = Command::new(cargo());
     c.args(args).current_dir(root());
-    let mut child = crate::lowload::spawn_uncapped(&mut c).map_err(|e| format!("cannot start cargo: {e}"))?;
+    let mut child = crate::lowload::spawn_light(&mut c).map_err(|e| format!("cannot start cargo: {e}"))?;
     let status = child.wait().map_err(|e| e.to_string())?;
     if status.success() {
         Ok(())
