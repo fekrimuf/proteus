@@ -355,3 +355,12 @@ Times are local (Europe/Stockholm). Written by the next session from the session
 **Decided (B24):** one agent session at a time, one row per new session, a checkpoint commit at every passing test run. ROUTE.md holds the queue in place of the lanes; CLAUDE.md's line on parallel agents says the same.
 
 **Heavy jobs run by the recovering session:** none (builds and tests only).
+
+## 2026-10-13: row 1a closed and merged (the creek's placement faults)
+
+Built and checked in the row's worktree, merged into main (the gate passes on the merged tree). Heavy jobs run: one `pt survey` of the creek (95 s); none left running.
+
+* **Result:** on the creek world, objects within 1.5 m of a standing camera 24 before and 0 after; more than half under the ground 5,337 before and 0 after; mostly under water 35 before and 0 after. The valley and Teton worlds are clean on every kind. The "last 3 under water" of the checkpoint came from a binary built before the final edits: rebuilt, the check reports nothing.
+* **Survey:** `pt survey` of the creek, 66 pictures, no flagged object; sheets opened (overview and walk) and kept in `out\survey\cascade_1a\`. No object floats, hangs or lies in the water in any of them.
+* **Two items closed by evidence:** the "coarse ground triangle beside the `hero` camera" does not reproduce (`pt pick` names the fine `terrain_hero` patch on that bank). The needles across the hut in the `village` survey frame are a sapling 7.6 m away that the engine draws with oversized needle cards, so it belongs to row 2a; a tree that blocks a camera's subject from further out is the first rule of the scene composer (row 7).
+* **Unchanged:** golden hashes and the gym baseline (the `seat` defaults leave every existing recipe as it was). Guide: WORLD_GUIDE "Clear of the lens, out of the ground, out of the water".

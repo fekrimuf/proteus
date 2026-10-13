@@ -168,6 +168,7 @@ pub fn check(geo: &Geometry, terrain: &Surface, water: &Surface) -> (Vec<Finding
     // per prototype: its real underside (the vertices of its base, where its body starts), which a box cannot give
     let soles: Vec<Option<pt_core::seat::Sole>> = inst.protos.iter().map(|p| pt_core::seat::Sole::of(p)).collect();
     let (land, wet) = (|x: f32, z: f32| terrain.height(x, z), |x: f32, z: f32| water.height(x, z));
+    let floated = inst.attrs.get("seat_float").and_then(pt_core::Column::as_f32);
     for (i, b) in bounds.iter().enumerate() {
         if let Some((lo, hi)) = b {
             let s = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
@@ -227,18 +228,64 @@ pub fn check(geo: &Geometry, terrain: &Surface, water: &Surface) -> (Vec<Finding
             None => {}
         }
         let ground_c = gaps.first().map_or(0.0, |g| y_lo - g);
-        let buried = ground_c - y_lo;
-        if buried > 0.6 * height {
-            push("buried", buried);
+        // under the ground, by the object's body (a log on a stub is not buried because the stub is)
+        let buried = fit.as_ref().map_or((ground_c - y_lo) / height, |f| f.buried_share());
+        if buried > pt_core::seat::MAX_BURIED {
+            push("buried", buried * height);
         }
-        if let Some(w) = water.height(origin[0], origin[2]) {
-            let under = (w - y_lo).min(height);
-            if under > 0.6 * height {
-                push("shallow", under);
+        // under the creek's water as an eye sees it: where the water lies over the ground, and not wood `seat` put in the water line
+        let afloat = floated.is_some_and(|s| s.get(k).is_some_and(|v| *v > 0.5));
+        match &fit {
+            Some(f) => {
+                if !afloat && f.drowned_share() > pt_core::seat::MAX_DROWNED {
+                    push("shallow", f.drowned_share() * f.visible());
+                }
+            }
+            None => {
+                if let Some(w) = water.height(origin[0], origin[2]).filter(|w| *w > ground_c + 0.02) {
+                    let under = (w - y_lo).min(height);
+                    if under > pt_core::seat::MAX_DROWNED * height {
+                        push("shallow", under);
+                    }
+                }
             }
         }
     }
     (out, flat_protos)
+}
+
+/// A placed object inside the clear radius of a standing camera: it fills the lens.
+#[derive(Clone, Debug)]
+pub struct InFace {
+    pub camera: String,
+    pub proto: u32,
+    pub index: usize,
+    pub pos: [f32; 3],
+    /// Metres from the camera's eye to the object's nearest vertex.
+    pub distance: f32,
+}
+
+/// Every placed object whose real extent (its nearest vertex, not its pivot) comes within `clearance` metres of the eye of a
+/// standing camera. Ground cover that `seat` marked `soft` (grass tiles, flowers) may stay: it is the ground the camera stands in.
+pub fn in_face(geo: &Geometry, terrain: &Surface, cams: &[Camera], clearance: f32) -> Vec<InFace> {
+    let mut out = Vec::new();
+    let Some(inst) = &geo.instances else { return out };
+    let bounds: Vec<Option<([f32; 3], [f32; 3])>> = inst.protos.iter().map(|p| p.bounds()).collect();
+    let soft = inst.attrs.get("seat_soft").and_then(pt_core::Column::as_f32);
+    let eyes: Vec<(usize, [f32; 3])> = cams.iter().enumerate().map(|(i, c)| (i, [c.x, terrain.height(c.x, c.z).unwrap_or(0.0) + c.eye_height, c.z])).collect();
+    for (k, xf) in inst.xf.iter().enumerate() {
+        let pid = inst.proto_id[k] as usize;
+        let Some(b) = bounds[pid] else { continue };
+        if soft.is_some_and(|s| s.get(k).is_some_and(|v| *v > 0.5)) || pt_core::lod::hinted_cull(&inst.protos[pid]).is_some() {
+            continue;
+        }
+        for (ci, eye) in &eyes {
+            if let Some(distance) = pt_core::seat::nearest_vertex(&inst.protos[pid], b, xf, *eye, clearance) {
+                out.push(InFace { camera: cams[*ci].name.clone(), proto: pid as u32, index: k, pos: [xf[3], xf[7], xf[11]], distance });
+            }
+        }
+    }
+    out
 }
 
 fn in_view(c: &Camera, pos: [f32; 3], radius: f32) -> bool {
@@ -304,7 +351,7 @@ fn widths(g: &Geometry, s: &pt_core::seat::Sole) -> Vec<[f32; 2]> {
 /// Report as JSON: totals per kind, per camera the flagged objects in view (with their pixel position in a 1920 x 1080 frame), and
 /// the failing verdict. With `frames`, a copy of every camera's `frame_<camera>.png` with the flagged objects boxed is written
 /// to `annotate_to` (red float, orange overhang, yellow shallow, magenta buried).
-pub fn report(geo: &Geometry, scene: &Value, radius: f32, frames: Option<&std::path::Path>, annotate_to: Option<&std::path::Path>) -> Result<Value, String> {
+pub fn report(geo: &Geometry, scene: &Value, radius: f32, clearance: f32, frames: Option<&std::path::Path>, annotate_to: Option<&std::path::Path>) -> Result<Value, String> {
     let terrain = Surface::from_geometry(geo, |m| m.starts_with("terrain"));
     if terrain.is_empty() {
         return Err("no terrain material (a name starting with 'terrain') in the cooked world".into());
@@ -359,6 +406,13 @@ pub fn report(geo: &Geometry, scene: &Value, radius: f32, frames: Option<&std::p
             "worst": seen.iter().take(8).map(|f| json!({"kind": f.kind, "what": label(f.proto), "at": [f.pos[0], f.pos[1], f.pos[2]], "height": f.height, "amount": f.amount, "pixel": px(f)})).collect::<Vec<_>>(),
         }));
     }
+    // objects in a camera's face (within the clear radius of its eye), nearest first
+    let mut faces = in_face(geo, &terrain, &cams, clearance);
+    faces.sort_by(|a, b| a.distance.partial_cmp(&b.distance).unwrap_or(std::cmp::Ordering::Equal));
+    let in_face_json: Vec<Value> = faces.iter().take(40).map(|f| json!({"camera": f.camera, "what": label(f.proto), "distance_m": (f.distance * 100.0).round() / 100.0, "at": f.pos})).collect();
+    // a world also fails on what is mostly under its ground or its water, anywhere: invisible or flat lids that cost memory
+    let (buried, drowned) = (by_kind.get("buried").copied().unwrap_or(0), by_kind.get("shallow").copied().unwrap_or(0));
+    failing |= !faces.is_empty() || buried > 0 || drowned > 0;
     // where the world's triangles are: per material, triangles, points used and the horizontal extent in metres
     let mut mats: std::collections::BTreeMap<String, (usize, f32, f32, f32, f32)> = Default::default();
     {
@@ -379,11 +433,20 @@ pub fn report(geo: &Geometry, scene: &Value, radius: f32, frames: Option<&std::p
         "base_materials": mats.iter().map(|(k, v)| json!({"material": k, "triangles": v.0, "x": [v.1, v.3], "z": [v.2, v.4]})).collect::<Vec<_>>(),
         "instances": inst.map_or(0, |i| i.len()),
         "findings": by_kind,
+        // the five worst of every kind anywhere in the world (the per-camera lists only show what is in view)
+        "worst_anywhere": by_kind.keys().map(|k| {
+            let mut all: Vec<&Finding> = findings.iter().filter(|f| f.kind == *k).collect();
+            all.sort_by(|a, b| b.amount.partial_cmp(&a.amount).unwrap_or(std::cmp::Ordering::Equal));
+            (k.to_string(), all.iter().take(5).map(|f| json!({"what": label(f.proto), "at": f.pos, "height": f.height, "amount": f.amount})).collect::<Vec<_>>())
+        }).collect::<std::collections::BTreeMap<_, _>>(),
         // the real underside of every prototype, as the check and the `seat` node see it
         "soles": inst.map(|i| i.protos.iter().enumerate().filter_map(|(k, g)| pt_core::seat::Sole::of(g).map(|s| json!({"proto": label(k as u32), "height": s.hi[1] - s.lo[1], "base_width": s.base_width, "body_starts_at": s.body, "slab_top": s.collar, "lying": s.lying, "width_by_height": widths(g, &s)}))).collect::<Vec<_>>()).unwrap_or_default(),
         "flat_prototypes": flat.iter().map(|(p, k)| json!({"proto": label(*p), "kind": k})).collect::<Vec<_>>(),
         "cameras": cam_json,
         "radius_m": radius,
+        "clearance_m": clearance,
+        "in_face": in_face_json,
+        "in_face_count": faces.len(),
         "fail": failing,
     }))
 }
@@ -393,12 +456,13 @@ pub const GROUND_CHECK: crate::registry::Command = {
     crate::registry::Command {
         name: "ground-check",
         tool: "ground_check",
-        summary: "Cook a world on the CPU (no render, no GPU) and list, per scene camera, the objects that float, hang over a slope or bank, are mostly under water (flat lids) or are buried. With frames and annotate it writes ground_<camera>.png with each one boxed (red float, orange hanging, yellow shallow, magenta buried). Fails when anything floats or hangs inside a camera view.",
+        summary: "Cook a world on the CPU (no render, no GPU) and list, per scene camera, the objects that float, hang over a slope or bank, are mostly under water (flat lids) or are buried. With frames and annotate it writes ground_<camera>.png with each one boxed (red float, orange hanging, yellow shallow, magenta buried). Fails when anything floats or hangs inside a camera view, when an object is within the clear radius of a camera's eye (in_face), or when anything anywhere is mostly under the ground or the creek's water.",
         heavy: false,
         params: &[
             Param::pos("recipe", Kind::Str, "the world's recipe .hcs file"),
             Param::pos("scene", Kind::Str, "the scene .json file that holds the cameras"),
             Param::flag("radius", Kind::Num, "metres around a camera that count as in view (default 45)"),
+            Param::flag("clearance", Kind::Num, "metres of clear air around every standing camera's eye (default 1.5): fails on a placed object whose nearest vertex is closer, naming camera, object and distance"),
             Param::flag("frames", Kind::Str, "folder holding the rendered frames to draw on"),
             Param::flag("annotate", Kind::Str, "folder to write the annotated frames to"),
             Param::flag("lookdev", Kind::Bool, "cook in the look-development tier (the tier the frame was rendered in)"),
@@ -433,10 +497,24 @@ pub fn ground_check_cmd(args: &[String]) -> Result<(), String> {
     let geo = g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?;
     drop(g);
     let (frames, out) = (flag("--frames").map(std::path::PathBuf::from), flag("--annotate").map(std::path::PathBuf::from));
-    let r = report(&geo, &scene, radius, frames.as_deref(), out.as_deref())?;
+    let clearance = flag("--clearance").and_then(|s| s.parse().ok()).unwrap_or(pt_core::seat::CAMERA_CLEARANCE);
+    let r = report(&geo, &scene, radius, clearance, frames.as_deref(), out.as_deref())?;
     println!("{}", serde_json::to_string_pretty(&r).map_err(|e| e.to_string())?);
     if r["fail"] == true {
-        Err("ground-check: floating or overhanging objects inside a camera view".into())
+        // say what failed, naming the worst of each class, so the line alone is enough to act on
+        let mut why = Vec::new();
+        if let Some(f) = r["in_face"].as_array().and_then(|a| a.first()) {
+            why.push(format!("{} object(s) within {clearance} m of a camera's eye (nearest: {} at {} m from camera {})", r["in_face_count"], f["what"].as_str().unwrap_or("?"), f["distance_m"], f["camera"].as_str().unwrap_or("?")));
+        }
+        for (kind, text) in [("buried", "more than half under the ground"), ("shallow", "mostly under water"), ("float", "floating"), ("overhang", "hanging")] {
+            if let Some(n) = r["findings"][kind].as_u64().filter(|n| *n > 0 && (kind == "buried" || kind == "shallow")) {
+                why.push(format!("{n} {text}"));
+            }
+        }
+        if why.is_empty() {
+            why.push("floating or overhanging objects inside a camera view".into());
+        }
+        Err(format!("ground-check: {}", why.join("; ")))
     } else {
         Ok(())
     }
@@ -547,6 +625,22 @@ pub fn cull_to_view(geo: &mut Geometry, cams: &[Camera], radius: f32) -> (usize,
 /// For the scorecard: (objects floating or hanging inside a camera view, objects mostly under water inside a camera view, cameras
 /// checked), counted over every standing camera of the scene; `None` when there is none or no terrain.
 pub fn view_counts(geo: &Geometry, scene: &Value, radius: f32) -> Option<(u64, u64, u64)> {
+    placement_counts(geo, scene, radius).map(|c| (c.hang, c.shallow, c.cams))
+}
+
+/// What the ground check says about a cooked world, as counts: in a camera view (`hang` floating or hanging, `shallow` mostly
+/// under water), within a camera's clear radius (`in_face`), and anywhere in the world (`buried`, `drowned`).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Counts {
+    pub hang: u64,
+    pub shallow: u64,
+    pub cams: u64,
+    pub in_face: u64,
+    pub buried: u64,
+    pub drowned: u64,
+}
+
+pub fn placement_counts(geo: &Geometry, scene: &Value, radius: f32) -> Option<Counts> {
     let cams = cameras_of(scene);
     let terrain = Surface::from_geometry(geo, |m| m.starts_with("terrain"));
     if cams.is_empty() || terrain.is_empty() {
@@ -554,18 +648,20 @@ pub fn view_counts(geo: &Geometry, scene: &Value, radius: f32) -> Option<(u64, u
     }
     let water = Surface::from_geometry(geo, |m| m.contains("water"));
     let (findings, _) = check(geo, &terrain, &water);
-    let (mut hang, mut shallow) = (0u64, 0u64);
+    let mut n = Counts { cams: cams.len() as u64, in_face: in_face(geo, &terrain, &cams, pt_core::seat::CAMERA_CLEARANCE).len() as u64, ..Default::default() };
     for f in &findings {
         let seen = cams.iter().any(|c| in_view(c, f.pos, radius));
-        if seen {
-            match f.kind {
-                "float" | "overhang" => hang += 1,
-                "shallow" => shallow += 1,
-                _ => {}
+        match f.kind {
+            "float" | "overhang" if seen => n.hang += 1,
+            "shallow" => {
+                n.drowned += 1;
+                n.shallow += u64::from(seen);
             }
+            "buried" => n.buried += 1,
+            _ => {}
         }
     }
-    Some((hang, shallow, cams.len() as u64))
+    Some(n)
 }
 
 #[cfg(test)]
@@ -624,6 +720,45 @@ mod tests {
     #[test]
     fn a_stone_sunk_into_the_ground_is_buried() {
         assert!(kinds(&world(vec![[0.0, -0.8, 0.0]], 0.0, None)).contains(&"buried"));
+    }
+
+    #[test]
+    fn more_than_half_under_the_ground_is_buried() {
+        assert!(kinds(&world(vec![[0.0, -0.55, 0.0]], 0.0, None)).contains(&"buried"));
+        assert!(!kinds(&world(vec![[0.0, -0.45, 0.0]], 0.0, None)).contains(&"buried"));
+    }
+
+    #[test]
+    fn a_stone_standing_in_the_water_is_shallow_but_not_where_the_water_lies_under_the_ground() {
+        // ground at 0, the unit box standing at -0.6 is 60% under the ground and the water plane at -0.2 hides under it
+        assert!(!kinds(&world(vec![[0.0, -0.6, 0.0]], 0.0, Some(-0.2))).contains(&"shallow"));
+        // ground at -1, water at 0: the box on the bed (-1 to 0) is wholly under water
+        assert!(kinds(&world(vec![[0.0, -1.0, 0.0]], -1.0, Some(0.0))).contains(&"shallow"));
+        // wood that `seat` put in the water line is not called drowned
+        let mut g = world(vec![[0.0, -1.0, 0.0]], -1.0, Some(0.0));
+        g.instances.as_mut().unwrap().attrs.set("seat_float", pt_core::Column::from_f32(vec![1.0]));
+        assert!(!kinds(&g).contains(&"shallow"));
+    }
+
+    fn standing_camera(x: f32, z: f32) -> Camera {
+        Camera { name: "front".into(), x, z, yaw_deg: 0.0, half_fov_deg: 33.0, pitch_deg: 0.0, eye_height: 1.0, lens: 28.0, sensor: 36.0 }
+    }
+
+    #[test]
+    fn an_object_within_reach_of_the_eye_is_found_by_its_extent_and_named() {
+        // boxes of 1 m at z = 1 (its near face 0.5 m ahead of the camera) and at z = 6; the eye is 1 m up at the origin
+        let g = world(vec![[0.0, 0.0, 1.0], [0.0, 0.0, 6.0]], 0.0, None);
+        let t = Surface::from_geometry(&g, |m| m.starts_with("terrain"));
+        let faces = in_face(&g, &t, &[standing_camera(0.0, 0.0)], 1.5);
+        assert_eq!(faces.len(), 1, "{faces:?}");
+        assert_eq!((faces[0].camera.as_str(), faces[0].index), ("front", 0));
+        assert!((faces[0].distance - 0.707).abs() < 0.01, "the near top corner is 0.71 m from the eye: {}", faces[0].distance);
+        // ground cover that `seat` marked soft may stay
+        let mut soft = g.clone();
+        soft.instances.as_mut().unwrap().attrs.set("seat_soft", pt_core::Column::from_f32(vec![1.0, 0.0]));
+        assert!(in_face(&soft, &t, &[standing_camera(0.0, 0.0)], 1.5).is_empty());
+        // and a camera further off sees nothing near
+        assert!(in_face(&g, &t, &[standing_camera(0.0, -4.0)], 1.5).is_empty());
     }
 
     #[test]

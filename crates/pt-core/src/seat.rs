@@ -13,6 +13,17 @@ use crate::Geometry;
 pub const BASE_AIR: f32 = 0.08;
 /// Share of an object's surface that may lie below its "body" (branch stubs, root tips, a twig it would stand on).
 const BODY_SHARE: f32 = 0.12;
+/// Most of an object's height that may lie under the ground before `pt ground-check` calls it `buried` (it shows a lid of itself,
+/// or nothing, and costs memory). `seat` keeps each kind under its own, stricter `sink`.
+pub const MAX_BURIED: f32 = 0.5;
+/// Most of an object's height that may lie under the water before the check calls it `shallow` (a land plant or stone drowned in
+/// the creek). Wood that floats is the exception (`Fit::floats`). `seat` keeps each kind under its own, stricter `wade`.
+pub const MAX_DROWNED: f32 = 0.5;
+/// How near a standing camera a placed object may reach (m, from the camera's eye to the object's nearest vertex). A fir sapling's
+/// branches 0.81 m from the `village` camera filled a fifth of its frame; at a metre and a half nothing but a branch tip is
+/// left in the corner of a 28 mm frame, and the owner's walk eye (1.7 m) stands clear of a person-high plant. Grass and flowers
+/// are exempt (`seat`'s `soft`), for they are the ground the camera stands in.
+pub const CAMERA_CLEARANCE: f32 = 1.5;
 
 /// The underside of a prototype, in its own space.
 pub struct Sole {
@@ -133,6 +144,8 @@ pub struct Fit {
     pub reach: f32,
     /// Least and most air under the bounding box (its middle and a ring at a quarter of its width), over ground or water.
     pub ring: (f32, f32),
+    /// A log, a branch or a tile: it lies along the ground and floats if it lies in water over deeper ground.
+    pub lying: bool,
 }
 
 pub fn fit(sole: &Sole, xf: &Mat34, ground: &dyn Fn(f32, f32) -> Option<f32>, water: &dyn Fn(f32, f32) -> Option<f32>) -> Option<Fit> {
@@ -172,10 +185,36 @@ pub fn fit(sole: &Sole, xf: &Mat34, ground: &dyn Fn(f32, f32) -> Option<f32>, wa
     let wide = scale(0).max(scale(2));
     let reach = if sole.lying { (hi[0] - lo[0]).max(hi[2] - lo[2]) * wide } else { (sole.base_width * wide).max(0.3) };
     let body_gap = sole.lying.then(|| mid[1] + body - w.map_or(g, |w| w.max(g)));
-    Some(Fit { y_lo, height: y_hi - y_lo, mid_y: mid[1], ground: g, water: w, base_gap, collar: sole.collar * scale(1), body_gap, body, reach, ring })
+    Some(Fit { y_lo, height: y_hi - y_lo, mid_y: mid[1], ground: g, water: w, base_gap, collar: sole.collar * scale(1), body_gap, body, reach, ring, lying: sole.lying })
 }
 
 impl Fit {
+    /// The stub a lying object stands on, in world metres: a log on one broken branch has most of the box under its body. That
+    /// part is not the object (`propped` is the verdict on it), so burial and drowning are measured on the body above it.
+    fn stub(&self) -> f32 {
+        if self.lying && self.body > 0.25 * self.height {
+            self.body
+        } else {
+            0.0
+        }
+    }
+
+    /// Height of the object itself, without a stub.
+    pub fn visible(&self) -> f32 {
+        (self.height - self.stub()).max(1e-6)
+    }
+
+    /// Share of the object (its body, for a lying one) that lies under the ground at its middle (0 when it stands on it).
+    pub fn buried_share(&self) -> f32 {
+        ((self.ground - (self.y_lo + self.stub())) / self.visible()).max(0.0)
+    }
+
+    /// Share of the object's height that lies under water seen from above (0 on dry ground, or where the water surface lies
+    /// under the ground and cannot be seen).
+    pub fn drowned_share(&self) -> f32 {
+        self.water.map_or(0.0, |w| ((w - (self.y_lo + self.stub())) / self.visible()).clamp(0.0, 1.0))
+    }
+
     /// The base hangs in the air: a root slab over a slope, a grass tile over a bank's edge.
     pub fn base_in_air(&self) -> bool {
         self.base_gap > BASE_AIR
@@ -268,6 +307,26 @@ pub fn seat(sole: &Sole, xf: &Mat34, ground: &dyn Fn(f32, f32) -> Option<f32>, w
 
 /// `seat`, with the reason an instance does not belong: `limit` (the ground falls away), or the verdict it would still get.
 pub fn seat_or_why(sole: &Sole, xf: &Mat34, ground: &dyn Fn(f32, f32) -> Option<f32>, water: &dyn Fn(f32, f32) -> Option<f32>, limit: f32, draft: f32, bury: f32) -> Result<Mat34, &'static str> {
+    place(sole, xf, ground, water, limit, draft, bury, &Keep::ANY).map(|r| r.0)
+}
+
+/// How deep in the ground and in the water a kind of object may sit, as shares of its height (1 = no limit). A rock may sit
+/// deeper than a fern; nothing that stands on land may stand in the water.
+#[derive(Clone, Copy, Debug)]
+pub struct Keep {
+    pub sink: f32,
+    pub wade: f32,
+}
+
+impl Keep {
+    pub const ANY: Keep = Keep { sink: 1.0, wade: 1.0 };
+}
+
+/// `seat_or_why` with the kind's limits. An object buried deeper than `keep.sink` is raised to the limit, and removed where
+/// raising leaves its base in the air (`buried`); one that stands more than `keep.wade` of its height under the water is removed
+/// (`drowned`), floating wood excepted. The flag returned with the new transform is true for wood put in the water line.
+#[allow(clippy::too_many_arguments)]
+pub fn place(sole: &Sole, xf: &Mat34, ground: &dyn Fn(f32, f32) -> Option<f32>, water: &dyn Fn(f32, f32) -> Option<f32>, limit: f32, draft: f32, bury: f32, keep: &Keep) -> Result<(Mat34, bool), &'static str> {
     let dry = |_: f32, _: f32| None;
     let drop_of = |f: &Fit| {
         let base = (f.base_gap + bury.max(0.02)).max(0.0);
@@ -277,19 +336,19 @@ pub fn seat_or_why(sole: &Sole, xf: &Mat34, ground: &dyn Fn(f32, f32) -> Option<
             base
         }
     };
-    let Some(upright) = fit(sole, xf, ground, &dry) else { return Ok(*xf) };
+    let Some(upright) = fit(sole, xf, ground, &dry) else { return Ok((*xf, false)) };
     if draft > 0.0 {
         if let Some(w) = fit(sole, xf, ground, water).and_then(|f| f.water) {
             let afloat = w - upright.body - draft * (upright.height - upright.body);
             if afloat > upright.mid_y - drop_of(&upright) {
                 let mut m = *xf;
                 m[7] += afloat - upright.mid_y;
-                return Ok(m);
+                return Ok((m, true));
             }
         }
     }
     let mut m = if sole.lying { conformed(sole, xf, ground).unwrap_or(*xf) } else { *xf };
-    let Some(f) = fit(sole, &m, ground, &dry) else { return Ok(m) };
+    let Some(f) = fit(sole, &m, ground, &dry) else { return Ok((m, false)) };
     if limit > 0.0 && f.base_gap - f.collar > limit * f.height.min(f.reach) {
         return Err("limit");
     }
@@ -300,7 +359,57 @@ pub fn seat_or_why(sole: &Sole, xf: &Mat34, ground: &dyn Fn(f32, f32) -> Option<
             return Err(kind);
         }
     }
-    Ok(m)
+    // deeper in the ground than this kind is meant to sit: up to its limit, and out where that leaves its base in the air
+    if keep.sink < 1.0 {
+        if let Some(f) = fit(sole, &m, ground, &dry) {
+            let over = f.buried_share() - keep.sink;
+            if over > 0.0 {
+                m[7] += over * f.visible();
+                if fit(sole, &m, ground, water).and_then(|f| f.verdict()).is_some() {
+                    return Err("buried");
+                }
+            }
+        }
+    }
+    // land plants and stones do not stand in the creek (a flat lid under the surface reads as a patch); wood afloat is the exception
+    if keep.wade < 1.0 {
+        if let Some(f) = fit(sole, &m, ground, water) {
+            if f.drowned_share() > keep.wade {
+                return Err("drowned");
+            }
+        }
+    }
+    Ok((m, false))
+}
+
+/// Distance (m) from `eye` to the nearest vertex of an instance (prototype `proto` with its bounds, placed by `xf`), when that is
+/// under `radius`. Real extent, not the pivot: a sapling's pivot is on the ground and its branches reach the lens.
+pub fn nearest_vertex(proto: &Geometry, bounds: ([f32; 3], [f32; 3]), xf: &Mat34, eye: [f32; 3], radius: f32) -> Option<f32> {
+    let (lo, hi) = bounds;
+    let (mut a, mut b) = ([f32::MAX; 3], [f32::MIN; 3]);
+    for c in 0..8 {
+        let q = xform_point(xf, [if c & 1 == 0 { lo[0] } else { hi[0] }, if c & 2 == 0 { lo[1] } else { hi[1] }, if c & 4 == 0 { lo[2] } else { hi[2] }]);
+        for k in 0..3 {
+            a[k] = a[k].min(q[k]);
+            b[k] = b[k].max(q[k]);
+        }
+    }
+    // the box first: most objects of a world are nowhere near a camera
+    let gap = |k: usize| (a[k] - eye[k]).max(eye[k] - b[k]).max(0.0);
+    let box_d2 = gap(0) * gap(0) + gap(1) * gap(1) + gap(2) * gap(2);
+    if box_d2 >= radius * radius {
+        return None;
+    }
+    let best = proto
+        .p()
+        .iter()
+        .map(|v| {
+            let q = xform_point(xf, *v);
+            let (dx, dy, dz) = (q[0] - eye[0], q[1] - eye[1], q[2] - eye[2]);
+            dx * dx + dy * dy + dz * dz
+        })
+        .fold(f32::MAX, f32::min);
+    (best < radius * radius).then(|| best.sqrt())
 }
 
 /// Heights of a surface (terrain, water) over x and z, with a grid so a lookup tests a handful of triangles. Where two levels
@@ -464,6 +573,9 @@ mod tests {
         assert!(f.propped().is_some(), "but the log is in the air");
         let m = seat(&s, &AT, &flat, &dry, 0.0, 0.0, 0.0).unwrap();
         assert!(fit(&s, &m, &flat, &dry).unwrap().propped().is_none());
+        // its stub is in the ground, half the box with it, and the log is not buried for that
+        let f = fit(&s, &m, &flat, &dry).unwrap();
+        assert!(f.ground - f.y_lo > 0.4 && f.buried_share() < 0.1, "buried {}", f.buried_share());
     }
 
     #[test]
@@ -495,6 +607,64 @@ mod tests {
         let m = seat(&s, &moved(-0.1), &shallow, &level, 0.0, 0.55, 0.0).unwrap();
         let f = fit(&s, &m, &shallow, &level).unwrap();
         assert!((f.mid_y + f.body - f.ground).abs() < 0.03, "the body lies on the bed");
+    }
+
+    #[test]
+    fn what_is_more_than_half_buried_is_raised_or_removed_by_its_kind() {
+        // a rock 1 m wide and 1 m tall on ground that rises toward +x: the seat buries its uphill side
+        let rock = boxes(&[(0.5, 0.5, 0.0, 1.0)]);
+        let s = Sole::of(&rock).unwrap();
+        let share_of = |m: &Mat34, ground: &dyn Fn(f32, f32) -> Option<f32>| fit(&s, m, ground, &dry).unwrap().buried_share();
+        // a steep bank (rising 1.2 m per metre): the middle is 0.6 m deep and the downhill rim is buried 1.2 m at the other side
+        let steep = |x: f32, _: f32| Some(1.2 * x);
+        let any = place(&s, &AT, &steep, &dry, 0.0, 0.0, 0.0, &Keep::ANY).unwrap().0;
+        assert!(share_of(&any, &steep) > 0.0, "left alone, the rock sits in the bank");
+        let m = place(&s, &AT, &steep, &dry, 0.0, 0.0, 0.0, &Keep { sink: 0.45, wade: 1.0 });
+        // raising it to a shallower seat leaves its downhill side in the air: it does not belong on that bank
+        assert_eq!(m.err(), Some("buried"));
+        // a bump under the middle (12 cm high under a 1 m rock): the middle is buried 14%; a fern-like kind that may sink only 10%
+        // is raised the 4 cm, which the rim does not mind
+        let bump = |x: f32, z: f32| Some(if x.abs() < 0.2 && z.abs() < 0.2 { 0.12 } else { 0.0 });
+        let deep = place(&s, &AT, &bump, &dry, 0.0, 0.0, 0.0, &Keep::ANY).unwrap().0;
+        assert!(share_of(&deep, &bump) >= 0.13, "the bump buries the middle: {}", share_of(&deep, &bump));
+        let (raised, _) = place(&s, &AT, &bump, &dry, 0.0, 0.0, 0.0, &Keep { sink: 0.1, wade: 1.0 }).unwrap();
+        assert!(share_of(&raised, &bump) <= 0.101 && raised[7] > deep[7], "raised to its kind's depth: {}", share_of(&raised, &bump));
+        assert!(fit(&s, &raised, &bump, &dry).unwrap().verdict().is_none(), "and still sits right by the check's measure");
+    }
+
+    #[test]
+    fn a_land_object_is_kept_out_of_the_water_but_wood_afloat_is_not() {
+        let stone = boxes(&[(0.3, 0.3, 0.0, 0.5)]);
+        let s = Sole::of(&stone).unwrap();
+        // the bed 0.9 m under the water: a 0.5 m stone on it is under water to its top
+        let bed = |_: f32, _: f32| Some(-0.9);
+        let level = |_: f32, _: f32| Some(0.0);
+        assert!(place(&s, &moved(-0.9), &bed, &level, 0.5, 0.0, 0.0, &Keep::ANY).is_ok(), "no rule, no removal");
+        assert_eq!(place(&s, &moved(-0.9), &bed, &level, 0.5, 0.0, 0.0, &Keep { sink: 1.0, wade: 0.45 }).err(), Some("drowned"));
+        // 0.1 m of water over the bed: a stone that shows is kept
+        let shallow = |_: f32, _: f32| Some(-0.1);
+        assert!(place(&s, &moved(-0.1), &shallow, &level, 0.5, 0.0, 0.0, &Keep { sink: 1.0, wade: 0.45 }).is_ok());
+        // wood put in the water line is the exception, and says so
+        let log = Sole::of(&log_on_a_stub()).unwrap();
+        let deep = |_: f32, _: f32| Some(-2.0);
+        let (m, floated) = place(&log, &moved(-2.0), &deep, &level, 0.0, 0.55, 0.0, &Keep { sink: 1.0, wade: 0.45 }).unwrap();
+        assert!(floated && m[7] > -1.0, "the log lies in the water line");
+    }
+
+    #[test]
+    fn the_nearest_vertex_is_the_objects_extent_not_its_pivot() {
+        // a sapling: a thin trunk and a skirt of branches 2.4 m across at 0.9 to 1.2 m; its pivot is on the ground
+        let sapling = boxes(&[(0.05, 0.05, 0.0, 2.5), (1.2, 1.2, 0.9, 1.2)]);
+        let bounds = sapling.base_bounds().unwrap();
+        let eye: [f32; 3] = [2.0, 1.7, 1.2];
+        let pivot = (eye[0] * eye[0] + eye[1] * eye[1] + eye[2] * eye[2]).sqrt();
+        assert!(pivot > 2.5, "the pivot is {pivot} m from the eye, outside the clear radius");
+        let d = nearest_vertex(&sapling, bounds, &AT, eye, CAMERA_CLEARANCE).expect("the branches reach the lens");
+        assert!(d < 1.1 && d > 0.7, "the branch tips are {d} m from the eye");
+        // the same sapling three metres further away is clear
+        let mut far = AT;
+        far[3] = -3.0;
+        assert!(nearest_vertex(&sapling, bounds, &far, eye, CAMERA_CLEARANCE).is_none());
     }
 
     #[test]
