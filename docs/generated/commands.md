@@ -58,12 +58,13 @@ Every command below is on the command line and, under the tool name, in the agen
 
 ### ground-check
 
-`pt ground-check <recipe> <scene> [--radius RADIUS] [--clearance CLEARANCE] [--frames FRAMES] [--annotate ANNOTATE] [--lookdev]`
+`pt ground-check <recipe> <scene> [--radius RADIUS] [--clearance CLEARANCE] [--sight SIGHT] [--frames FRAMES] [--annotate ANNOTATE] [--lookdev]`
 
 * `recipe` (required): the world's recipe .hcs file
 * `scene` (required): the scene .json file that holds the cameras
 * `--radius`: metres around a camera that count as in view (default 45)
 * `--clearance`: metres of clear air around every standing camera's eye (default 1.5): fails on a placed object whose nearest vertex is closer, naming camera, object and distance
+* `--sight`: metres of clear air around the line from a camera to its scene `subject` (default 2.5): fails on a placed object whose nearest vertex is closer, naming camera, object and distance
 * `--frames`: folder holding the rendered frames to draw on
 * `--annotate`: folder to write the annotated frames to
 * `--lookdev`: cook in the look-development tier (the tier the frame was rendered in)
