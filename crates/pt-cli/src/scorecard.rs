@@ -157,8 +157,7 @@ pub fn ledger_trace(a: &Audit, scene: &Value, lib: &Value, geo: &Geometry, ledge
         names.insert(g.to_string());
     }
     for n in names {
-        let key = scene.pointer(&format!("/materials/{n}/use")).and_then(Value::as_str).unwrap_or(&n);
-        if let Some(id) = lib.pointer(&format!("/materials/{key}/polyhaven")).and_then(Value::as_str) {
+        for id in crate::blender::polyhaven_sets(scene, lib, &n) {
             wanted.insert(format!("polyhaven/materials/{id}/{id}_diff_1k.jpg"));
         }
     }

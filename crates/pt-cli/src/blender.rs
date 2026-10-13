@@ -294,8 +294,73 @@ pub struct Opts {
     pub lookdev: bool,
 }
 
-fn load_library(root: &Path) -> Value {
+pub fn load_library(root: &Path) -> Value {
     std::fs::read_to_string(root.join("corpus/materials/library.json")).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or(json!({"materials": {}}))
+}
+
+/// The merged entry the render uses for a material NAME: the library entry (chosen by the scene entry's `use`, else by the name)
+/// with the scene entry's own keys on top, `use` excluded. `None` when the render would not resolve it.
+/// MUST stay in step with `material_spec` in corpus/tools/render_scene.py.
+pub fn material_spec(scene: &Value, lib: &Value, name: &str) -> Option<Value> {
+    let entry = |m: &str| lib.pointer(&format!("/materials/{m}")).filter(|v| v.is_object()).cloned();
+    let over = scene.pointer(&format!("/materials/{name}")).filter(|v| v.is_object());
+    let mut s = entry(name);
+    if s.is_none() && over.is_none() {
+        return None;
+    }
+    if let Some(base) = over.and_then(|o| o.get("use")).and_then(Value::as_str).filter(|u| !u.is_empty()).and_then(entry) {
+        s = Some(base);
+    }
+    let mut merged = s.and_then(|v| v.as_object().cloned()).unwrap_or_default();
+    for (k, v) in over.and_then(Value::as_object).into_iter().flatten().filter(|(k, _)| k.as_str() != "use") {
+        merged.insert(k.clone(), v.clone());
+    }
+    ["polyhaven", "fallback", "color", "layers"].iter().any(|k| merged.contains_key(*k)).then(|| Value::Object(merged))
+}
+
+/// The corpus files a material reaches: Poly Haven sets (set -> the first material name that led to it) and `texture` pictures of
+/// foliage materials.
+#[derive(Debug, Default)]
+pub struct Reached {
+    pub sets: std::collections::BTreeMap<String, String>,
+    pub textures: std::collections::BTreeSet<String>,
+}
+
+/// Follow a material NAME as the render does (`material_spec`; a `layers` entry reads only its layers' files, which are followed the
+/// same way, nesting included; otherwise water reads none, foliage its `texture`, anything else its `polyhaven` set). A name met
+/// twice is followed once, so a cycle in `layers` ends.
+pub fn reach_material(scene: &Value, lib: &Value, name: &str, into: &mut Reached) {
+    let mut seen = std::collections::BTreeSet::new();
+    reach_inner(scene, lib, name, name, into, &mut seen);
+}
+
+fn reach_inner(scene: &Value, lib: &Value, name: &str, root: &str, into: &mut Reached, seen: &mut std::collections::BTreeSet<String>) {
+    if !seen.insert(name.to_string()) {
+        return;
+    }
+    let Some(spec) = material_spec(scene, lib, name) else { return };
+    if let Some(layers) = spec.get("layers").and_then(Value::as_array) {
+        for l in layers.iter().filter_map(Value::as_str) {
+            reach_inner(scene, lib, l, root, into, seen);
+        }
+        return;
+    }
+    match spec.get("kind").and_then(Value::as_str) {
+        Some("water") => {}
+        Some("foliage") => into.textures.extend(spec.get("texture").and_then(Value::as_str).map(|t| t.replace('\\', "/"))),
+        _ => {
+            if let Some(set) = spec.get("polyhaven").and_then(Value::as_str) {
+                into.sets.entry(set.to_string()).or_insert_with(|| root.to_string());
+            }
+        }
+    }
+}
+
+/// The Poly Haven sets a material NAME reaches (`reach_material`).
+pub fn polyhaven_sets(scene: &Value, lib: &Value, name: &str) -> Vec<String> {
+    let mut r = Reached::default();
+    reach_material(scene, lib, name, &mut r);
+    r.sets.into_keys().collect()
 }
 
 /// Fold the scene's `style` (an object, or a path to a style file) into the scene: the style supplies defaults for
