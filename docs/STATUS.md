@@ -32,7 +32,7 @@ Numbers (tests, recipes, gym, ledger, scorecard runs) are not written here: they
 6. The right slope of the creek's east view carries little tall grass since the stable placement of 10-13: raise the hero tile density there.
 7. The USD export of the layer stack (row 8), before an engine handoff.
 8. A walk-through note marked "remove this" needs the scatter's scope name: record the scope on every placed object so the note becomes the edit by itself.
-9. Housekeeping on the owner's word (branch deletion is the owner's): four empty `worktree-agent-*` branches, the merged `lane/lock` and `lane/certificate` branches and the `lane/lock` worktree.
+9. The folder of the finished lock work (`.claude\worktrees\agent-a5d0e824feb7584c7`, clean, its work on main) stays until the owner says to remove it; the leftover branches were deleted on the owner's word (2026-10-13).
 
 ## Capability track (B18)
 
