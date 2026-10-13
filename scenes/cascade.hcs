@@ -345,17 +345,29 @@ h_log_pts = edited(h_log_pts, "hero_logs")
 # for it and on the bed where it is not. A grass tile or a rock whose base would hang over a bank's edge is not placed there.
 # The ground to stand on is the near level and the level around it: a tree at the near level's edge has part of its base over the next.
 footing = merge(land_near, land_mid)
+# Three more rules in the same node (2026-10-13, from the first survey; WORLD_GUIDE "Seating by the real shape"): `cameras` keeps
+# every object's real extent out of arm's reach of a standing camera (grass and flowers, `soft`, are the ground the camera stands
+# in); `sink` is how much of an object's height may lie under the ground (a rock may sit deeper than a fern: more is raised, or
+# removed where raising would hang it); `wade` is how much may lie under the creek (land plants and stones stay out of it). The
+# water goes in as input 2 for `wade`; only `afloat` has a `draft`, so only wood is put in the water line.
+CAMERAS = knob("cameras", [])
 def rooted(instances):
-    return seat(instances, footing, limit=0.5, bury=0.2)
+    return seat(instances, footing, water, limit=0.5, bury=0.2, cameras=CAMERAS)
 
 def seated(instances):
-    return seat(instances, footing, limit=0.5)
+    return seat(instances, footing, water, limit=0.5, sink=0.25, cameras=CAMERAS)
+
+def flowering(instances):
+    return seat(instances, footing, water, limit=0.5, sink=0.25, cameras=CAMERAS, soft=1)
+
+def stony(instances):
+    return seat(instances, footing, water, limit=0.5, sink=0.45, cameras=CAMERAS)
 
 def turfed(instances):
-    return seat(instances, footing, limit=0.25)
+    return seat(instances, footing, water, limit=0.25, sink=0.3, cameras=CAMERAS, soft=1)
 
 def afloat(instances):
-    return seat(instances, footing, water, limit=0.5, draft=0.55)
+    return seat(instances, footing, water, limit=0.5, draft=0.55, cameras=CAMERAS)
 
 tall = rooted(three(tall_pts, fir_a, young_a, pine_a, 51))
 young = rooted(three(young_pts, fir_b, young_b, pine_b, 52))
@@ -364,15 +376,15 @@ bushes = seated(three(bush_pts, bush_a, bush_b, bush_c, 54))
 seedlings = seated(three(seedling_pts, seedling_a, seedling_b, seedling_c, 55))
 ferns = seated(three(fern_pts, fern_a, fern_b, fern_c, 56))
 meadow = turfed(copy_variants(meadow_pts, tile_a, tile_b, tile_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, orient_to_normal=1, seed=57))
-flowers = seated(three(flower_pts, flower_a, flower_b, dandelion, 58))
-rocks = seated(three(rock_pts, rock_a, rock_b, rock_c, 59))
-shore_rocks = seated(three(shore_rock_pts, rock_d, rock_e, rock_f, 60))
+flowers = flowering(three(flower_pts, flower_a, flower_b, dandelion, 58))
+rocks = stony(three(rock_pts, rock_a, rock_b, rock_c, 59))
+shore_rocks = stony(three(shore_rock_pts, rock_d, rock_e, rock_f, 60))
 deadwood = afloat(three(deadwood_pts, log_a, stump_a, stump_b, 61))
 h_tiles = turfed(copy_variants(h_tile_pts, tile_a, tile_b, tile_c, weights=[1.0, 1.0, 1.0], rot_y_random=360.0, orient_to_normal=1, seed=62))
 h_ferns = seated(three(h_fern_pts, fern_a, fern_b, fern_c, 63))
 h_weeds = seated(three(h_weed_pts, weed_a, nettle_a, shrub, 64))
-h_cobbles = seated(three(h_cobble_pts, cobble_a, cobble_b, cobble_c, 65))
-h_rocks = seated(three(h_rock_pts, rock_d, rock_e, rock_a, 66))
+h_cobbles = stony(three(h_cobble_pts, cobble_a, cobble_b, cobble_c, 65))
+h_rocks = stony(three(h_rock_pts, rock_d, rock_e, rock_a, 66))
 h_logs = afloat(three(h_log_pts, log_b, branches, roots, 67))
 
 # ---- the forest beyond the near level: low conifer shapes on the mid level out to 3.4 km. At that distance a tree is a dark spike

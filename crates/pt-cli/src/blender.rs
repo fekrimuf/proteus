@@ -147,7 +147,14 @@ pub fn check_scene(s: &Value) -> Vec<String> {
 pub fn knobs_of(scene: &Value) -> Result<BTreeMap<String, Value>, String> {
     let mut s = scene.clone();
     resolve_style(&mut s)?;
-    Ok(s.get("knobs").and_then(Value::as_object).map(|m| m.iter().map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default())
+    let mut knobs: BTreeMap<String, Value> = s.get("knobs").and_then(Value::as_object).map(|m| m.iter().map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default();
+    // the standing cameras go to the recipe as [[x, z, eye_height], ...], so placement keeps objects out of arm's reach of every
+    // lens (`knob("cameras", [])` and the `seat` node's `cameras`); a style or world variant may set the knob itself
+    let cams = crate::grounding::cameras_of(&s);
+    if !cams.is_empty() {
+        knobs.entry("cameras".to_string()).or_insert_with(|| json!(cams.iter().map(|c| json!([c.x, c.z, c.eye_height])).collect::<Vec<_>>()));
+    }
+    Ok(knobs)
 }
 
 /// Layered materials (`blend_materials`): material name -> its layer roles, from the geometry and its instance prototypes.
@@ -191,8 +198,8 @@ pub struct WorldFacts {
     pub layers: std::collections::BTreeMap<String, Vec<String>>,
     pub names: std::collections::BTreeSet<String>,
     pub authored: std::collections::BTreeSet<String>,
-    /// Objects that float or hang inside a camera view, by the ground check (`None`: no standing camera or no terrain).
-    pub ungrounded: Option<u64>,
+    /// The ground check's counts for the world (`None`: no standing camera or no terrain).
+    pub ungrounded: Option<crate::grounding::Counts>,
 }
 
 pub fn world_facts(geo: &Geometry) -> WorldFacts {
@@ -226,7 +233,8 @@ pub fn unknown_materials(geo: &Geometry, lib: &Value, scene: &Value) -> Vec<Stri
 }
 
 fn write_sidecar(path: &Path, key: &str, f: &WorldFacts) {
-    let v = json!({"key": key, "layers": f.layers, "names": f.names, "authored": f.authored, "ungrounded": f.ungrounded});
+    let placement = f.ungrounded.map(|c| json!([c.hang, c.in_face, c.buried, c.drowned]));
+    let v = json!({"key": key, "layers": f.layers, "names": f.names, "authored": f.authored, "placement": placement});
     let _ = std::fs::write(path, v.to_string());
 }
 
@@ -240,7 +248,10 @@ fn read_sidecar(path: &Path, key: &str) -> Option<WorldFacts> {
         layers: v.get("layers")?.as_object()?.iter().map(|(k, r)| (k.clone(), strs(r).into_iter().collect::<Vec<_>>())).collect(),
         names: strs(v.get("names")?),
         authored: strs(v.get("authored")?),
-        ungrounded: v.get("ungrounded").and_then(Value::as_u64),
+        ungrounded: v.get("placement").and_then(Value::as_array).and_then(|a| {
+            let n = |i: usize| a.get(i).and_then(Value::as_u64);
+            Some(crate::grounding::Counts { hang: n(0)?, in_face: n(1)?, buried: n(2)?, drowned: n(3)?, ..Default::default() })
+        }),
     })
 }
 
@@ -414,7 +425,7 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
         let rep = pt_hcs::run(&code, &mut g, true).map_err(|d| d[0].to_string())?;
         let mut geo = (*g.cook(rep.outputs.first().ok_or("recipe has no out()")?)?).clone();
         // every frame carries the ground check's verdict on the world it shows, so a floating object is never found by eye first
-        let ungrounded = crate::grounding::view_counts(&geo, &scene, 45.0).map(|c| c.0);
+        let ungrounded = crate::grounding::placement_counts(&geo, &scene, 45.0);
         if let (Some(r), Some(only)) = (cull, o.only.as_deref()) {
             let names: Vec<&str> = only.split(',').map(str::trim).collect();
             let cams: Vec<crate::grounding::Camera> = crate::grounding::cameras_of(&scene).into_iter().filter(|c| names.contains(&c.name.as_str())).collect();
@@ -434,13 +445,25 @@ pub fn render(input: &str, scene_path: &Path, out: &Path, o: &Opts) -> Result<Va
 
 /// Put the ground check's verdict into a render report: the count of objects that float or hang inside a camera view, and a
 /// warning when there are any. A frame is looked at through its report, so the report says it before an eye has to find it.
-fn with_grounding(mut report: Value, ungrounded: Option<u64>) -> Value {
-    if let Some(n) = ungrounded {
-        report["floating_or_hanging_in_view"] = json!(n);
-        if n > 0 {
-            let w = json!(format!("{n} objects float or hang inside a camera view: run `pt ground-check` and seat them with the `seat` node before this frame is shown"));
+fn with_grounding(mut report: Value, ungrounded: Option<crate::grounding::Counts>) -> Value {
+    if let Some(c) = ungrounded {
+        report["floating_or_hanging_in_view"] = json!(c.hang);
+        report["objects_in_camera_face"] = json!(c.in_face);
+        report["buried_anywhere"] = json!(c.buried);
+        report["drowned_anywhere"] = json!(c.drowned);
+        let mut says = Vec::new();
+        if c.hang > 0 {
+            says.push(format!("{} objects float or hang inside a camera view: run `pt ground-check` and seat them with the `seat` node before this frame is shown", c.hang));
+        }
+        if c.in_face > 0 {
+            says.push(format!("{} objects stand within arm's reach of a camera's eye: `pt ground-check` names them; the `seat` node's `cameras` keeps them out", c.in_face));
+        }
+        if c.buried > 0 || c.drowned > 0 {
+            says.push(format!("{} objects are more than half under the ground and {} are mostly under water: `seat` with `sink` and `wade` removes or raises them", c.buried, c.drowned));
+        }
+        for w in says {
             match report.get_mut("warnings").and_then(Value::as_array_mut) {
-                Some(list) => list.push(w),
+                Some(list) => list.push(json!(w)),
                 None => report["warnings"] = json!([w]),
             }
         }
@@ -639,11 +662,16 @@ mod tests {
 
     #[test]
     fn a_render_report_says_when_objects_float_or_hang_in_view() {
-        let clean = with_grounding(json!({"warnings": []}), Some(0));
+        use crate::grounding::Counts;
+        let clean = with_grounding(json!({"warnings": []}), Some(Counts::default()));
         assert_eq!((clean["floating_or_hanging_in_view"].clone(), clean["warnings"].as_array().unwrap().len()), (json!(0), 0));
-        let bad = with_grounding(json!({"frames": []}), Some(7));
+        let bad = with_grounding(json!({"frames": []}), Some(Counts { hang: 7, ..Default::default() }));
         assert_eq!(bad["floating_or_hanging_in_view"], 7);
         assert!(bad["warnings"][0].as_str().unwrap().contains("7 objects float or hang"));
+        // an object in a camera's face, and objects buried or drowned anywhere, speak in the report too
+        let more = with_grounding(json!({}), Some(Counts { in_face: 2, buried: 5, drowned: 3, ..Default::default() }));
+        assert_eq!((more["objects_in_camera_face"].clone(), more["buried_anywhere"].clone(), more["drowned_anywhere"].clone()), (json!(2), json!(5), json!(3)));
+        assert_eq!(more["warnings"].as_array().unwrap().len(), 2);
         // no standing camera or no terrain: nothing to say
         assert!(with_grounding(json!({}), None).get("floating_or_hanging_in_view").is_none());
     }

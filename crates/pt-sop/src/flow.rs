@@ -209,6 +209,8 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             match &mut e.inst {
                 Some(i) => {
                     i.insert("seat_move".into(), Ty::Float);
+                    i.insert("seat_soft".into(), Ty::Float);
+                    i.insert("seat_float".into(), Ty::Float);
                 }
                 None => return Err(vec![fd("seat needs instances on input 0", "put copy_to_points or copy_variants upstream of it")]),
             }
