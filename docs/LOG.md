@@ -262,3 +262,7 @@ Measured in the engine on the creek world (`out/sc_cascade_test`, no render): 10
 * **Tests through the agent tools** (`crates/pt-cli/tests/agent_tools.rs`): the command line and tool list agree; mistyped options and arguments are refused with the accepted names; a failing command returns what it printed; rocks placed by the footprint rule never float or hang over four seeds on a rugged hill, the same world without the rule hangs 10 to 16 rocks per seed, rocks lifted 2.5 m float, stones on a submerged bed are counted as flat lids.
 * **Route map:** [ROUTE.md](ROUTE.md) ranks all open work with evidence, route, cost and plan dates. Calibration: capabilities 1 to 6 and the start of 7 landed in about two hours of commits (10-12 23:10 to 10-13 01:15), so the old dates (one step a day) are re-set at three times the measured pace.
 * **Checked-in setup:** `.mcp.json` registers the tool server; CLAUDE.md gained "Running and looking at the product", the rule that a fix ships with a test that fails without it, and the registry rule.
+
+## 2026-10-13: the owner approves the three lanes
+
+* The owner said yes to three work lanes side by side (ROUTE.md "Lanes", DECISIONS B19 item 8) and asked that no work start yet. Recorded; nothing is in progress. The blind pairs were explained to the owner and their protocol written into ROUTE.md.

@@ -188,4 +188,6 @@ change: the judges take two briefs from the start, and the tree family is design
 6. **Every defect fix ships with a test that fails without it**, written against the class (the placement rule, not the one stone), through the agent tools where an agent can see the defect. `crates/pt-cli/tests/agent_tools.rs` holds the floating, hanging and drowned classes, and shows the check fails where it should.
 7. **A fresh agent needs no setup.** `.mcp.json` is checked in; CLAUDE.md carries the commands to run and look at the product.
 
+8. **Three work lanes side by side** (ROUTE.md, "Lanes"): approved by the owner on 2026-10-13; each lane works in its own git worktree with its own build folder, merges only after `pt gate` passes, and the lead alone edits STATUS and LOG. Not started; they begin on the owner's word.
+
 **Effect on the plan.** The dates of B12.6 and B18 were set at one gated step per working day; the history shows capabilities 1 to 6 in about two hours of commits. [ROUTE.md](ROUTE.md) re-sets the dates from that pace and ranks all open work with its cost; the stage gates and the north star are unchanged.

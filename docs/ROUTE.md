@@ -34,8 +34,10 @@ Run one after another, rows 1 to 9 take about four to nine working days. Their o
 * **Lane B (nature and style):** rows 3, then 6.
 * **Lane C (surfaces and buildings):** rows 4, then 5, then 7.
 
-The longest lane is C (13 to 26 hours), so three lanes bring rows 1 to 9 to about two to four working days. One job that takes the GPU or several GB of memory runs at a time, whichever lane asks. The lanes start when the owner agrees to the extra use of the agent allowance.
+The longest lane is C (13 to 26 hours), so three lanes bring rows 1 to 9 to about two to four working days. One job that takes the GPU or several GB of memory runs at a time, whichever lane asks. **The owner approved the three lanes on 2026-10-13** (the extra use of the agent allowance, no cash spend). No lane has started: they begin on the owner's word to start. Until then nothing in rows 1 to 9 is in progress.
 
 ## What the owner decides
 
-The 10 blind pairs when row 1 delivers the frames (about 10 minutes, date 10-15 to 10-17), the CC-BY yes or no by 2026-11-01 (default: CC0 only), the product name before any public release, and the go-ahead for the three lanes.
+Decided: the three lanes (2026-10-13). Still to come: the 10 blind pairs when row 1 delivers the frames (about 10 minutes, date 10-15 to 10-17), the CC-BY yes or no by 2026-11-01 (default: CC0 only), the product name before any public release, and the word to start the lanes.
+
+**How the blind pairs run** (stage 1 gate, [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) B12.6): ten slides, each two pictures of the same view side by side, one made by our rules and one set up by hand from the same assets, same camera and same sun; which is which is hidden and the sides are shuffled. For each slide the owner answers one question: which is closer to the reference picture. The gate is passed when the owner picks ours in at least 5 of 10. A miss changes the approach for that stage, and the owner's one-line reason per slide says what to fix.
