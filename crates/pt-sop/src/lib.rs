@@ -4,6 +4,7 @@
 
 mod assets;
 mod attrs;
+mod building;
 pub mod dem;
 mod hydro;
 pub mod hfield;
@@ -105,6 +106,7 @@ fn base_schemas() -> Vec<NodeSchema> {
 pub fn schemas() -> Vec<NodeSchema> {
     let mut v = base_schemas();
     v.extend(prims::schemas());
+    v.extend(building::schemas());
     v.extend(deform::schemas());
     v.extend(assets::schemas());
     v.extend(dem::schemas());
@@ -192,6 +194,9 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Res {
         _ => {}
     }
     if let Some(r) = prims::cook(kind, p, inputs) {
+        return r;
+    }
+    if let Some(r) = building::cook(kind, p) {
         return r;
     }
     if let Some(r) = deform::cook(kind, p, inputs) {

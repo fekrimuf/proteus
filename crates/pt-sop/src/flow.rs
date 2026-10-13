@@ -263,6 +263,18 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             e.is_grid = true; // a far ring with a hole is not one; the heightfield tools check at cook time
             Ok(e)
         }
+        "building" => {
+            let mut e = GeoEnv::base_points(&[], true);
+            let attrs: &[&str] = match p.s("mode").as_str() {
+                "openings" => &["opening", "kind", "wall", "room_from", "room_to", "width", "height", "sill"],
+                "rooms" => &["room", "row", "col", "area", "height"],
+                _ => &["room", "part", "opening"],
+            };
+            for a in attrs {
+                e.prim.insert((*a).into(), Ty::Float);
+            }
+            Ok(e)
+        }
         "line" => Ok(GeoEnv::base_points(&[], false)),
         "curve" | "helix" | "resample" => Ok(GeoEnv::base_points(&[], false)),
         "sweep" | "revolve" => Ok(GeoEnv::base_points(&[], true)),
