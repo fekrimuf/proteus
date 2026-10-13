@@ -220,6 +220,17 @@ The owner found three defects in a frame the check had passed: firs on the right
 * **The guard speaks on every frame:** `pt render-scene` puts the check's count into its report (`floating_or_hanging_in_view`) and warns when it is not zero, so a world that forgot `seat` says so on its first render instead of waiting for someone to run the check.
 * **Lesson:** a guard that measures a proxy passes whatever the proxy hides. Measure what the eye sees, and make the placement call the same function, so the two cannot drift apart.
 
+### Clear of the lens, out of the ground, out of the water (2026-10-13, from the first `pt survey`)
+
+The first survey of the creek showed three more faults that the earlier check passed: a fir sapling 0.3 m from the `village` camera, half-buried rocks and ferns on the east slope, and 40 objects mostly under the creek's water. Each is a rule of the same `seat` node, measured by the same function in `pt ground-check`:
+
+* **`cameras` and `clearance`:** an object whose nearest vertex (not its pivot) comes within `clearance` metres (1.5 by default) of a standing camera's eye is not placed. The recipe takes the cameras from `knob("cameras", [])`. Ground cover marked `soft=1` (grass tiles, flowers) is the ground the camera stands in and is exempt.
+* **`sink`:** the share of an object's height that may lie under the ground. A rock may sit 0.45 deep, a fern 0.25; more is raised to the limit, or the object is not placed where raising would hang it.
+* **`wade`:** the share that may lie under the creek's water (needs the water on input 2). Land plants and stones that would stand deeper are not placed; wood that `seat` floats in the water line (`draft`) is recorded as `seat_float` and is not counted.
+* **Measured on the creek world:** objects within 3 m of a camera 24 before, none inside 1.5 m after; more than half buried 5,337 before, 0 after; mostly under water 35 before, 0 after. The valley and Teton worlds are clean on every kind. `pt ground-check` fails a world on any of the four and `pt render-scene` counts them in its report.
+* **A branch seen in an engine frame is not always near:** the survey's `village` frame shows needles across the hut; `pt pick` named a sapling 7.6 m away, and the engine draws its needle cards larger than the offline render does. That is the engine's look (ROUTE row 2a), not a placement fault. A sapling that blocks a camera's subject from further out is the scene composer's rule (row 7).
+* **The survey is the proof:** `pt survey` of the creek, 66 pictures, no flagged object; the sheets are kept in `out\survey\cascade_1a\`.
+
 
 ## The look-development tier (2026-10-13)
 

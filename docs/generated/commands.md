@@ -9,7 +9,7 @@ Every command below is on the command line and, under the tool name, in the agen
 | `docs-check` | `docs_check` |  | Check the documentation: size budgets, broken links, banned headings, mangled Windows paths, the STATUS date, the index, and that the generated state and command table are current. Exit 1 on any problem. |
 | `edit` | `edit` |  | Record the owner's decision about one placed object in an edits file, by its stable id (from `pick`): remove it, move it by (dx dy dz) or to a place (with `to`), scale it, or add a new one. The decision is replayed on every rebuild of the world. |
 | `gate` | `gate` | yes | The checks every commit must pass, in order: build, lint (the platform-independent maths rule and the ban on crash-prone shortcuts, enforced by clippy on all production code), the documentation harness, and the tests. Stops at the first failing step and names it. Takes minutes: it builds and tests the workspace. |
-| `ground-check` | `ground_check` |  | Cook a world on the CPU (no render, no GPU) and list, per scene camera, the objects that float, hang over a slope or bank, are mostly under water (flat lids) or are buried. With frames and annotate it writes ground_<camera>.png with each one boxed (red float, orange hanging, yellow shallow, magenta buried). Fails when anything floats or hangs inside a camera view. |
+| `ground-check` | `ground_check` |  | Cook a world on the CPU (no render, no GPU) and list, per scene camera, the objects that float, hang over a slope or bank, are mostly under water (flat lids) or are buried. With frames and annotate it writes ground_<camera>.png with each one boxed (red float, orange hanging, yellow shallow, magenta buried). Fails when anything floats or hangs inside a camera view, when an object is within the clear radius of a camera's eye (in_face), or when anything anywhere is mostly under the ground or the creek's water. |
 | `heavy-status` | `heavy_status` |  | Say whether a heavy job (Blender, the game engine, the validator, the judge server) holds the machine, and who: only one runs at a time across every `pt` and worktree; a second waits up to PT_HEAVY_WAIT_SECONDS (default 3600, 0 = fail at once). Look here before starting a render to know whether it would wait. |
 | `recipes` | `recipes` |  | Build every recipe in recipes/, check its specs and its static flow check, and compare each content hash with recipes/golden.json. Exit 1 when any recipe fails. After an intended numeric change, --update re-records the hashes (then also run `pt gym-baseline`). |
 | `render-scene` | `render_world` | yes | Cook a recipe (or read a .glb) and render it with Blender Cycles under a scene file's cameras, sky and sun, with material names bound to the CC0 PBR library. Prints the report: frames, triangles, material coverage, unknown materials, warnings. |
@@ -47,11 +47,12 @@ Every command below is on the command line and, under the tool name, in the agen
 
 ### ground-check
 
-`pt ground-check <recipe> <scene> [--radius RADIUS] [--frames FRAMES] [--annotate ANNOTATE] [--lookdev]`
+`pt ground-check <recipe> <scene> [--radius RADIUS] [--clearance CLEARANCE] [--frames FRAMES] [--annotate ANNOTATE] [--lookdev]`
 
 * `recipe` (required): the world's recipe .hcs file
 * `scene` (required): the scene .json file that holds the cameras
 * `--radius`: metres around a camera that count as in view (default 45)
+* `--clearance`: metres of clear air around every standing camera's eye (default 1.5): fails on a placed object whose nearest vertex is closer, naming camera, object and distance
 * `--frames`: folder holding the rendered frames to draw on
 * `--annotate`: folder to write the annotated frames to
 * `--lookdev`: cook in the look-development tier (the tier the frame was rendered in)
