@@ -62,6 +62,11 @@ pub fn schemas() -> Vec<NodeSchema> {
             ps("set_normal", json!(1), "1 = write the surface normal into point attribute N."),
             ps("footprint", json!(0.0), "If > 0, settle each point onto the LOWEST ground under a ring of this radius (metres, times the point's pscale), so an object placed there has no side hanging in the air on a slope or a bank. Writes point attribute `settle_drop` (how far it was lowered, m): reject points with a large drop."),
         ]),
+        sch("seat", "GROUNDING: seats the instances of input 0 (copy_to_points, copy_variants) on the ground of input 1 by their REAL shape, so nothing floats: a standing object is lowered until its whole base is in the ground, however steep the slope, and that includes the slab of soil a scanned tree stands on; a lying object (a log, a branch, a grass tile) is turned to lie along the ground under its whole footprint and comes down until its body rests on it, so it never stands in the air on a stub; and with input 2 (the water surface) and `draft`, wood lies in the water line where the water is deep enough and on the bed where it is not. An instance that would have to be lowered too far (the ground falls away under it: the lip of a bank, a ledge) is removed. Writes instance attribute `seat_move` (metres moved in y). `pt ground-check` measures the same thing, so what this node seats passes it.", 3, D::None, G::Whole, vec![
+            ps("limit", json!(0.5), "Remove an instance that must be lowered by more than this share of its size (the smaller of its height and of what it stands on); 0 keeps all."),
+            ps("draft", json!(0.0), "For things that float (wood): the share of the body under the water line, e.g. 0.55; 0 = it does not float and rests on the bed. Needs the water surface on input 2."),
+            ps("bury", json!(0.02), "Metres the rim of the base with the most air under it goes below the ground: 0.2 for trees, whose roots go into the soil."),
+        ]),
         sch("point_jitter", "Random per-point displacement in [-amount, amount] per axis (scaled by `scale`).", 1, D::None, G::PerPoint, vec![
             ps("amount", json!(0.1), "Maximum displacement (m)."),
             ps("scale", json!([1.0, 1.0, 1.0]), "Per-axis multiplier (use [1,0,1] to keep Y)."),
@@ -92,6 +97,7 @@ pub fn cook(kind: &str, p: &Params, inputs: Inputs) -> Option<Res> {
         "sweep" => inp(0).and_then(|g| sweep(g, p)),
         "revolve" => inp(0).and_then(|g| revolve(g, p)),
         "drop_to_surface" => inp(0).and_then(|g| inp(1).and_then(|s| drop_to_surface(g, s, p))),
+        "seat" => inp(0).and_then(|g| inp(1).and_then(|s| seat(g, s, inputs.get(2).and_then(|w| w.as_deref()), p))),
         "point_jitter" => inp(0).map(|g| point_jitter(g, p)),
         "switch" => {
             let i = p.i("index").clamp(0, 3) as usize;
@@ -455,6 +461,35 @@ fn drop_to_surface(src: &Geometry, surf: &Geometry, p: &Params) -> Res {
         g.point.set("settle_drop", pt_core::Column::from_f32(drops));
     }
     Ok(g)
+}
+
+/// Seat instances on the ground by their real shape (`pt_core::seat`): the same measure `pt ground-check` uses.
+fn seat(src: &Geometry, ground: &Geometry, water: Option<&Geometry>, p: &Params) -> Res {
+    use pt_core::seat::{Heights, Sole};
+    let inst = src.instances.as_ref().ok_or("seat: input 0 has no instances (put copy_to_points or copy_variants upstream)")?;
+    let land = Heights::new(ground).ok_or("seat: input 1 has no polygons to stand on")?;
+    let wet = water.and_then(Heights::new);
+    let (limit, draft, bury) = (p.f("limit").max(0.0), p.f("draft").clamp(0.0, 1.0), p.f("bury").max(0.0));
+    let soles: Vec<Option<Sole>> = inst.protos.iter().map(|g| Sole::of(g)).collect();
+    let on_land = |x: f32, z: f32| land.at(x, z);
+    let on_water = |x: f32, z: f32| wet.as_ref().and_then(|w| w.at(x, z));
+    let (mut keep, mut xf, mut moved) = (Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()), Vec::with_capacity(inst.len()));
+    for (k, m) in inst.xf.iter().enumerate() {
+        let seated = match &soles[inst.proto_id[k] as usize] {
+            Some(sole) => pt_core::seat::seat(sole, m, &on_land, &on_water, limit, draft, bury),
+            None => Some(*m),
+        };
+        if let Some(to) = seated {
+            keep.push(k as u32);
+            moved.push(to[7] - m[7]);
+            xf.push(to);
+        }
+    }
+    let mut out = src.clone();
+    let mut attrs = inst.attrs.gather(&keep);
+    attrs.set("seat_move", pt_core::Column::from_f32(moved));
+    out.instances = Some(pt_core::geo::Instances { protos: inst.protos.clone(), proto_id: Arc::new(keep.iter().map(|&k| inst.proto_id[k as usize]).collect()), xf: Arc::new(xf), attrs });
+    Ok(out)
 }
 
 fn point_jitter(src: &Geometry, p: &Params) -> Geometry {

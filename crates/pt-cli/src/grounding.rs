@@ -4,8 +4,11 @@
 //! shows only a flat lid), so the build must find them first, from the geometry alone and on the CPU: no renderer, no GPU.
 //! For every instance the check reads the cooked terrain and water surfaces under the object's footprint and reports
 //!
-//! * `float`: the lowest point of the object is above the ground under every part of its footprint (nothing touches);
-//! * `overhang`: one side hangs in the air by more than a third of the object's height (reads as hovering on a slope);
+//! * `float`: the lowest point of the object is above the ground under every part of its footprint (nothing touches), or it is
+//!   a lying object (a log) whose body is in the air over the ground or the water because it stands on a stub;
+//! * `overhang`: one side hangs in the air by more than a third of the object's height (reads as hovering on a slope), or part
+//!   of its real base does (the root plate of a tree, a clump of a grass tile over a bank's edge): `pt_core::seat` measures
+//!   the base on the object's vertices, because a bounding box calls a 24 m tree grounded when the middle of its trunk is;
 //! * `shallow`: more than 60% of the object's height is under water, so it shows only a flat lid;
 //! * `buried`: more than 60% of the object's height is under the ground;
 //! * `card`: the prototype is flat (thickness under 12% of its widest side), a leaf card or a sheet that reads as 2D close up.
@@ -162,6 +165,9 @@ pub fn check(geo: &Geometry, terrain: &Surface, water: &Surface) -> (Vec<Finding
     let Some(inst) = &geo.instances else { return (out, flat_protos) };
     // per prototype: bounds, and whether it is a flat card
     let bounds: Vec<Option<([f32; 3], [f32; 3])>> = inst.protos.iter().map(|p| p.bounds()).collect();
+    // per prototype: its real underside (the vertices of its base, where its body starts), which a box cannot give
+    let soles: Vec<Option<pt_core::seat::Sole>> = inst.protos.iter().map(|p| pt_core::seat::Sole::of(p)).collect();
+    let (land, wet) = (|x: f32, z: f32| terrain.height(x, z), |x: f32, z: f32| water.height(x, z));
     for (i, b) in bounds.iter().enumerate() {
         if let Some((lo, hi)) = b {
             let s = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
@@ -201,14 +207,24 @@ pub fn check(geo: &Geometry, terrain: &Surface, water: &Surface) -> (Vec<Finding
         if gaps.is_empty() {
             continue; // off the terrain (on a building roof, say)
         }
-        let min_gap = gaps.iter().cloned().fold(f32::MAX, f32::min);
-        let max_gap = gaps.iter().cloned().fold(f32::MIN, f32::max);
+        // air under the box, over what carries the object: the ground, or the water where the object lies in it
+        let carried: Vec<f32> = samples.iter().filter_map(|s| terrain.height(s[0], s[2]).map(|g| y_lo - water.height(s[0], s[2]).map_or(g, |w| w.max(g)))).collect();
+        let min_gap = carried.iter().cloned().fold(f32::MAX, f32::min);
+        let max_gap = carried.iter().cloned().fold(f32::MIN, f32::max);
         let tol = (0.04 * height).max(0.08);
         let mut push = |kind: &'static str, amount: f32| out.push(Finding { kind, proto: pid, index: k, pos: origin, height, amount });
-        if min_gap > tol {
-            push("float", min_gap);
-        } else if max_gap > height / 3.0 && max_gap > 0.2 {
-            push("overhang", max_gap);
+        let fit = soles[pid as usize].as_ref().and_then(|s| pt_core::seat::fit(s, xf, &land, &wet));
+        match &fit {
+            // the box, then the real shape: the base of a tree or a tile hangs in the air, or a lying log stands on a stub
+            Some(f) => {
+                if let Some((kind, air)) = f.verdict() {
+                    push(kind, air);
+                }
+            }
+            // no ground under its middle: the box alone, over whatever ground its footprint has
+            None if min_gap > tol => push("float", min_gap),
+            None if max_gap > height / 3.0 && max_gap > 0.2 => push("overhang", max_gap),
+            None => {}
         }
         let ground_c = gaps.first().map_or(0.0, |g| y_lo - g);
         let buried = ground_c - y_lo;
@@ -270,6 +286,19 @@ fn kind_colour(kind: &str) -> [u8; 3] {
         "buried" => [255, 0, 255],
         _ => [0, 255, 255],
     }
+}
+
+/// How wide a prototype is below each of a few heights above its lowest point (m): [height, width]. A root plate, a skirt of low
+/// branches or a stub shows here; the base band alone does not tell them apart.
+fn widths(g: &Geometry, s: &pt_core::seat::Sole) -> Vec<[f32; 2]> {
+    let c = [(s.lo[0] + s.hi[0]) * 0.5, (s.lo[2] + s.hi[2]) * 0.5];
+    [0.15f32, 0.3, 0.5, 1.0, 2.0]
+        .iter()
+        .map(|top| {
+            let r = g.p().iter().filter(|q| q[1] - s.lo[1] <= *top).map(|q| (math::sq(q[0] - c[0]) + math::sq(q[2] - c[1])).sqrt()).fold(0.0f32, f32::max);
+            [*top, 2.0 * r]
+        })
+        .collect()
 }
 
 /// Report as JSON: totals per kind, per camera the flagged objects in view (with their pixel position in a 1920 x 1080 frame), and
@@ -350,6 +379,8 @@ pub fn report(geo: &Geometry, scene: &Value, radius: f32, frames: Option<&std::p
         "base_materials": mats.iter().map(|(k, v)| json!({"material": k, "triangles": v.0, "x": [v.1, v.3], "z": [v.2, v.4]})).collect::<Vec<_>>(),
         "instances": inst.map_or(0, |i| i.len()),
         "findings": by_kind,
+        // the real underside of every prototype, as the check and the `seat` node see it
+        "soles": inst.map(|i| i.protos.iter().enumerate().filter_map(|(k, g)| pt_core::seat::Sole::of(g).map(|s| json!({"proto": label(k as u32), "height": s.hi[1] - s.lo[1], "base_width": s.base_width, "body_starts_at": s.body, "slab_top": s.collar, "lying": s.lying, "width_by_height": widths(g, &s)}))).collect::<Vec<_>>()).unwrap_or_default(),
         "flat_prototypes": flat.iter().map(|(p, k)| json!({"proto": label(*p), "kind": k})).collect::<Vec<_>>(),
         "cameras": cam_json,
         "radius_m": radius,

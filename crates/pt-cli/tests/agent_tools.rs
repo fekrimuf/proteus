@@ -211,6 +211,98 @@ out(world)
     assert!(report["cameras"][0]["by_prototype"]["shallow rock_test"].as_u64().unwrap_or(0) >= 10, "the finding names the prototype: {}", report["cameras"]);
 }
 
+/// Trees on the same hill: a root plate 1.6 m wide, a trunk and a crown far above. `stand` is an hcs expression over `trees`
+/// (the instances, each dropped onto the ground by its centre) and `terrain`.
+fn trees_on_a_hill(stand: &str, seed: u32) -> String {
+    format!(
+        r#"terrain = set_material(wrangle(grid(size=[40, 40], rows=80, cols=80), code="@P.y = 4.0 * exp(-(@P.x * @P.x + @P.z * @P.z) / 40.0) + 0.6 * sin(@P.x * 1.3) * cos(@P.z * 1.1);"), name="terrain_test")
+terrain = normals(terrain)
+pts = scatter_poisson(grid(size=[30, 30]), count=70, min_dist=1.8, seed={seed}, pscale_min=0.8, pscale_max=1.4)
+tree = set_material(merge(box(size=[1.6, 0.1, 1.6], center=[0.0, 0.05, 0.0]), box(size=[0.4, 14.0, 0.4], center=[0.0, 7.1, 0.0]), box(size=[6.0, 6.0, 6.0], center=[0.0, 17.1, 0.0])), name="tree_test")
+trees = copy_to_points(tree, drop_to_surface(pts, terrain), rot_y_random=360.0, seed=2)
+world = merge(terrain, {stand})
+spec(world, "instances", min=20)
+out(world)
+"#
+    )
+}
+
+#[test]
+fn a_tree_dropped_by_its_centre_has_its_root_plate_in_the_air_and_the_check_sees_it() {
+    // The owner's east frame: firs on the right bank stood with the rim of their base over the slope, and the check passed
+    // them, because it measured a 20 m bounding box (a third of that height had to be air before it spoke).
+    setup();
+    let mut s = Session::new();
+    for seed in 1..=4 {
+        let dir = scratch(&format!("treeair{seed}"));
+        let (recipe, scene) = write_world(&dir, &trees_on_a_hill("trees", seed), SCENE);
+        let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+        assert!(err, "seed {seed}: root plates over a slope must fail the check: {v}");
+        assert!(v["output"]["findings"]["overhang"].as_u64().unwrap_or(0) >= 10, "seed {seed}: {}", v["output"]["findings"]);
+        assert!(v["output"]["cameras"][0]["by_prototype"]["overhang tree_test"].as_u64().unwrap_or(0) >= 3, "the finding names the tree: {}", v["output"]["cameras"]);
+    }
+}
+
+#[test]
+fn seated_trees_stand_in_the_ground_whatever_the_seed() {
+    setup();
+    let mut s = Session::new();
+    for seed in 1..=4 {
+        let dir = scratch(&format!("treeseat{seed}"));
+        let (recipe, scene) = write_world(&dir, &trees_on_a_hill("seat(trees, terrain)", seed), SCENE);
+        let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+        assert!(!err, "seed {seed}: seated trees must pass: {v}");
+        let report = &v["output"];
+        assert!(report["instances"].as_u64().unwrap() >= 20, "the trees are still there: {report}");
+        assert!(report["findings"]["float"].is_null() && report["findings"]["overhang"].is_null(), "seed {seed}: {}", report["findings"]);
+    }
+}
+
+/// Logs along a creek: each log is a 4 m trunk that stands half a metre up on one thin stub, the way a scanned dead trunk
+/// stands on a broken branch. The bed is 0.9 m under the water in the middle and dry at the sides.
+fn logs_along_a_creek(lie: &str, seed: u32) -> String {
+    format!(
+        r#"bed = set_material(normals(wrangle(grid(size=[40, 40], rows=80, cols=80), code="@P.y = 0.3 - 1.2 * exp(-(@P.x * @P.x) / 30.0);")), name="terrain_test")
+water = set_material(normals(wrangle(grid(size=[40, 40], rows=2, cols=2), code="@P.y = 0.0;")), name="stream_water")
+pts = scatter_poisson(grid(size=[24, 30]), count=40, min_dist=4.5, seed={seed}, pscale_min=0.9, pscale_max=1.1)
+log = set_material(merge(box(size=[0.08, 0.5, 0.08], center=[0.0, 0.25, 0.0]), box(size=[4.0, 0.4, 0.4], center=[0.0, 0.7, 0.0])), name="log_test")
+logs = copy_to_points(log, drop_to_surface(pts, bed), rot_y_random=360.0, seed=2)
+world = merge(bed, water, {lie})
+spec(world, "instances", min=10)
+out(world)
+"#
+    )
+}
+
+#[test]
+fn a_log_standing_on_a_stub_is_caught_as_floating_on_land_and_over_water() {
+    // The owner's east frame: a dead trunk in the creek hung over the water line. Its lowest twig touched, so the box touched.
+    setup();
+    let mut s = Session::new();
+    for seed in 1..=3 {
+        let dir = scratch(&format!("logair{seed}"));
+        let (recipe, scene) = write_world(&dir, &logs_along_a_creek("logs", seed), SCENE);
+        let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+        assert!(err, "seed {seed}: logs standing on a stub must fail the check: {v}");
+        assert!(v["output"]["findings"]["float"].as_u64().unwrap_or(0) >= 5, "seed {seed}: {}", v["output"]["findings"]);
+    }
+}
+
+#[test]
+fn seated_logs_lie_on_the_ground_and_in_the_water_line() {
+    setup();
+    let mut s = Session::new();
+    for seed in 1..=3 {
+        let dir = scratch(&format!("logseat{seed}"));
+        let (recipe, scene) = write_world(&dir, &logs_along_a_creek("seat(logs, bed, water, draft=0.55)", seed), SCENE);
+        let (err, v) = tool(&mut s, "ground_check", json!({"recipe": recipe, "scene": scene}));
+        assert!(!err, "seed {seed}: seated logs must pass: {v}");
+        let report = &v["output"];
+        assert!(report["instances"].as_u64().unwrap() >= 10, "the logs are still there: {report}");
+        assert!(report["findings"]["float"].is_null() && report["findings"]["overhang"].is_null(), "seed {seed}: {}", report["findings"]);
+    }
+}
+
 #[test]
 fn hostile_input_gets_answers_and_the_session_keeps_working() {
     // A burst of hostile input through the public entry point: malformed requests, wrong shapes, unknown tools. (A panic inside a

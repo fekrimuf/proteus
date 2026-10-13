@@ -8,6 +8,7 @@ pub mod lod;
 pub mod math;
 pub mod noise;
 pub mod rng;
+pub mod seat;
 pub mod sparse;
 pub mod spatial;
 pub mod validate;

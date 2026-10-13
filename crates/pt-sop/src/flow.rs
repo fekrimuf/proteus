@@ -201,6 +201,19 @@ pub fn effect(kind: &str, p: &Params, ins: &[Option<GeoEnv>]) -> Result<GeoEnv, 
             }
             Ok(e)
         }
+        "seat" => {
+            let mut e = in0();
+            if !ins.get(1).cloned().flatten().is_some_and(|s| s.has_surface) {
+                return Err(vec![fd("seat needs the ground (polygons) on input 1", "connect the terrain the objects stand on")]);
+            }
+            match &mut e.inst {
+                Some(i) => {
+                    i.insert("seat_move".into(), Ty::Float);
+                }
+                None => return Err(vec![fd("seat needs instances on input 0", "put copy_to_points or copy_variants upstream of it")]),
+            }
+            Ok(e)
+        }
         "sdf_shape" => Ok(GeoEnv { volumes: ["sdf".to_string()].into(), ..Default::default() }),
         "sdf_from_mesh" => {
             let e = in0();
