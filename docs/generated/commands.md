@@ -6,7 +6,7 @@ Every command below is on the command line and, under the tool name, in the agen
 
 | Command | Tool | Heavy | What it does |
 |---|---|---|---|
-| `certificate` | `certificate` |  | Write the clean-title certificate of a world: every asset file and elevation tile its recipe uses, with source, licence and hash from corpus/LEDGER.csv, and a line stating that everything else is made by the recipe's rules. Works from the recipe text and the ledger alone (no asset files, GPU or Blender). Fails with exit code 1, naming them, when an asset is missing from the ledger. |
+| `certificate` | `certificate` |  | Write the clean-title certificate of a world: every file its recipe reads from the corpus, with source, licence and hash from corpus/LEDGER.csv, and a closing line that claims only what was checked. Models: every ledger file in the model's folder (.gltf, .bin, textures; the .gltf's own buffer and image names are checked when the file is present). Elevation tiles of dem nodes. With --scene or --style: the scanned material sets the style's materials use (the render's own lookup) and the sky picture. Without them the report says materials were not certified and claims no completeness. Works from the texts and the ledger alone (no asset files, GPU or Blender). Fails with exit code 1, naming them, when a file or a material set is missing from the ledger. |
 | `docs-check` | `docs_check` |  | Check the documentation: size budgets, broken links, banned headings, mangled Windows paths, the STATUS date, the index, and that the generated state and command table are current. Exit 1 on any problem. |
 | `edit` | `edit` |  | Record the owner's decision about one placed object in an edits file, by its stable id (from `pick`): remove it, move it by (dx dy dz) or to a place (with `to`), scale it, or add a new one. The decision is replayed on every rebuild of the world. |
 | `gate` | `gate` | yes | The checks every commit must pass, in order: build, lint (the platform-independent maths rule and the ban on crash-prone shortcuts, enforced by clippy on all production code), the documentation harness, and the tests. Stops at the first failing step and names it. Takes minutes: it builds and tests the workspace. |
@@ -24,10 +24,12 @@ Every command below is on the command line and, under the tool name, in the agen
 
 ### certificate
 
-`pt certificate <recipe> --out OUT [--ledger LEDGER]`
+`pt certificate <recipe> --out OUT [--scene SCENE] [--style STYLE] [--ledger LEDGER]`
 
 * `recipe` (required): the world's recipe .hcs file
 * `--out` (required): the Markdown file to write
+* `--scene`: the world's scene .json (it names its style); certifies the materials and the sky picture
+* `--style`: a style .json on its own (or replacing the scene's style); certifies the materials
 * `--ledger`: the licence ledger (default corpus/LEDGER.csv of this repository)
 
 ### docs-check

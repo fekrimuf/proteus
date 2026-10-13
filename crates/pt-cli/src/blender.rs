@@ -294,8 +294,20 @@ pub struct Opts {
     pub lookdev: bool,
 }
 
-fn load_library(root: &Path) -> Value {
+pub fn load_library(root: &Path) -> Value {
     std::fs::read_to_string(root.join("corpus/materials/library.json")).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or(json!({"materials": {}}))
+}
+
+/// The Poly Haven set behind a material NAME, by the render's own lookup: the scene's entry for the name may say `use` (a library
+/// material), else the name is the library key; the library entry names its `polyhaven` set. `None` for a flat colour, a water or a
+/// drawn material.
+pub fn polyhaven_set(scene: &Value, lib: &Value, name: &str) -> Option<String> {
+    lib.pointer(&format!("/materials/{}/polyhaven", library_key(scene, name))).and_then(Value::as_str).map(String::from)
+}
+
+/// The library material a material NAME resolves to: the scene's `use` for the name, else the name itself.
+pub fn library_key(scene: &Value, name: &str) -> String {
+    scene.pointer(&format!("/materials/{name}/use")).and_then(Value::as_str).unwrap_or(name).to_string()
 }
 
 /// Fold the scene's `style` (an object, or a path to a style file) into the scene: the style supplies defaults for

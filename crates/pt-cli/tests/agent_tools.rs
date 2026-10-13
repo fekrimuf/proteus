@@ -473,7 +473,11 @@ fn certificate_tool_writes_the_report_and_refuses_an_unledgered_asset() {
     let recipe = dir.join("world.hcs");
     std::fs::write(&recipe, "rock = import_asset(path=\"polyhaven/models/rock_09/rock_09_1k.gltf\")\nout(rock)\n").unwrap();
     let header = "id,source,url,license,license_url,sha256,fetched_at,attribution\n";
-    let row = "polyhaven/models/rock_09/rock_09_1k.gltf,polyhaven,https://example.org/rock,CC0-1.0,https://creativecommons.org/publicdomain/zero/1.0/,deadbeef,2026-10-10T00:00:00Z,\n";
+    // the model's own folder: the .gltf, its .bin and textures (a real rock_09 on disk names exactly these)
+    let row: String = ["rock_09_1k.gltf", "rock_09.bin", "textures/rock_09_arm_1k.jpg", "textures/rock_09_diff_1k.jpg", "textures/rock_09_nor_gl_1k.jpg"]
+        .iter()
+        .map(|f| format!("polyhaven/models/rock_09/{f},polyhaven,https://example.org/rock,CC0-1.0,https://creativecommons.org/publicdomain/zero/1.0/,deadbeef,2026-10-10T00:00:00Z,\n"))
+        .collect();
     let (good, bad) = (dir.join("good.csv"), dir.join("bad.csv"));
     std::fs::write(&good, format!("{header}{row}")).unwrap();
     std::fs::write(&bad, header).unwrap();
@@ -492,4 +496,38 @@ fn certificate_tool_writes_the_report_and_refuses_an_unledgered_asset() {
     assert!(err, "a missing asset must fail");
     assert!(v.to_string().contains("polyhaven/models/rock_09/rock_09_1k.gltf") && v.to_string().contains("\"exit_code\":1"), "{v}");
     assert!(!out2.exists(), "a failed certificate left a file");
+}
+
+/// The certificate with `--scene`: the scene's materials are followed to their Poly Haven sets, every file of a set is listed, and a
+/// set the ledger lacks is an error that names it.
+#[test]
+fn certificate_tool_follows_the_scenes_materials_to_their_sets() {
+    setup();
+    let dir = scratch("certificate_scene");
+    let recipe = dir.join("world.hcs");
+    std::fs::write(&recipe, "out(grid())\n").unwrap();
+    let scene = dir.join("world.scene.json");
+    std::fs::write(&scene, r#"{"materials": {"ground_flat": {"use": "forest_floor"}}}"#).unwrap();
+    let header = "id,source,url,license,license_url,sha256,fetched_at,attribution\n";
+    let row = |id: &str| format!("{id},polyhaven,https://example.org/m,CC0-1.0,https://creativecommons.org/publicdomain/zero/1.0/,cafe01,2026-10-10T00:00:00Z,\n");
+    let (good, bad) = (dir.join("good.csv"), dir.join("bad.csv"));
+    std::fs::write(&good, format!("{header}{}{}", row("polyhaven/materials/forrest_ground_01/forrest_ground_01_diff_1k.jpg"), row("polyhaven/materials/forrest_ground_01/forrest_ground_01_nor_gl_1k.jpg"))).unwrap();
+    std::fs::write(&bad, header).unwrap();
+    let mut s = Session::new();
+
+    let out = dir.join("cert.md");
+    let (err, v) = tool(&mut s, "certificate", json!({"recipe": recipe, "out": out, "scene": scene, "ledger": good}));
+    assert!(!err, "{v}");
+    let text = std::fs::read_to_string(&out).unwrap();
+    assert!(text.contains("forrest_ground_01_diff_1k.jpg") && text.contains("forrest_ground_01_nor_gl_1k.jpg"), "{text}");
+
+    let out2 = dir.join("cert2.md");
+    let (err, v) = tool(&mut s, "certificate", json!({"recipe": recipe, "out": out2, "scene": scene, "ledger": bad}));
+    assert!(err && v.to_string().contains("forrest_ground_01"), "a missing material set must fail and be named: {v}");
+    assert!(!out2.exists(), "a failed certificate left a file");
+
+    let out3 = dir.join("cert3.md");
+    let (err, v) = tool(&mut s, "certificate", json!({"recipe": recipe, "out": out3, "ledger": bad}));
+    assert!(!err, "{v}");
+    assert!(std::fs::read_to_string(&out3).unwrap().contains("Materials were not certified"));
 }
