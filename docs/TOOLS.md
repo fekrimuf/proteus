@@ -18,10 +18,12 @@ Changes when a command or crate is added. Counts are not quoted here; see [gener
 
 ## Commands
 
+Commands that work on files (a recipe and a scene, a frame, the documents) are declared once in `crates/pt-cli/src/registry.rs`, beside their code. That one list is the command line (`pt help`, `pt commands --json`), the agent's tool list (each command is also a tool, run as a child process so a crash or a long print cannot reach the live session) and the generated table [generated/commands.md](generated/commands.md). Mistyped options and arguments are refused with what is accepted. New commands go in the registry; the commands below that are not in it yet are listed by `pt help`.
+
 `pt mcp [--ui PORT]` (MCP over stdio; UI shares the same live session) | `pt ui [PORT]` | `pt recipes [--update]` |
 `pt shot <recipe> <out.png> [spp] [az]` (path-traced still) | `pt render-scene <recipe|glb> <scene.json> <out.png> [--quick] [--only CAMERA,CAMERA]` (Blender Cycles photographic still, materials bound by name; the imported scene is cached, so a second render of the same world starts in seconds) | `pt dem-manifest <manifest> --id ID --lat .. --lon .. --zoom Z --size METRES` (tile list of an elevation window, then `pt corpus fetch`) | `pt scorecard <recipe> <scene.json> --out DIR [--quick] [--no-render] [--no-fps] [--no-lod] [--bake] [--judge] [--brief T] [--foil T]... [--baseline OLD.json] [--notes TEXT]` (one build measured by Blender, Godot, the glTF validator and the vision judge; writes world.glb for the render and world.engine.glb for the engine; the brief comes from the scene file's `brief`) | `pt judge status|frames|parts|compare|rate|which|critique|audit` (vision judges, see AGENT_GUIDE) | `pt terrain <recipe> [--out DIR] [--px N] [--find-valley RADIUS_M] [--reaches N --reach-spacing M]` (terrain statistics, a shaded top-down map, a search for valley floors, and, for an `hf_flow` grid with channels, a water map and the channel's centre line with heights) | `pt bench [a]` | `pt golden` | `pt optimize-demo` |
 `pt recover-demo` | `pt vary-bench` | `pt gym` (JSON-lines env) | `pt gym-baseline` | `pt top <farm.json>` | `pt demo` | `pt render`.
-Register with Claude Code: `claude mcp add proteus -- D:\Fekri\Houdini-clone\target\release\pt.exe mcp --ui 7700`.
+The agent tool server is registered by the checked-in `.mcp.json` (build once with `cargo build --release -p pt-cli`; it starts `target/release/pt.exe mcp --ui 7700`, and the page at `http://127.0.0.1:7700` shows the live scene).
 
 ## MCP tools (agent surface)
 
@@ -51,6 +53,7 @@ Code: `pt-core/src/gltf.rs` (GLB reader and writer), `pt-opt/src/{matching,solve
 | Command | What it does |
 |---|---|
 | `pt status [--write]` | prints, or with `--write` stores in `docs/generated/state.md`, every number the docs may quote (node types, test functions, recipes, gym, ledger, scorecard runs) |
+| `pt gate [--quick] [--only STEPS]` (alias `cargo gate`) | the checks every commit must pass, in order: `build`, `lint` (clippy on all production code: the platform-independent maths rule of `clippy.toml` and the ban on `unwrap`, `expect`, `panic!` and friends set in the root `Cargo.toml`), `docs` (below) and `tests`; stops at the first failure and names the step; CI runs the same lint step |
 | `pt docs-check` | fails on a stale `state.md`, a broken link, a file over its size budget, a banned heading, a mangled Windows path, a STATUS older than the last commit, or a document missing from the index; runs in CI |
 
 ## Placement and frame review

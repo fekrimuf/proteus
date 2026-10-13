@@ -5,7 +5,8 @@ Read in this order: [../CLAUDE.md](../CLAUDE.md) (role and reporting rules), the
 | File | What it is | How it changes |
 |---|---|---|
 | [STATUS.md](STATUS.md) | current state, open items, next steps; 8 KB cap | rewritten at every wrap-up |
-| [generated/state.md](generated/state.md) | every count and score, produced from the code and result files | `pt status --write`, never by hand |
+| [generated/state.md](generated/state.md), [generated/commands.md](generated/commands.md) | every count and score, and the table of commands (also the agent tools), produced from the code and result files | `pt status --write`, never by hand |
+| [ROUTE.md](ROUTE.md) | every open piece of work ranked by lever per agent-hour, with evidence, route, cost and plan dates | when work finishes or evidence moves a row |
 | [PLAN.md](PLAN.md) | master plan: thesis, architecture bets, phases, risks, research decisions D1 to D10 | rarely |
 | [PRO_QUALITY_PLAN.md](PRO_QUALITY_PLAN.md) | owner brief (Part A), runbook and tracks (Part B), north star | when the approach changes |
 | [DECISIONS.md](DECISIONS.md) | decisions that stay fixed until new evidence (B11, B15, B16) | when a decision is made |

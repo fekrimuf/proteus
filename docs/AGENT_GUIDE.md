@@ -241,6 +241,8 @@ MCP:   pick(node, scene, camera, x, y, radius?, frame_size?)
 
 ## Tools (progressive disclosure)
 
+Every tool call is checked against its schema before it runs: an unknown, missing or wrongly typed argument is refused with the accepted names, so a typo never silently changes nothing. The frame-review and world commands (`ground_check`, `review_tiles`, `world`, `edit`, `render_world`, `scorecard`, `gate`, `recipes`, `docs_check`, `status`) are tools too, listed by `tools/list` like the session tools; the heavy ones say so in their description (tell the owner first). A tool that fails returns an error whose text is what the command printed.
+
 `list_node_types`, `search_nodes`, `describe_node` -> discover. `run_hcs`, `check_hcs`,
 `graph_to_hcs` -> author. `batch`, `create_node`, `set_param`, `connect` -> fine edits.
 `cook`, `validate`, `check_graph`, `explain` -> inspect. `render_preview` -> look.
